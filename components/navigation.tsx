@@ -10,11 +10,7 @@ import logoImage from "@/attached_assets/ChatGPT Image Jul 12, 2025, 10_28_30 AM
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    }
+  const closeMenu = () => {
     setIsMenuOpen(false)
   }
 
@@ -23,7 +19,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
+            <Link href="/" className="flex-shrink-0 flex items-center">
               <div className="relative w-16 h-16 mr-3">
                 <Image 
                   src={logoImage}
@@ -34,51 +30,52 @@ export default function Navigation() {
               </div>
               <div className="text-primary font-bold text-xl">O&N</div>
               <div className="ml-2 text-gray-600 text-sm font-medium">HOME RENOVATION</div>
-            </div>
+            </Link>
           </div>
           
           <div className="hidden md:block">
             <div className="ml-10 flex items-baseline space-x-8">
-              <button 
-                onClick={() => scrollToSection("home")}
+              <Link 
+                href="/"
                 className="text-primary hover:text-primary-dark font-medium transition-colors"
               >
                 Home
-              </button>
-              <button 
-                onClick={() => scrollToSection("services")}
+              </Link>
+              <Link 
+                href="/services"
                 className="text-gray-600 hover:text-primary font-medium transition-colors"
               >
                 Services
-              </button>
-              <button 
-                onClick={() => scrollToSection("portfolio")}
+              </Link>
+              <Link 
+                href="/portfolio"
                 className="text-gray-600 hover:text-primary font-medium transition-colors"
               >
                 Portfolio
-              </button>
-              <button 
-                onClick={() => scrollToSection("about")}
+              </Link>
+              <Link 
+                href="/about"
                 className="text-gray-600 hover:text-primary font-medium transition-colors"
               >
                 About
-              </button>
-              <button 
-                onClick={() => scrollToSection("contact")}
+              </Link>
+              <Link 
+                href="/contact"
                 className="text-gray-600 hover:text-primary font-medium transition-colors"
               >
                 Contact
-              </button>
+              </Link>
             </div>
           </div>
           
           <div className="hidden md:block">
-            <Button 
-              onClick={() => scrollToSection("contact")}
-              className="bg-dubai-gold hover:bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-            >
-              Get Quote
-            </Button>
+            <Link href="/contact">
+              <Button 
+                className="bg-dubai-gold hover:bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+              >
+                Get Quote
+              </Button>
+            </Link>
           </div>
           
           <div className="md:hidden">
@@ -97,43 +94,49 @@ export default function Navigation() {
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t">
           <div className="px-2 pt-2 pb-3 space-y-1">
-            <button 
-              onClick={() => scrollToSection("home")}
+            <Link 
+              href="/"
+              onClick={closeMenu}
               className="block w-full text-left px-3 py-2 text-primary hover:text-primary-dark font-medium"
             >
               Home
-            </button>
-            <button 
-              onClick={() => scrollToSection("services")}
+            </Link>
+            <Link 
+              href="/services"
+              onClick={closeMenu}
               className="block w-full text-left px-3 py-2 text-gray-600 hover:text-primary font-medium"
             >
               Services
-            </button>
-            <button 
-              onClick={() => scrollToSection("portfolio")}
+            </Link>
+            <Link 
+              href="/portfolio"
+              onClick={closeMenu}
               className="block w-full text-left px-3 py-2 text-gray-600 hover:text-primary font-medium"
             >
               Portfolio
-            </button>
-            <button 
-              onClick={() => scrollToSection("about")}
+            </Link>
+            <Link 
+              href="/about"
+              onClick={closeMenu}
               className="block w-full text-left px-3 py-2 text-gray-600 hover:text-primary font-medium"
             >
               About
-            </button>
-            <button 
-              onClick={() => scrollToSection("contact")}
+            </Link>
+            <Link 
+              href="/contact"
+              onClick={closeMenu}
               className="block w-full text-left px-3 py-2 text-gray-600 hover:text-primary font-medium"
             >
               Contact
-            </button>
+            </Link>
             <div className="px-3 py-2">
-              <Button 
-                onClick={() => scrollToSection("contact")}
-                className="w-full bg-dubai-gold hover:bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium transition-colors"
-              >
-                Get Quote
-              </Button>
+              <Link href="/contact" onClick={closeMenu}>
+                <Button 
+                  className="w-full bg-dubai-gold hover:bg-yellow-500 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
+                  Get Quote
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
