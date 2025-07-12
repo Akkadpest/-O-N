@@ -3,14 +3,9 @@
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Image from "next/image"
+import Link from "next/link"
 
 export default function Hero() {
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId)
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" })
-    }
-  }
 
   return (
     <section id="home" className="relative bg-gradient-to-br from-primary to-primary-dark text-white">
@@ -35,19 +30,21 @@ export default function Hero() {
             Premium home renovation services that bring your vision to life. From luxury interiors to complete home transformations across Dubai.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              onClick={() => scrollToSection("portfolio")}
-              className="bg-dubai-gold hover:bg-yellow-500 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
-            >
-              View Our Work
-            </Button>
-            <Button 
-              onClick={() => scrollToSection("contact")}
-              variant="outline"
-              className="border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-4 rounded-lg font-semibold text-lg transition-colors"
-            >
-              Free Consultation
-            </Button>
+            <Link href="/portfolio">
+              <Button 
+                className="bg-dubai-gold hover:bg-yellow-500 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors w-full sm:w-auto"
+              >
+                View Our Work
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button 
+                variant="outline"
+                className="border-2 border-white text-white hover:bg-white hover:text-primary px-8 py-4 rounded-lg font-semibold text-lg transition-colors w-full sm:w-auto"
+              >
+                Free Consultation
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

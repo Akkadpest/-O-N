@@ -5,7 +5,7 @@ import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import Image from "next/image"
-import logoImage from "@/attached_assets/ChatGPT Image Jul 12, 2025, 10_28_30 AM_1752304160694.png"
+import logoImage from "@/attached_assets/ChatGPT Image Jul 12, 2025, 10_28_30 AM_1752306324523.png"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -20,7 +20,7 @@ export default function Navigation() {
         <div className="flex justify-between items-center h-20">
           <div className="flex items-center">
             <Link href="/" className="flex-shrink-0 flex items-center">
-              <div className="relative w-16 h-16 mr-3">
+              <div className="relative w-40 h-16">
                 <Image 
                   src={logoImage}
                   alt="O&N Home Renovation Logo"
@@ -28,8 +28,6 @@ export default function Navigation() {
                   className="object-contain"
                 />
               </div>
-              <div className="text-primary font-bold text-xl">O&N</div>
-              <div className="ml-2 text-gray-600 text-sm font-medium">HOME RENOVATION</div>
             </Link>
           </div>
           
