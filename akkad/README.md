@@ -1,12 +1,19 @@
 # Akkad Pest Control website
 
-Node.js (Express) website built from *Akkad Website Flow v7*: all 56 screens, responsive for phone and desktop.
+Node.js website built from *Akkad Website Flow v7*: all 56 screens, responsive for phone and desktop.
+
+It runs **offline**: there are no packages to install and nothing is loaded from the internet (the font is bundled).
+The only thing the computer needs is [Node.js](https://nodejs.org) 18 or newer, installed once.
+
+- **Windows:** double-click `start-windows.bat`
+- **Mac:** double-click `start-mac.command`
+- **Any system:**
 
 ```bash
-cd akkad
-npm install
-npm start        # http://localhost:3000  (PORT=8080 npm start to change the port)
+node server.js   # http://localhost:3000  (PORT=8080 node server.js to change the port)
 ```
+
+Offline, the links that leave the site (WhatsApp, Google reviews) and location detection need a connection; choose your area by typing it instead.
 
 ## What is where
 
@@ -14,6 +21,7 @@ npm start        # http://localhost:3000  (PORT=8080 npm start to change the por
 | --- | --- |
 | `server.js` | The server and JSON API: areas, slots, prices, bookings, tracking, reschedule, cancel, WhatsApp code login |
 | `data/catalog.js` | Everything Akkad edits: company details, services, packages, prices, fees, areas, reviews, FAQ |
+| `lib/mini.js` | The small built-in web server layer (routes, JSON, static files) that replaces Express |
 | `lib/store.js` | Booking storage (a JSON file, `data/db.json`); replace with a database when dispatch is connected |
 | `public/css/styles.css` | All styling, phone first, desktop from 900px |
 | `public/js/pages-home.js` | Homepage, area search, area page, inspection and photo requests (screens 1-18) |

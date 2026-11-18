@@ -1,6 +1,6 @@
-// Akkad Pest Control website: Node.js (Express) server.
+// Akkad Pest Control website: Node.js server. No packages to install; works offline.
 // Serves the site and the JSON API behind every screen of the flow.
-const express = require('express');
+const express = require('./lib/mini');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -431,7 +431,7 @@ app.use((err, req, res, next) => {
 });
 
 /* ---------- the website ---------- */
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'], maxAge: DEMO ? 0 : '1h' }));
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: DEMO ? 0 : 3600 }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 app.listen(PORT, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
