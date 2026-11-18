@@ -1,10 +1,13 @@
 // After the sale: confirmation, live tracking, reschedule, cancel, and finding a booking (screens 33-36, 41-56).
-import { S, save, site, me, api, bookingApi, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell } from './core.js';
+import { S, save, site, me, api, bookingApi, download, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell } from './core.js';
 
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const getBooking = async (id) => (await bookingApi(id)).booking;
 const contactRow = (a = 'Call', b = 'WhatsApp') => `<div class="row"><a class="btn ghost" href="${site.company.phoneHref}">${a}</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">${b}</a></div>`;
-const paidText = (b) => (b.kind === 'warranty' && !b.total ? '<span class="green">AED 0 · covered by warranty</span>' : `${aed(b.total)}${b.payMethod === 'tabby' ? ' with Tabby' : ' by card'}`);
+const pending = (b) => b.paymentStatus === 'pending';
+const paidText = (b) => (b.kind === 'warranty' && !b.total ? '<span class="green">AED 0 · covered by warranty</span>'
+  : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)}${b.payMethod === 'tabby' ? ' with Tabby' : ' by card'}`);
+const pendingNote = (b) => (pending(b) ? '<p class="demo-note">Online payment is not connected yet, so nothing has been charged. Your visit is booked and the amount is shown as pending.</p>' : '');
 const warrantyNote = (b) => (b.kind === 'warranty' ? 'Same address. Treatment stays free under your warranty.' : `Same service, same address, same ${b.warrantyMonths}-month warranty.`);
 
 /* ---------- screens 33 and 40: booking confirmed ---------- */
@@ -16,7 +19,7 @@ route('/booking/:id/confirmed', async ({ id }) => {
     html: `<div class="flow"><span class="pill lg">${icon('check', 22)}Booking confirmed · ${esc(b.id)}</span>
       <h1>See you on ${esc(b.weekday)}</h1>
       <div class="card">${lines([['Date', `<b>${esc(b.dateLabel)}</b>`], ['Time slot', `<b>${esc(b.slot)}</b>`], ['Service', esc(b.kind === 'warranty' ? 'Warranty visit' : b.label)],
-        ['Total', b.total ? `${aed(b.total)} paid` : '<span class="green">AED 0 · nothing to pay</span>']])}</div>
+        ['Total', !b.total ? '<span class="green">AED 0 · nothing to pay</span>' : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)} paid`]])}</div>${pendingNote(b)}
       <div class="card"><p class="muted">Before we arrive</p><p style="font-size:18px;color:var(--ink);margin-top:8px">${esc(b.prep)}</p></div>
       <p class="muted">A reminder is sent on WhatsApp the day before, and live tracking starts when the technician sets off.</p>
       <div class="row"><a class="btn ghost" href="/booking/${b.id}/reschedule">Reschedule</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp</a></div>
@@ -76,7 +79,7 @@ route('/booking/:id/track', async ({ id }) => {
         if (phaseChanged) { box.innerHTML = body(); loadMe(); } else { $('.big', box).innerHTML = `${b.tracking.remaining} <small>min</small>`; }
       }, 2500);
       onLeave(() => clearInterval(timer));
-      on(box, '[data-setoff]', (btn) => busy(btn, async () => { await api(`/ops/bookings/${id}/set-off`, {}); b = await getBooking(id); last = ''; box.innerHTML = body(); await loadMe(); }));
+      on(box, '[data-setoff]', (btn) => busy(btn, async () => { await api(`/ops/bookings/${id}/set-off`, {}, { key: S.keys[id] }); b = await getBooking(id); last = ''; box.innerHTML = body(); await loadMe(); }));
       on(box, '[data-change]', () => onTheWay(b));
     },
   };
@@ -112,15 +115,17 @@ route('/booking/:id', async ({ id }) => {
   return {
     title: 'Your booking', head: 'area', flow: true, banner: false,
     html: `<div class="flow">${pill}<h1>Your booking</h1>
-      <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Date and time</span>', `<b>${esc(b.when)}</b>`], ['<span class="k">Paid</span>', paidText(b)]])}</div>
+      <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Date and time</span>', `<b>${esc(b.when)}</b>`], [`<span class="k">${pending(b) ? 'Payment' : 'Paid'}</span>`, paidText(b)]])}</div>
       ${b.status === 'booked' ? `<a class="btn" href="/booking/${b.id}/reschedule">${icon('calendar', 22)}Reschedule</a>` : ''}
       ${live ? `<a class="btn" href="/booking/${b.id}/track">${icon('truck', 22)}Track my technician</a>` : ''}
-      ${b.status === 'done' && b.kind === 'new' ? (b.warrantyActive ? `<div class="card on"><h3 class="ic-row" style="gap:8px">${icon('shield')}Warranty active until ${esc(b.warrantyUntilLabel)}</h3><p class="sub">The service report and receipt were sent on WhatsApp.</p><a class="btn ghost" style="margin-top:12px" href="/warranty/${b.id}">Pests back? Book a free visit</a></div>`
+      ${b.status === 'done' && b.kind === 'new' ? (b.warrantyActive ? `<div class="card on"><h3 class="ic-row" style="gap:8px">${icon('shield')}Warranty active until ${esc(b.warrantyUntilLabel)}</h3><p class="sub">If the same pest returns before then, we come back free.</p><a class="btn ghost" style="margin-top:12px" href="/warranty/${b.id}">Pests back? Book a free visit</a></div>`
         : `<div class="card"><h3>Warranty ended ${esc(b.warrantyUntilLabel || '')}</h3><a class="btn ghost" style="margin-top:12px" href="${S.area ? '/book/' + b.pest : '/area'}">Book again</a></div>`) : ''}
       ${b.status === 'cancelled' && b.credit ? `<div class="card warn"><h3>${aed(b.credit.amount)} Akkad credit</h3><p class="sub">Use it on any service until ${esc(b.credit.untilLabel)}. It is taken off your next booking once you confirm your mobile number.</p></div><button class="btn" data-book>Book a new service</button>` : ''}
       <div class="card ic-row">${icon('pin', 28)}<div class="grow"><h3>Address</h3><p class="sub">${esc(b.address)}</p></div>${editable ? '<button class="btn ghost sm" data-edit="address">Change</button>' : ''}</div>
       ${editable ? `<div class="card ic-row">${icon('info', 28)}<div class="grow"><h3>Note for the technician</h3><p class="sub">${esc(b.note || 'Building access, pets, parking')}</p></div><button class="btn ghost sm" data-edit="note">${b.note ? 'Edit' : 'Add'}</button></div>` : ''}
       ${b.status === 'booked' ? `<p class="center green">Reschedule free, any time before the technician sets off</p><p class="center"><button class="link" data-cancel>Cancel booking</button></p>` : ''}
+      ${b.status === 'done' ? `<a class="btn ghost" href="/booking/${b.id}/report">${icon('doc', 22)}Service report</a>` : ''}
+      ${b.status === 'booked' && b.slot ? `<p class="center"><a class="link" href="/reminder/${b.id}">See the WhatsApp reminder</a></p>` : ''}
       ${contactRow('Call us')}</div>`,
     mount(root) {
       on(root, '[data-cancel]', () => cancelSheet(b));
@@ -151,7 +156,8 @@ function cancelSheet(b) {
     <div class="card on"><h3 class="ic-row" style="gap:8px">${icon('calendar', 24)}Move it instead, free</h3><p class="sub" style="margin:8px 0 12px">Keep your price and warranty. Pick any open day in the next 30 days.</p><a class="btn" href="/booking/${b.id}/reschedule">Pick a new time</a></div>
     <p class="muted">Tell us why you're cancelling</p>
     <div class="chips">${['Not at home', 'Pests gone', 'Found cheaper', 'Other'].map((r) => `<button class="chip" data-r="${r}">${r}</button>`).join('')}</div>
-    ${amount ? `<div class="card warn"><p><b style="font-size:19px">No cash refund.</b> If you cancel, your ${aed(amount)} stays as Akkad credit for 90 days, to use on any service.</p></div>`
+    ${pending(b) ? `<div class="card warn"><p><b>Nothing has been charged.</b> Payment for this booking is still pending, so there is nothing to refund.</p></div>`
+      : amount ? `<div class="card warn"><p><b style="font-size:19px">No cash refund.</b> If you cancel, your ${aed(amount)} stays as Akkad credit for 90 days, to use on any service.</p></div>`
       : `<div class="card warn"><p><b>Nothing was charged.</b> Your warranty stays active, so you can book this free visit again.</p></div>`}
     <p class="err"></p><button class="btn danger" data-go>Cancel anyway</button>`, {
     mount(box) {
@@ -163,6 +169,24 @@ function cancelSheet(b) {
     },
   });
 }
+
+/* ---------- service report for a finished visit (the "Report" links) ---------- */
+route('/booking/:id/report', async ({ id }) => {
+  const b = await getBooking(id);
+  if (b.status !== 'done') { go('/booking/' + id, { replace: true }); return null; }
+  const p = site.pests.find((x) => x.id === b.pest) || { steps: [] };
+  return {
+    title: 'Service report', flow: true, banner: false,
+    html: `<div class="flow report"><span class="pill lg">${icon('check', 22)}Visit complete · ${esc(b.id)}</span><h1>Service report</h1>
+      <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Visit date</span>', `<b>${esc(b.dateLong)}</b>`],
+        ['<span class="k">Address</span>', esc(b.address)], [`<span class="k">${pending(b) ? 'Payment' : 'Paid'}</span>`, paidText(b)]])}</div>
+      <div class="card"><h3>What the technician did</h3>${p.steps.map(([t, d], i) => `<div class="ic-row" style="align-items:flex-start;margin-top:12px"><span class="num">${i + 1}</span><div class="grow"><b style="color:var(--ink)">${esc(t)}</b><p class="sub" style="margin:0">${esc(d)}</p></div></div>`).join('')}</div>
+      ${b.kind === 'new' && b.warrantyUntilLabel ? `<div class="card ${b.warrantyActive ? 'on' : ''}"><h3 class="ic-row" style="gap:8px">${icon('shield')}${b.warrantyMonths}-month warranty</h3><p class="sub">${b.warrantyActive ? 'Active until' : 'Ended on'} ${esc(b.warrantyUntilLabel)}. ${b.warrantyActive ? 'If the same pest returns, we come back free.' : ''}</p></div>` : ''}
+      <p class="note">Products used are Dubai Municipality approved. The technician's own notes and product list are added to this report by dispatch.</p>
+      <div class="row noprint"><button class="btn ghost" data-print>Print or save as PDF</button><a class="btn ghost" href="/my-bookings">My bookings</a></div></div>`,
+    mount(root) { on(root, '[data-print]', () => window.print()); },
+  };
+});
 
 /* ---------- screens 45-49: moving a visit takes three taps ---------- */
 route('/booking/:id/reschedule', async ({ id }) => {
@@ -201,7 +225,7 @@ route('/booking/:id/reschedule/confirm', async ({ id }) => {
     title: 'Confirm the new time', head: 'area', flow: true, banner: false,
     html: `<div class="flow"><h1>Confirm the new time</h1>
       <div class="card fromto"><div class="old"><small>From</small><b>${esc(d1)}</b><b>${esc(d2)}</b></div>${icon('arrow', 34)}<div><small>To</small>${m.express ? `<b>Today</b><b>about ${site.fees.aboutMin} min</b>` : `<b>${esc(m.label)}</b><b>${esc(m.slot)}</b>`}</div></div>
-      <div class="card">${lines([['Already paid', b.kind === 'warranty' && !b.total ? 'AED 0 (warranty)' : aed(b.total)], m.express ? ['Express fee', aed(fee)] : ['Reschedule fee', 'Free', 'green']], ['To pay now', aed(m.express ? fee : 0)])}</div>
+      <div class="card">${lines([[pending(b) ? 'Booking total (payment pending)' : 'Already paid', b.kind === 'warranty' && !b.total ? 'AED 0 (warranty)' : aed(b.total)], m.express ? ['Express fee', aed(fee)] : ['Reschedule fee', 'Free', 'green']], ['To pay now', aed(m.express ? fee : 0)])}</div>
       <p class="muted">${warrantyNote(b)}</p>${m.express && site.demo ? '<p class="demo-note">Demo mode: the express fee is not charged to a card.</p>' : ''}
       <p class="err"></p><button class="btn lg" id="ok">${m.express ? 'Confirm express visit' : 'Confirm new time'}</button>
       <a class="btn ghost" href="/booking/${id}">Keep ${esc(b.slot ? b.dateLabel : 'my express visit')}</a></div>`,
@@ -226,8 +250,9 @@ route('/booking/:id/moved', async ({ id }) => {
       <h1 class="big">Your visit is moved</h1><p style="font-size:18px" class="muted">${esc(b.when)} · Booking ${esc(b.id)}</p>
       <div class="card" style="text-align:left">${lines([[`<span class="ic-row" style="gap:8px">${icon('chat', 22)}WhatsApp confirmation</span>`, '<span class="green">Sent</span>'],
         [`<span class="ic-row" style="gap:8px">${icon('calendar', 22)}Reminder</span>`, esc(b.reminderLabel)], [`<span class="ic-row" style="gap:8px">${icon('truck', 22)}Live tracking</span>`, 'On the day']])}</div>
-      ${key ? `<a class="btn ghost" href="/api/bookings/${b.id}/calendar.ics?k=${encodeURIComponent(key)}" download>${icon('calendar', 22)}Add to my calendar</a>` : ''}
+      ${b.slot ? `<button class="btn ghost" data-cal>${icon('calendar', 22)}Add to my calendar</button>` : ''}
       <div class="row"><a class="btn ghost" href="/booking/${b.id}">Manage booking</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp</a></div></div>`,
+    mount(root) { on(root, '[data-cal]', (btn) => busy(btn, () => download(`/bookings/${b.id}/calendar.ics`, `akkad-${b.id}.ics`, key).catch((e) => toast(e.message)))); },
   };
 });
 
@@ -287,7 +312,7 @@ route('/manage/code', async () => {
         if (code().length < 4) return showErr(root, new Error('Please enter the 4-digit code.'));
         try {
           const r = await api('/auth/verify', { mobile: a.mobile, code: code(), bookingNo: a.bookingNo });
-          S.session = r.session; setDraft({ auth: null }); await loadMe();
+          setDraft({ auth: null }); await loadMe();
           go(r.bookingId ? '/booking/' + r.bookingId : '/my-bookings', { replace: true });
         } catch (e) { showErr(root, e); boxes.forEach((b) => { b.value = ''; }); boxes[0].focus(); }
       });
@@ -316,7 +341,7 @@ route('/my-bookings', async () => {
   const warranties = me.warranties.map((b) => `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><h3 class="ic-row" style="gap:8px">${icon('shield')}Your warranty</h3><span class="green">Active</span></div>
     <p class="sub">${esc(b.service)} · until ${esc(b.warrantyUntilLabel)}</p><a class="btn ghost" style="margin-top:12px" href="/warranty/${b.id}">Pests back? Book a free visit</a></div>`).join('');
   const past = me.past.length ? `<div class="card"><h3 style="margin-bottom:10px">Past visits</h3><div class="lines">${me.past.map((b) => `<div><span class="muted">${esc(b.dateLong)} · ${esc(b.kind === 'warranty' ? 'Warranty visit' : b.service)}</span>
-    ${b.kind === 'new' && !b.warrantyActive ? `<a class="link" href="${S.area ? '/book/' + b.pest : '/area'}" data-again="${b.pest}">Book again</a>` : `<a class="link" href="/booking/${b.id}">Report</a>`}</div>`).join('')}</div></div>` : '';
+    ${b.kind === 'new' && !b.warrantyActive ? `<a class="link" href="${S.area ? '/book/' + b.pest : '/area'}" data-again="${b.pest}">Book again</a>` : `<a class="link" href="/booking/${b.id}/report">Report</a>`}</div>`).join('')}</div></div>` : '';
   const credit = me.cancelled.map((b) => `<div class="card warn"><h3>${aed(b.credit.amount)} Akkad credit</h3><p class="sub">From cancelled booking ${esc(b.id)}. Use it on any service until ${esc(b.credit.untilLabel)}.</p></div>`).join('');
   return {
     title: 'My bookings', flow: true, banner: false,
@@ -327,7 +352,7 @@ route('/my-bookings', async () => {
       ${me.verified ? '<p class="center"><button class="link" data-out>Not you? Sign out on this device</button></p>' : '<p class="center"><a class="link" href="/find">Booked on another phone? Find my bookings</a></p>'}</div>`,
     mount(root) {
       on(root, '[data-again]', (a) => setDraft({ timing: 'scheduled', preset: a.dataset.again }));
-      on(root, '[data-out]', async () => { await api('/logout', {}); S.session = null; S.keys = {}; save(); await loadMe(); go('/'); });
+      on(root, '[data-out]', async () => { await api('/logout', {}); S.keys = {}; S.draft = {}; save(); await loadMe(); go('/'); });
     },
   };
 });

@@ -40,7 +40,7 @@ function save() {
   timer = setTimeout(() => {
     try {
       fs.mkdirSync(path.dirname(FILE), { recursive: true });
-      fs.writeFileSync(FILE + '.tmp', JSON.stringify(db, null, 1));
+      fs.writeFileSync(FILE + '.tmp', JSON.stringify(db, null, 1), { mode: 0o600 }); // customer data: owner-only
       fs.renameSync(FILE + '.tmp', FILE);
     } catch (e) { console.error('Could not save data:', e.message); }
   }, 50);

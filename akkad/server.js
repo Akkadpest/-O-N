@@ -15,9 +15,66 @@ const DEMO = process.env.AKKAD_LIVE !== '1';
 const TRACK_SPEED = Number(process.env.TRACK_SPEED || (DEMO ? 14 : 1));
 const TZ = 'Asia/Dubai';
 
+const LIVE_HTTPS = process.env.AKKAD_HTTPS === '1'; // set when served over https (adds HSTS and Secure cookies)
+const TRUST_PROXY = process.env.TRUST_PROXY === '1'; // set when behind a reverse proxy that sends X-Forwarded-For
+
 const app = express();
 app.disable('x-powered-by');
-app.use(express.json({ limit: '12mb' }));
+
+/* ---------- security ---------- */
+const sha = (v) => crypto.createHash('sha256').update(String(v)).digest('hex');
+const same = (a, b) => { const x = Buffer.from(sha(a)), y = Buffer.from(sha(b)); return crypto.timingSafeEqual(x, y); };
+const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self'", "style-src-attr 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self'",
+  "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join('; ');
+app.use((req, res, next) => {
+  req.ip = (TRUST_PROXY && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || 'unknown';
+  res.setHeader('Content-Security-Policy', CSP);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=(), payment=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (LIVE_HTTPS) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+// Every change goes through POST with a custom header. Browsers will not let another
+// website send that header, so a page elsewhere cannot act with a customer's session cookie.
+app.use('/api', (req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD' && (req.method !== 'POST' || req.get('x-akkad') !== '1')) return fail(res, 403, 'This request was not sent from the Akkad website.');
+  next();
+});
+
+// Rate limits, kept in memory per visitor address.
+const buckets = new Map();
+function take(key, max, windowMs) {
+  const now = Date.now();
+  let b = buckets.get(key);
+  if (!b || b.reset < now) { b = { n: 0, reset: now + windowMs }; buckets.set(key, b); }
+  return { ok: ++b.n <= max, retry: Math.ceil((b.reset - now) / 1000) };
+}
+const limit = (name, max, minutes, keyOf = (req) => req.ip) => (req, res, next) => {
+  const r = take(`${name}:${keyOf(req)}`, max, minutes * 60000);
+  if (r.ok) return next();
+  res.setHeader('Retry-After', r.retry);
+  fail(res, 429, 'Too many tries. Please wait a few minutes and try again.');
+};
+// Wrong guesses (booking numbers, codes, links) are counted separately and run out quickly.
+const strikes = (req, name) => take(`strike:${name}:${req.ip}`, 8, 15 * 60000).ok;
+const struckOut = (name) => (req, res, next) => {
+  const b = buckets.get(`strike:${name}:${req.ip}`);
+  if (b && b.reset > Date.now() && b.n >= 8) { res.setHeader('Retry-After', Math.ceil((b.reset - Date.now()) / 1000)); return fail(res, 429, 'Too many wrong tries. Please wait 15 minutes, or call us and we will help.'); }
+  next();
+};
+setInterval(() => { const now = Date.now(); for (const [k, b] of buckets) if (b.reset < now) buckets.delete(k); }, 60000).unref();
+
+app.use('/api', limit('api', 300, 1));
+app.use('/api/photo-requests', express.json({ limit: 12 * 1024 * 1024 }));
+app.use('/api', express.json({ limit: 32 * 1024 }));
+
+// The login session lives in an HttpOnly cookie, so page scripts can never read it.
+const COOKIE = 'akkad_session';
+const cookieOf = (req) => { const m = new RegExp('(?:^|;\\s*)' + COOKIE + '=([A-Za-z0-9_-]{20,80})').exec(req.headers.cookie || ''); return m ? m[1] : null; };
+const setCookie = (res, value, days) => res.setHeader('Set-Cookie', `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.round(days * 86400)}${LIVE_HTTPS ? '; Secure' : ''}`);
 
 /* ---------- helpers ---------- */
 const db = () => store.load();
@@ -104,7 +161,7 @@ function view(b) {
     areaSlug: b.areaSlug, areaName: b.areaName, areaShort: b.areaShort, address: maskAddress(b.address), building: maskAddress({ building: b.address.building }),
     mobile: maskMobile(b.mobile), note: b.note || '', timing: b.timing, date: b.date, dateLabel: fmtDate(b.date), dateLong: fmtDate(b.date, true),
     weekday: weekday(b.date), slot: b.slot, when: b.timing === 'express' && !b.slot ? 'Express today' : `${fmtDate(b.date)}, ${b.slot}`,
-    price: b.price, expressFee: b.expressFee, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, prep: (pest(b.pest) || {}).prep || '',
+    price: b.price, expressFee: b.expressFee, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, paymentStatus: b.paymentStatus || (b.total ? 'paid' : 'none'), prep: (pest(b.pest) || {}).prep || '',
     warrantyMonths: b.warrantyMonths, warrantyUntil: b.warrantyUntil || null, warrantyUntilLabel: b.warrantyUntil ? fmtDate(b.warrantyUntil, true) : null,
     warrantyActive: !!b.warrantyUntil && b.warrantyUntil >= today, parentId: b.parentId || null,
     reminderLabel: b.slot ? fmtDate(addDays(b.date, -1)) : null, credit: b.credit || null, tracking: track(b),
@@ -113,14 +170,17 @@ function view(b) {
 }
 function findBooking(id) { return db().bookings.find((b) => b.id.toLowerCase() === String(id || '').trim().toLowerCase().replace(/^(\d+)$/, 'ak-$1')); }
 function sessionMobile(req) {
-  const s = db().sessions[req.get('x-akkad-session') || ''];
+  const token = cookieOf(req);
+  if (!token) return null;
+  const s = db().sessions[sha(token)]; // only a hash of the session is stored
   return s && s.exp > Date.now() ? s.mobile : null;
 }
 function authed(req, res, next) {
   const b = findBooking(req.params.id);
-  if (!b) return fail(res, 404, 'We could not find that booking.');
-  const key = req.get('x-akkad-key') || req.query.k;
-  if (key !== b.key && sessionMobile(req) !== b.mobile) return fail(res, 401, 'Please confirm it is you to open this booking.');
+  // The same answer whether the booking exists or not, so numbers cannot be probed.
+  if (!b) return fail(res, 401, 'Please confirm it is you to open this booking.');
+  const key = req.get('x-akkad-key');
+  if (!(key && same(key, b.key)) && sessionMobile(req) !== b.mobile) return fail(res, 401, 'Please confirm it is you to open this booking.');
   req.booking = refresh(b);
   next();
 }
@@ -182,7 +242,7 @@ function newRequest(type, body) {
   d.requests.push(r); store.save();
   return r;
 }
-app.post('/api/inspections', (req, res) => {
+app.post('/api/inspections', limit('request', 10, 60), (req, res) => {
   const mobile = normMobile(req.body.mobile);
   const name = clean(req.body.name, 80), where = clean(req.body.area, 80);
   if (!name) return fail(res, 400, 'Please add a company or contact name.');
@@ -191,7 +251,7 @@ app.post('/api/inspections', (req, res) => {
   const r = newRequest('inspection', { job: req.body.job === 'amc' ? 'Commercial AMC' : 'Termite control', property: clean(req.body.property, 20), name, mobile, area: where });
   res.json({ id: r.id });
 });
-app.post('/api/photo-requests', (req, res) => {
+app.post('/api/photo-requests', limit('photos', 8, 60), (req, res) => {
   const mobile = normMobile(req.body.mobile);
   const photos = Array.isArray(req.body.photos) ? req.body.photos.slice(0, 6) : [];
   if (!photos.length) return fail(res, 400, 'Please add at least one photo.');
@@ -202,8 +262,12 @@ app.post('/api/photo-requests', (req, res) => {
   for (const p of photos) {
     const m = /^data:image\/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$/.exec(String(p));
     if (!m) continue;
-    const file = crypto.randomBytes(8).toString('hex') + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]);
-    fs.writeFileSync(path.join(dir, file), Buffer.from(m[2], 'base64'));
+    const bytes = Buffer.from(m[2], 'base64');
+    const magic = bytes.subarray(0, 12).toString('latin1');
+    const real = (m[1] === 'jpeg' && bytes[0] === 0xff && bytes[1] === 0xd8) || (m[1] === 'png' && magic.startsWith('\x89PNG')) || (m[1] === 'webp' && magic.startsWith('RIFF') && magic.endsWith('WEBP'));
+    if (!real || bytes.length > 4 * 1024 * 1024) continue;
+    const file = crypto.randomBytes(12).toString('hex') + '.' + (m[1] === 'jpeg' ? 'jpg' : m[1]);
+    fs.writeFileSync(path.join(dir, file), bytes, { mode: 0o600 });
     files.push(file);
   }
   if (!files.length) return fail(res, 400, 'Those photos could not be read. Please try again.');
@@ -243,12 +307,16 @@ function schedule(body, exceptId) {
 function create(fields) {
   const d = db();
   const b = { id: 'AK-' + ++d.seq, key: store.token(), createdAt: new Date().toISOString(), status: 'booked', ...fields };
+  // PAYMENT PENDING: connect Network International / Tabby here. Until then nothing is charged
+  // and every amount is recorded as "pending", never as paid.
+  b.paymentStatus = !b.total ? 'none' : DEMO ? 'pending' : 'paid';
+  if (b.paymentStatus === 'pending') b.paid = 0;
   if (b.timing === 'express') { b.status = 'on_the_way'; b.setOffAt = Date.now(); b.etaMin = C.FEES.etaMin; }
   d.bookings.push(b); store.save();
   return b;
 }
 
-app.post('/api/bookings', (req, res) => {
+app.post('/api/bookings', limit('book', 20, 60), (req, res) => {
   try {
     const a = area(req.body.area);
     if (!a) throw new Error('Please choose your area first.');
@@ -267,8 +335,9 @@ app.post('/api/bookings', (req, res) => {
   } catch (e) { fail(res, 400, e.message); }
 });
 
-app.post('/api/warranty/lookup', (req, res) => {
+app.post('/api/warranty/lookup', struckOut('lookup'), (req, res) => {
   const b = findBooking(req.body.bookingNo);
+  if (!b || b.kind !== 'new') strikes(req, 'lookup');
   if (!b || b.kind !== 'new') return fail(res, 404, 'We could not find that booking number. Check your receipt or WhatsApp message.');
   refresh(b);
   const today = dubaiNow().iso;
@@ -276,11 +345,12 @@ app.post('/api/warranty/lookup', (req, res) => {
   if (!b.warrantyUntil || b.warrantyUntil < today) return res.status(410).json({ error: `The warranty on ${b.id} ended on ${fmtDate(b.warrantyUntil, true)}.`, ended: true, pest: b.pest });
   res.json({ id: b.id, service: b.service, pest: b.pest, address: maskAddress(b.address), areaName: b.areaName, areaShort: b.areaShort, areaSlug: b.areaSlug, until: fmtDate(b.warrantyUntil, true) });
 });
-app.post('/api/warranty/bookings', (req, res) => {
+app.post('/api/warranty/bookings', limit('book', 20, 60), struckOut('lookup'), (req, res) => {
   try {
     const src = findBooking(req.body.bookingNo);
     const today = dubaiNow().iso;
     if (!src || src.kind !== 'new' || src.status !== 'done' || !src.warrantyUntil || src.warrantyUntil < today) throw new Error('This booking has no active warranty.');
+    if (db().bookings.some((x) => x.parentId === src.id && ['booked', 'on_the_way', 'arrived'].includes(x.status))) throw new Error('A warranty visit is already booked for this booking. Open My bookings to change it.');
     const when = schedule(req.body);
     const address = req.body.building ? { building: clean(req.body.building, 80), apt: clean(req.body.apt, 12) } : src.address;
     const fee = when.timing === 'express' ? C.FEES.expressWarranty : 0;
@@ -292,7 +362,7 @@ app.post('/api/warranty/bookings', (req, res) => {
 });
 
 /* ---------- finding a booking safely ---------- */
-app.post('/api/auth/send-code', (req, res) => {
+app.post('/api/auth/send-code', limit('code-ip', 10, 30), (req, res) => {
   const mobile = normMobile(req.body.mobile);
   if (!mobile) return fail(res, 400, 'Please enter the mobile number you used to book.');
   const d = db();
@@ -303,27 +373,31 @@ app.post('/api/auth/send-code', (req, res) => {
   }
   const prev = d.codes[mobile];
   if (prev && Date.now() - prev.sentAt < 20000) return fail(res, 429, 'A code was just sent. Please wait a moment before asking again.');
+  if (!take(`code-mobile:${mobile}`, 5, 60 * 60000).ok) return fail(res, 429, 'Too many codes were requested for this number. Please try again in an hour, or call us.');
   const code = String(crypto.randomInt(0, 10000)).padStart(4, '0');
   // The reply is the same whether or not a booking exists, so numbers cannot be probed.
-  d.codes[mobile] = { code: list.length ? code : null, sentAt: Date.now(), exp: Date.now() + 10 * 60000, tries: 0 };
+  d.codes[mobile] = { code: list.length ? sha(mobile + code) : null, sentAt: Date.now(), exp: Date.now() + 10 * 60000, tries: 0 };
   store.save();
   // LIVE: send `code` through the WhatsApp Business API here.
   res.json({ sentTo: maskMobile(mobile), resendIn: 45, demoCode: DEMO && list.length ? code : undefined });
 });
-app.post('/api/auth/verify', (req, res) => {
+app.post('/api/auth/verify', limit('verify-ip', 30, 30), (req, res) => {
   const mobile = normMobile(req.body.mobile);
   const d = db();
   const c = mobile && d.codes[mobile];
   if (!c || c.exp < Date.now()) return fail(res, 400, 'That code has expired. Please ask for a new one.');
   if (++c.tries > 5) { delete d.codes[mobile]; store.save(); return fail(res, 429, 'Too many tries. Please ask for a new code.'); }
-  if (!c.code || String(req.body.code) !== c.code) { store.save(); return fail(res, 400, 'That code is not right. Please check your WhatsApp message.'); }
+  if (!c.code || !same(sha(mobile + String(req.body.code)), c.code)) { store.save(); return fail(res, 400, 'That code is not right. Please check your WhatsApp message.'); }
   delete d.codes[mobile];
-  const session = store.token(24);
-  d.sessions[session] = { mobile, exp: Date.now() + 90 * 86400000 };
+  const session = store.token(32);
+  d.sessions[sha(session)] = { mobile, exp: Date.now() + 90 * 86400000 };
+  for (const [k, v] of Object.entries(d.sessions)) if (v.exp < Date.now()) delete d.sessions[k];
+  for (const [k, v] of Object.entries(d.codes)) if (v.exp < Date.now()) delete d.codes[k];
   store.save();
+  setCookie(res, session, 90);
   const list = d.bookings.filter((b) => b.mobile === mobile);
   const asked = req.body.bookingNo && findBooking(req.body.bookingNo);
-  res.json({ session, bookingId: asked && asked.mobile === mobile ? asked.id : null, count: list.length });
+  res.json({ bookingId: asked && asked.mobile === mobile ? asked.id : null, count: list.length });
 });
 
 // Everything this browser is allowed to see: bookings it made (keys) plus,
@@ -331,8 +405,9 @@ app.post('/api/auth/verify', (req, res) => {
 app.post('/api/me', (req, res) => {
   const d = db();
   const mobile = sessionMobile(req);
-  const keys = req.body.keys && typeof req.body.keys === 'object' ? req.body.keys : {};
-  const mine = d.bookings.filter((b) => (mobile && b.mobile === mobile) || keys[b.id] === b.key).map(view);
+  const sent = req.body.keys && typeof req.body.keys === 'object' && !Array.isArray(req.body.keys) ? Object.entries(req.body.keys).slice(0, 40) : [];
+  const keys = new Map(sent.filter(([k, v]) => typeof k === 'string' && typeof v === 'string'));
+  const mine = d.bookings.filter((b) => (mobile && b.mobile === mobile) || (keys.has(b.id) && same(keys.get(b.id), b.key))).map(view);
   const active = (b) => ['booked', 'on_the_way', 'arrived'].includes(b.status);
   const upcoming = mine.filter(active).sort((a, b) => (a.date + a.id).localeCompare(b.date + b.id));
   const done = mine.filter((b) => b.status === 'done').sort((a, b) => b.date.localeCompare(a.date));
@@ -343,7 +418,12 @@ app.post('/api/me', (req, res) => {
   res.json({ state, verified: !!mobile, mobile: mobile ? maskMobile(mobile) : null, upcoming, warranties, past: done, ended, credit: mobile ? credit : 0,
     cancelled: mine.filter((b) => b.status === 'cancelled' && b.credit && b.credit.amount > 0) });
 });
-app.post('/api/logout', (req, res) => { delete db().sessions[req.get('x-akkad-session') || '']; store.save(); res.json({ ok: true }); });
+app.post('/api/logout', (req, res) => {
+  const token = cookieOf(req);
+  if (token) { delete db().sessions[sha(token)]; store.save(); }
+  setCookie(res, 'gone', 0);
+  res.json({ ok: true });
+});
 
 /* ---------- one booking ---------- */
 app.get('/api/bookings/:id', authed, (req, res) => res.json({ booking: view(req.booking) }));
@@ -355,8 +435,8 @@ app.post('/api/bookings/:id/reschedule', authed, (req, res) => {
     if (req.body.timing === 'express') {
       if (enRoute) throw new Error('Your technician is already on the way.');
       const fee = b.kind === 'warranty' ? C.FEES.expressWarranty : C.FEES.expressNew;
-      Object.assign(b, { movedFrom: `${fmtDate(b.date)}, ${b.slot}`, timing: 'express', date: dubaiNow().iso, slot: null, expressFee: fee, total: b.total + fee, paid: (b.paid || 0) + fee,
-        payMethod: b.payMethod || 'card', status: 'on_the_way', setOffAt: Date.now(), etaMin: C.FEES.etaMin });
+      Object.assign(b, { movedFrom: `${fmtDate(b.date)}, ${b.slot}`, timing: 'express', date: dubaiNow().iso, slot: null, expressFee: fee, total: b.total + fee, paid: (b.paid || 0) + (DEMO ? 0 : fee),
+        payMethod: b.payMethod || 'card', paymentStatus: DEMO ? 'pending' : 'paid', status: 'on_the_way', setOffAt: Date.now(), etaMin: C.FEES.etaMin });
     } else {
       let when;
       if (req.body.laterToday) {
@@ -393,22 +473,29 @@ app.post('/api/bookings/:id/cancel', authed, (req, res) => {
   if (b.status !== 'booked') return fail(res, 400, 'This visit can no longer be cancelled online. Please call us.');
   b.status = 'cancelled'; b.cancelReason = clean(req.body.reason, 40); b.cancelledAt = new Date().toISOString();
   // No cash refund: what was paid stays as Akkad credit for 90 days.
-  const amount = (b.paid || 0) + (b.creditUsed || 0);
+  const amount = (b.paid || 0) + (b.creditUsed || 0); // payment pending means nothing was received, so no credit
   if (amount > 0) b.credit = { amount, until: addDays(dubaiNow().iso, 90), untilLabel: fmtDate(addDays(dubaiNow().iso, 90), true) };
   store.save();
   res.json({ booking: view(b) });
 });
 // Personal link from a WhatsApp message: opens the booking straight away, no code.
-app.get('/api/link/:key', (req, res) => {
-  const b = db().bookings.find((x) => x.key === req.params.key);
+app.get('/api/link/:key', struckOut('link'), (req, res) => {
+  const b = db().bookings.find((x) => same(x.key, req.params.key));
+  if (!b) strikes(req, 'link');
   if (!b) return fail(res, 404, 'This link is no longer valid.');
   refresh(b);
   if (b.status === 'done' || b.status === 'cancelled') return fail(res, 410, 'This link stopped working after the visit. Use your mobile number to see your bookings.');
   res.json({ id: b.id, key: b.key });
 });
 // Dispatch hook: the technician sets off for a scheduled visit (starts live tracking).
-app.post('/api/ops/bookings/:id/set-off', (req, res) => {
-  if (!DEMO && req.get('x-ops-secret') !== process.env.OPS_SECRET) return fail(res, 403, 'Not allowed.');
+// Live: dispatch calls it with the OPS_SECRET. Demo: only the booking's own customer can press the button.
+const opsAllowed = (req, res, next) => {
+  const secret = process.env.OPS_SECRET;
+  if (secret && req.get('x-ops-secret') && same(req.get('x-ops-secret'), secret)) return next();
+  if (DEMO) return authed(req, res, next);
+  fail(res, 403, 'Not allowed.');
+};
+app.post('/api/ops/bookings/:id/set-off', opsAllowed, (req, res) => {
   const b = findBooking(req.params.id);
   if (!b || b.status !== 'booked') return fail(res, 400, 'Booking is not waiting for a visit.');
   Object.assign(b, { status: 'on_the_way', setOffAt: Date.now(), etaMin: C.FEES.etaMin });
@@ -421,17 +508,23 @@ app.get('/api/bookings/:id/calendar.ics', authed, (req, res) => {
   const h = slotStartHour(b.slot);
   const stamp = (hour) => new Date(Date.parse(`${b.date}T${String(hour).padStart(2, '0')}:00:00+04:00`)).toISOString().replace(/[-:]|\.\d{3}/g, '');
   res.type('text/calendar').attachment(`akkad-${b.id}.ics`).send(['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Akkad Pest Control//EN', 'BEGIN:VEVENT', `UID:${b.id}@pestcontrol.ae`,
-    `DTSTAMP:${stamp(h)}`, `DTSTART:${stamp(h)}`, `DTEND:${stamp(h + 2)}`, `SUMMARY:Akkad Pest Control visit (${b.id})`, `DESCRIPTION:${b.label}. ${C.COMPANY.phone}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'));
+    `DTSTAMP:${stamp(h)}`, `DTSTART:${stamp(h)}`, `DTEND:${stamp(h + 2)}`, `SUMMARY:Akkad Pest Control visit (${b.id})`, `DESCRIPTION:${String(b.label).replace(/[\\;,\r\n]/g, ' ')}. ${C.COMPANY.phone}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'));
 });
 
 app.use('/api', (req, res) => fail(res, 404, 'Not found.'));
 app.use((err, req, res, next) => {
   if (!req.path.startsWith('/api')) return next(err);
-  fail(res, err.type === 'entity.too.large' ? 413 : 400, err.type === 'entity.too.large' ? 'Those photos are too large. Please send fewer or smaller photos.' : 'We could not read that request.');
+  if (err.type === 'entity.too.large') return fail(res, 413, 'That is too much to send at once. Please send fewer or smaller photos.');
+  if (err.type === 'entity.parse.failed') return fail(res, 400, 'We could not read that request.');
+  console.error(err); // details stay in the server log, never in the reply
+  fail(res, 500, 'Something went wrong on our side. Please try again.');
 });
 
 /* ---------- the website ---------- */
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: DEMO ? 0 : 3600 }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-app.listen(PORT, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
+const server = app.listen(PORT, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
+server.headersTimeout = 15000; // slow or stalled connections are dropped
+server.requestTimeout = 30000;
+server.keepAliveTimeout = 10000;

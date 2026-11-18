@@ -68,7 +68,9 @@ function mini() {
 
 // Reads a JSON request body into req.body.
 mini.json = ({ limit = 1024 * 1024 } = {}) => (req, res, next) => {
-  if (req.method !== 'POST' || !/json/.test(req.headers['content-type'] || '')) return next();
+  if (req.method !== 'POST' || req.bodyRead || !/^application\/json\b/.test(req.headers['content-type'] || '')) return next();
+  req.bodyRead = true;
+  if (Number(req.headers['content-length']) > limit) { req.resume(); return next({ type: 'entity.too.large' }); }
   const chunks = []; let size = 0, over = false;
   req.on('data', (c) => { size += c.length; if (size > limit) over = true; else chunks.push(c); });
   req.on('end', () => {

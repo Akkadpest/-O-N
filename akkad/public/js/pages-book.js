@@ -157,7 +157,7 @@ function wirePay(root) {
   on(root, '[data-pay]', (b) => $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }));
   return () => $('[data-pay].on', root).dataset.pay;
 }
-const demoNote = () => (site.demo ? `<p class="demo-note">Demo mode: no card is charged. Confirming creates a real booking in this site so you can try tracking, rescheduling and the warranty.</p>` : '');
+const demoNote = () => (site.demo ? `<p class="demo-note"><b>Online payment is not connected yet.</b> Confirming books your visit now and nothing is charged; the amount is recorded as payment pending.</p>` : '');
 
 // Screen 28: "Your service, explained".
 function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done }) {

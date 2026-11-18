@@ -1,0 +1,100 @@
+// Run with: npm test   (starts the server on a spare port with a throwaway data file)
+const { test, before, after } = require('node:test');
+const assert = require('node:assert/strict');
+const { spawn } = require('node:child_process');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+
+const PORT = 3900 + Math.floor(Math.random() * 90);
+const B = `http://127.0.0.1:${PORT}`;
+const DB = path.join(os.tmpdir(), `akkad-test-${process.pid}.json`);
+let server;
+
+const call = async (p, body, headers = {}) => {
+  const res = await fetch(B + p, { method: body ? 'POST' : 'GET', headers: body ? { 'content-type': 'application/json', 'x-akkad': '1', ...headers } : headers, body: body ? JSON.stringify(body) : undefined });
+  return { status: res.status, headers: res.headers, data: await res.json().catch(() => null) };
+};
+const contact = { name: 'Test', mobile: '0507654321', building: 'Test Tower', apt: '12' };
+const order = { area: 'barsha-heights-tecom', pest: 'cockroach', pkg: 'apartment', size: 's1', ...contact };
+
+before(async () => {
+  server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: { ...process.env, PORT, AKKAD_DB: DB }, stdio: 'ignore' });
+  for (let i = 0; i < 50; i++) { try { await fetch(B + '/api/site'); return; } catch { await new Promise((r) => setTimeout(r, 100)); } }
+  throw new Error('server did not start');
+});
+after(() => { server.kill(); fs.rmSync(DB, { force: true }); });
+
+test('pages carry security headers', async () => {
+  const res = await fetch(B + '/');
+  assert.match(res.headers.get('content-security-policy'), /default-src 'self'/);
+  assert.equal(res.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(res.headers.get('x-frame-options'), 'DENY');
+});
+
+test('files outside the public folder are never served', async () => {
+  for (const p of ['/../server.js', '/..%2fserver.js', '/.gitignore', '/data/db.json', '/%2e%2e/data/catalog.js']) {
+    const text = await (await fetch(B + p)).text();
+    assert.ok(!text.includes('require(') && !text.includes('"bookings"') && !text.includes('node_modules'), p);
+  }
+});
+
+test('changes are refused without the site header', async () => {
+  const res = await fetch(B + '/api/bookings', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(order) });
+  assert.equal(res.status, 403);
+});
+
+test('the server sets the price and records payment as pending', async () => {
+  const { days } = (await call('/api/slots?days=3')).data;
+  const r = await call('/api/bookings', { ...order, timing: 'scheduled', date: days[0].iso, slot: days[0].slots[0], price: 1, total: 1 });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.booking.total, 179);
+  assert.equal(r.data.booking.paymentStatus, 'pending');
+  const id = r.data.booking.id, key = r.data.booking.key;
+  assert.equal((await call(`/api/bookings/${id}`)).status, 401, 'no key, no access');
+  assert.equal((await call(`/api/bookings/${id}`, null, { 'x-akkad-key': 'wrong' })).status, 401);
+  assert.equal((await call(`/api/bookings/AK-99999`)).status, 401, 'unknown booking looks the same');
+  assert.equal((await call(`/api/bookings/${id}`, null, { 'x-akkad-key': key })).status, 200);
+  const moved = await call(`/api/bookings/${id}/reschedule`, { date: days[1].iso, slot: days[1].slots[0] }, { 'x-akkad-key': key });
+  assert.equal(moved.data.booking.date, days[1].iso);
+  const cancelled = await call(`/api/bookings/${id}/cancel`, { reason: 'Other' }, { 'x-akkad-key': key });
+  assert.equal(cancelled.data.booking.status, 'cancelled');
+  assert.equal(cancelled.data.booking.credit, null, 'nothing was paid, so no credit');
+});
+
+test('made-up slots, sizes and areas are rejected', async () => {
+  assert.equal((await call('/api/bookings', { ...order, timing: 'scheduled', date: '2020-01-01', slot: '2–4 PM' })).status, 400);
+  assert.equal((await call('/api/bookings', { ...order, timing: 'express', size: 's99' })).status, 400);
+  assert.equal((await call('/api/bookings', { ...order, timing: 'express', area: 'nowhere' })).status, 400);
+  assert.equal((await call('/api/bookings', { ...order, timing: 'express', pest: 'termites' })).status, 400);
+});
+
+test('a WhatsApp code opens the bookings on that number, in an HttpOnly cookie', async () => {
+  const mobile = '+971501234567';
+  const sent = await call('/api/auth/send-code', { mobile });
+  assert.equal(sent.status, 200);
+  assert.equal((await call('/api/auth/verify', { mobile, code: sent.data.demoCode === '0000' ? '1111' : '0000' })).status, 400);
+  const ok = await call('/api/auth/verify', { mobile, code: sent.data.demoCode });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.data.session, undefined, 'the session is never handed to page scripts');
+  const cookie = ok.headers.get('set-cookie');
+  assert.match(cookie, /HttpOnly/); assert.match(cookie, /SameSite=Strict/);
+  const mine = await call('/api/me', { keys: {} }, { cookie: cookie.split(';')[0] });
+  assert.equal(mine.data.verified, true);
+  assert.ok(mine.data.past.some((b) => b.id === 'AK-10482'));
+  assert.ok(!JSON.stringify(mine.data).includes('Sheikha Noora'), 'addresses stay masked');
+  assert.equal((await call('/api/auth/verify', { mobile, code: sent.data.demoCode })).status, 400, 'a code works once');
+  const nobody = await call('/api/auth/send-code', { mobile: '+971509999999' });
+  assert.equal(nobody.status, 200); assert.equal(nobody.data.demoCode, undefined);
+});
+
+test('oversized requests are refused', async () => {
+  const r = await call('/api/inspections', { name: 'x'.repeat(200000), mobile: '0501112223', area: 'Tecom' });
+  assert.equal(r.status, 413);
+});
+
+test('guessing booking numbers is cut off', async () => {
+  let last;
+  for (let i = 0; i < 10; i++) last = await call('/api/warranty/lookup', { bookingNo: 'AK-2' + i });
+  assert.equal(last.status, 429);
+});

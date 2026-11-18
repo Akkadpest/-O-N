@@ -3,22 +3,32 @@
 /* ---------- state remembered on this phone and browser ---------- */
 const KEY = 'akkad.v1';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
-export const S = Object.assign({ area: null, session: null, keys: {}, draft: {} }, read());
+export const S = Object.assign({ area: null, keys: {}, draft: {} }, read());
+delete S.session; // sessions now live in an HttpOnly cookie, never in page storage
 export const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* private mode */ } };
 export let site = null;
 export let me = { state: 'none', upcoming: [], warranties: [], past: [], ended: [], cancelled: [], credit: 0 };
 
 /* ---------- api ---------- */
 export async function api(path, body, opts = {}) {
-  const headers = { 'x-akkad-session': S.session || '' };
+  const headers = {};
   if (opts.key) headers['x-akkad-key'] = opts.key;
-  if (body) headers['content-type'] = 'application/json';
+  if (body) { headers['content-type'] = 'application/json'; headers['x-akkad'] = '1'; } // the server refuses changes without this header
   let res;
-  try { res = await fetch('/api' + path, { method: body ? 'POST' : 'GET', headers, body: body ? JSON.stringify(body) : undefined }); }
+  try { res = await fetch('/api' + path, { method: body ? 'POST' : 'GET', headers, credentials: 'same-origin', body: body ? JSON.stringify(body) : undefined }); }
   catch { throw new Error('No connection. Please check your internet and try again.'); }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) { const e = new Error(data.error || 'Something went wrong. Please try again.'); e.status = res.status; e.data = data; throw e; }
   return data;
+}
+// Downloads a file that needs the booking key (sent as a header, so it never appears in a link).
+export async function download(path, filename, key) {
+  const res = await fetch('/api' + path, { headers: key ? { 'x-akkad-key': key } : {}, credentials: 'same-origin' });
+  if (!res.ok) throw new Error('We could not prepare that file. Please try again.');
+  const url = URL.createObjectURL(await res.blob());
+  const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
 }
 export const bookingApi = (id, sub = '', body) => api(`/bookings/${id}${sub}`, body, { key: S.keys[id] });
 export async function loadSite() { site = await api('/site'); return site; }
@@ -62,6 +72,7 @@ const P = {
   camera: '<path d="M4 7.500h3l1.500-2.500h7L17 7.500h3a1.500 1.500 0 0 1 1.500 1.500v9.500A1.500 1.500 0 0 1 20 20H4a1.500 1.500 0 0 1-1.500-1.500V9A1.500 1.500 0 0 1 4 7.500z"/><circle cx="12" cy="13.500" r="3.500"/>',
   down: '<path d="m6 9 6 6 6-6"/>', left: '<path d="m14.500 5.500-6 6.500 6 6.500"/>', right: '<path d="m9.500 5.500 6 6.500-6 6.500"/>',
   x: '<path d="m6 6 12 12M18 6 6 18"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.500v.2"/>',
   search: '<circle cx="11" cy="11" r="6.500"/><path d="m16 16 4.500 4.500"/>',
   bug: '<rect x="8" y="7.500" width="8" height="12" rx="4"/><path d="M9.500 7.500a2.500 2.500 0 0 1 5 0M8 11H4.500M8 15H4.500M16 11h3.500M16 15h3.500M9 6 7 3.500M15 6l2-2.500M8.500 18.500 6 21M15.500 18.500 18 21"/>',
@@ -77,8 +88,11 @@ export const lines = (rows, total) => `<div class="lines">${rows.map(([a, b, cls
 
 /* ---------- pop-ups (centered) and sheets (from the bottom on phones) ---------- */
 let layerClose = null;
+let layerOpener = null;
+const focusable = (box) => $$('a[href], button:not([disabled]), input:not([disabled]), textarea, [tabindex="0"]', box).filter((el) => el.offsetParent !== null);
 export function openLayer(type, html, { onClose, mount } = {}) {
   const layer = $('#layer');
+  if (!layer.classList.contains('open')) layerOpener = document.activeElement;
   layer.innerHTML = `<div class="shade" data-close></div><div class="box ${type}" tabindex="-1"><button class="x" data-close aria-label="Close">${icon('x')}</button>${html}</div>`;
   layer.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -94,10 +108,23 @@ export function closeLayer(silent) {
   layer.classList.remove('open'); layer.innerHTML = '';
   document.body.style.overflow = '';
   const fn = layerClose; layerClose = null;
+  if (layerOpener && document.contains(layerOpener) && !silent) layerOpener.focus({ preventScroll: true });
+  layerOpener = null;
   if (fn && !silent) fn();
 }
 document.addEventListener('click', (e) => { if (e.target.closest('#layer [data-close]')) closeLayer(); });
-document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLayer(); });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') return closeLayer();
+  // Keep keyboard focus inside an open pop-up.
+  const layer = $('#layer');
+  if (e.key !== 'Tab' || !layer.classList.contains('open')) return;
+  const els = focusable($('.box', layer));
+  if (!els.length) return;
+  const first = els[0], last = els[els.length - 1];
+  if (!layer.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 
 /* ---------- sliders ---------- */
 export function slider(root) {
