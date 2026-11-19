@@ -54,6 +54,7 @@ const bugTile = (p) => `<button class="bug" data-jump="${p.id}"><span class="bug
 const pkName = (pk) => { const n = pk.title.split(': ')[1] || pk.title; return n.charAt(0).toUpperCase() + n.slice(1); };
 const pkPhoto = (p, pk) => imgFor(pk.photo) || imgFor(p.photo);
 export const pkgCard = (p, pk) => `<article class="card pk">
+    <button class="pk-pic" data-info="${p.id}:${pk.id}" aria-label="Details of ${esc(pk.title)}"${pkPhoto(p, pk) ? ` style="background-image:url('${esc(pkPhoto(p, pk))}')"` : ''}></button>
     <div class="pk-main">${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pkName(pk))}</h3>
       <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span>${p.warrantyMonths ? `<span>${icon('calendar', 15)}${esc(pk.duration)}</span>` : ''}</div>
       <button class="link b" data-info="${p.id}:${pk.id}">Details ›</button></div>
