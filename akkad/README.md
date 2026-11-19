@@ -66,6 +66,20 @@ One limit that comes from the approved flow: a warranty visit can be requested w
 npm test   # API and security checks
 ```
 
+## Hosting on AWS Lightsail
+
+`.github/workflows/deploy-akkad.yml` deploys on every push: it runs the tests, copies this folder to the server and runs `deploy/server-setup.sh` there.
+It needs one repository secret, `LIGHTSAIL_SSH_KEY` (the contents of the Lightsail `.pem` file). Never commit the key itself.
+
+The script installs Node.js and nginx, runs the site as a locked-down `akkad` service on `127.0.0.1:3000` behind nginx on port 80,
+and keeps bookings in `/var/lib/akkad` so updates never erase them. Settings live in `/etc/akkad.env`.
+It refuses to run if another website already answers on the server (override with `FORCE=1`).
+
+To install by hand instead, copy this folder to the server and run `sudo bash deploy/server-setup.sh`.
+
+For a domain with https: point the domain at the server, run `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx -d yourdomain`,
+then add `AKKAD_HTTPS=1` to `/etc/akkad.env` and `sudo systemctl restart akkad`.
+
 ## Sample content to replace
 
 Marked `sample: true` or "SAMPLE" in `data/catalog.js`: size-by-size prices for pests other than cockroaches,

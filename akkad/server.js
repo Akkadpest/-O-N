@@ -36,6 +36,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'geolocation=(self), camera=(), microphone=(), payment=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
+  if (DEMO) res.setHeader('X-Robots-Tag', 'noindex, nofollow'); // a test site must not show up in Google
   if (LIVE_HTTPS) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
@@ -268,7 +269,7 @@ app.post('/api/photo-requests', limit('photos', 8, 60), (req, res) => {
   const photos = Array.isArray(req.body.photos) ? req.body.photos.slice(0, 6) : [];
   if (!photos.length) return fail(res, 400, 'Please add at least one photo.');
   if (!mobile) return fail(res, 400, 'Please enter a valid mobile number.');
-  const dir = path.join(__dirname, 'data', 'uploads');
+  const dir = process.env.AKKAD_UPLOADS || path.join(__dirname, 'data', 'uploads');
   fs.mkdirSync(dir, { recursive: true });
   const files = [];
   for (const p of photos) {
@@ -536,7 +537,7 @@ app.use((err, req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: DEMO ? 0 : 3600 }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-const server = app.listen(PORT, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
+const server = app.listen(PORT, process.env.HOST || undefined, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
 server.headersTimeout = 15000; // slow or stalled connections are dropped
 server.requestTimeout = 30000;
 server.keepAliveTimeout = 10000;

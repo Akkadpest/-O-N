@@ -62,7 +62,7 @@ function mini() {
   app.use = (a, b) => stack.push({ prefix: typeof a === 'string' ? a : null, fn: b || a });
   for (const method of ['get', 'post']) app[method] = (p, ...fns) => stack.push({ method: method.toUpperCase(), ...compile(p), fns });
   app.disable = () => {};
-  app.listen = (port, cb) => http.createServer(app).listen(port, cb);
+  app.listen = (port, host, cb) => http.createServer(app).listen(port, host, cb);
   return app;
 }
 
