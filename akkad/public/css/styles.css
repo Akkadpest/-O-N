@@ -1359,3 +1359,18 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
 .cb-sum b { white-space: nowrap; }
 @media (max-width: 899px) { .cart-bar .cb-x ~ .btn:last-child { flex: 0 0 auto; width: auto; padding-left: 18px; padding-right: 18px; } }
 @media (max-width: 359px) { .cart-bar { gap: 8px; padding-left: 12px; padding-right: 12px; } .cb-sum b { font-size: 15px; } .cb-sum b u { margin-left: 6px; font-size: 12px; } .cart-bar .cb-x ~ .btn:last-child { padding-left: 12px; padding-right: 12px; font-size: 14.5px; } .cart-bar .cb-x ~ .btn:last-child svg { display: none; } }
+
+/* ---------- size picker: every detail of the package, with the Add button always in reach ---------- */
+.sz-details { margin-top: 18px !important; padding-top: 4px; border-top: 1px solid var(--line); }
+.sz-facts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; font-size: 13.5px; font-weight: 500; color: var(--ink); }
+.sz-facts span { display: inline-flex; align-items: center; gap: 6px; }
+.sz-facts svg { color: var(--green); }
+.sz-details h4 { margin: 20px 0 10px; color: var(--green); font-size: 12.5px; letter-spacing: .08em; text-transform: uppercase; }
+.sz-details .do { display: flex; gap: 12px; margin-top: 12px; }
+.sz-details .do b { display: block; color: var(--ink); font-size: 15px; }
+.sz-details .do span:not(.num) { color: var(--muted); font-size: 14px; }
+.sz-details .muted { font-size: 14.5px; line-height: 1.5; }
+.sz-foot { position: sticky; bottom: calc(-22px - env(safe-area-inset-bottom)); margin: 18px -16px calc(-22px - env(safe-area-inset-bottom)) !important; padding: 12px 16px calc(14px + env(safe-area-inset-bottom)); background: #fff; border-top: 1px solid var(--line); box-shadow: 0 -8px 16px rgba(255, 255, 255, .9); }
+@media (min-width: 900px) { .sz-foot { bottom: -28px; margin: 18px -28px -28px !important; padding: 14px 28px 20px; } }
+/* phone cards: the first two points of each package; the rest is one tap away */
+@media (max-width: 899px) { .st-pkg ul { display: block; margin: 10px 0 2px; padding: 10px 0 0 18px; font-size: 13px; line-height: 1.4; } .st-pkg ul li:nth-child(n+3) { display: none; } .st-pkg ul li + li { margin-top: 4px; } }

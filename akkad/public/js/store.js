@@ -278,10 +278,18 @@ function sizePicker(p, pkgId, done) {
       <p class="muted">Choose your home size. Price includes VAT and a ${p.warrantyMonths}-month warranty.</p>
       ${sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
       <div class="sizes" role="radiogroup">${list.map((s) => `<label><input type="radio" name="size" value="${s.id}" ${s.id === S.draft.size ? 'checked' : ''}>${esc(s.label)}<b>${aed(s.price)}</b></label>`).join('')}</div>
-      <button class="btn" data-done>Add ${esc(shortSize(type, list.find((s) => s.id === S.draft.size).label))} · ${aed(c.price)}</button>`, {
+      <div class="sz-details">
+        <div class="sz-facts"><span>${icon('shield', 16)}${p.warrantyMonths}-month warranty</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
+        <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}<li>${icon('shield', 16)}${p.warrantyMonths}-month warranty: pests back, we return free</li></ul>
+        <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
+        <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
+        ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
+        <h4>Timing and payment</h4><p class="muted">Express in about ${site.fees.aboutMin} min (+${aed(site.fees.expressNew)}), or schedule from ${esc(site.firstDay)} at no extra fee. Pay by card or in 4 instalments with Tabby.</p>
+      </div>
+      <div class="sz-foot"><button class="btn" data-done>Add ${esc(shortSize(type, list.find((s) => s.id === S.draft.size).label))} · ${aed(c.price)}</button></div>`, {
       mount(box) {
         on(box, '[data-seg]', (b) => { setDraft({ pkg: b.dataset.seg }); paint(); });
-        on(box, 'input[name=size]', (i) => { setDraft({ size: i.value }); paint(); }, 'change');
+        on(box, 'input[name=size]', (i) => { const y = box.scrollTop; setDraft({ size: i.value }); paint(); $('#layer .box').scrollTop = y; }, 'change');
         on(box, '[data-done]', () => { closeLayer(); done(); });
       },
     });
@@ -297,6 +305,7 @@ function details(p, pkgId, add) {
     <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}<li>${icon('shield', 16)}${p.warrantyMonths}-month warranty</li></ul>
     <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
     <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
+    ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
     <button class="btn" style="margin-top:16px" data-ok>Add · ${pk.sized ? 'from ' : ''}${aed(fromOf(p, pk))}</button></div>`,
   { mount(box) { on(box, '[data-ok]', () => { closeLayer(); add(); }); } });
 }

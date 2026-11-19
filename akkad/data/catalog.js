@@ -190,6 +190,66 @@ function genericPest(id, name, single, service, short, signs, from, intro, photo
   };
 }
 
+// Service details shown on the cards and in the size picker: what each package covers,
+// what the technician does, how to prepare and what to expect afterwards.
+// DRAFT wording: check each line against how Akkad actually carries out the job.
+const DETAILS = {
+  general: {
+    points: { apartment: ['Cockroaches, ants, spiders, silverfish and other crawling insects', 'Kitchen, bathrooms, bedrooms, living room and balcony', 'Gel in cabinets and hinges, spray along skirting and drains', 'Odourless products, safe for children and pets once dry'],
+      villa: ['Cockroaches, ants, spiders, silverfish and other crawling insects', 'All rooms, kitchens, bathrooms and maid’s room', 'Outdoor drains, manholes and the garden perimeter', 'Odourless products, safe for children and pets once dry'] },
+    after: 'You may see more insects for a few days as they leave their hiding places. Avoid mopping along the skirting for 3 days so the treatment keeps working.',
+  },
+  cockroach: {
+    points: { kitchen: ['Gel in cabinets, hinges, under the sink and behind appliances', 'Food-safe gel: no need to empty cupboards or leave home', 'Best for cockroaches seen only in the kitchen', 'Most kitchens are clear within 3 to 5 days'],
+      apartment: ['Whole apartment: kitchen, bathrooms, bedrooms and balcony', 'Gel in cabinets and hinges, spray in drains and service shafts', 'Treats German and American cockroaches', 'Safe for children and pets once dry'],
+      villa: ['Whole villa: kitchens, bathrooms, rooms and maid’s room', 'Outdoor drains, manholes and the garbage area', 'Garden perimeter spray to stop them coming back in', 'Safe for children and pets once dry'] },
+    after: 'Seeing a few slow or dead cockroaches in the first days is normal: the gel is working through the colony. Do not spray shop insecticide, it spoils the gel.',
+  },
+  bedbugs: {
+    points: { room: ['Mattress, bed frame, headboard and bedside furniture', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Room ready to use again after about 4 hours'],
+      apartment: ['All bedrooms, sofas, curtains and the living area', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Rooms ready to use again after about 4 hours'],
+      villa: ['All bedrooms, majlis, sofas and the maid’s room', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Rooms ready to use again after about 4 hours'] },
+    steps: [['Inspect', 'Checks mattresses, bed frames, sofas and furniture seams to find where they hide.'], ['Treat', 'Sprays and steams every hiding place with municipality-approved products.'], ['Second visit', 'Returns after 14 days to treat newly hatched bugs, then your warranty starts.']],
+    after: 'Keep the room closed for about 4 hours, then air it. Do not move furniture between rooms before the second visit.',
+  },
+  ants: {
+    points: { apartment: ['Kitchen, bathrooms, balcony and every ant trail', 'Gel bait that workers carry back to the nest', 'Barrier spray at doors, windows and pipe entries', 'Safe for children and pets'],
+      villa: ['All rooms, kitchens and outdoor seating areas', 'Gel bait that workers carry back to the nest', 'Nests treated in the garden, paving and boundary walls', 'Safe for children and pets'] },
+    steps: [['Inspect', 'Follows the trails to find the nest and how the ants get in.'], ['Treat', 'Places gel bait on the trails and sprays a barrier at entry points.'], ['Explain and hand over', 'Shows where bait was placed, gives safety advice, starts your warranty.']],
+    prep: 'Wipe up food spills, but leave the ant trails alone so the technician can follow them.',
+    after: 'Ants keep visiting the bait for a few days: that is how it reaches the nest. Do not wipe the bait or spray over it.',
+  },
+  rodents: {
+    points: { apartment: ['Tamper-proof bait stations and traps in the right places', 'Entry points found: pipes, AC ducts and door gaps', 'Follow-up visit to check stations and remove rodents', 'Stations are locked: safe around children and pets'],
+      villa: ['Bait stations indoors, in the garden and along boundary walls', 'Entry points found: drains, roof, garage and door gaps', 'Follow-up visit to check stations and remove rodents', 'Stations are locked: safe around children and pets'] },
+    steps: [['Inspect', 'Looks for droppings, gnaw marks and the gaps rodents use to get in.'], ['Treat', 'Sets locked bait stations and traps along their runs.'], ['Follow up', 'Checks the stations, removes rodents and advises how to seal entry points.']],
+    prep: 'Store food in sealed containers and tell us where you have seen droppings or heard noises.',
+    after: 'Do not move the bait stations. Activity usually drops within a week; call us if you find a dead rodent and we will collect it.',
+  },
+  mosquitoes: {
+    points: { apartment: ['Balcony, drains and standing water treated', 'Larvicide where mosquitoes breed', 'Residual spray where they rest: walls, plants and corners', 'Safe to use the balcony again after about 2 hours'],
+      villa: ['Garden, pool area, drains and boundary walls', 'Fogging of plants and shaded resting places', 'Larvicide in standing water and drains', 'Safe to use the garden again after about 2 hours'] },
+    steps: [['Inspect', 'Finds standing water and the shaded places where mosquitoes rest.'], ['Treat', 'Applies larvicide to breeding spots and fogs or sprays resting places.'], ['Explain and hand over', 'Shows how to remove breeding spots, starts your warranty.']],
+    prep: 'Empty plant saucers and buckets, cover fish ponds, and keep windows closed during the treatment.',
+    after: 'Stay off treated outdoor areas for about 2 hours. Empty standing water every week to keep them away.',
+  },
+  flies: {
+    points: { apartment: ['Kitchen, bin area, balcony and drains', 'Bait and residual spray where flies land and rest', 'Breeding sources found and treated', 'Safe for children and pets once dry'],
+      villa: ['Kitchens, garbage area, garden and outdoor seating', 'Bait and residual spray where flies land and rest', 'Drains and breeding sources treated', 'Safe for children and pets once dry'] },
+    steps: [['Inspect', 'Finds where the flies breed: bins, drains and food waste.'], ['Treat', 'Applies bait and residual spray to resting and breeding places.'], ['Explain and hand over', 'Gives hygiene advice that keeps them away, starts your warranty.']],
+    prep: 'Empty and close the bins, and cover or put away food.',
+    after: 'Keep bins closed and drains clean. Fly numbers usually fall within 2 to 3 days.',
+  },
+};
+for (const p of PESTS) {
+  const d = DETAILS[p.id];
+  if (!d) continue;
+  if (d.steps) p.steps = d.steps;
+  if (d.prep) p.prep = d.prep;
+  p.after = d.after;
+  for (const pk of p.packages) if (d.points[pk.id]) pk.points = d.points[pk.id];
+}
+
 // Communities. `aliases` are towers and alternative names that map to the community.
 const AREAS = [
   ['barsha-heights-tecom', 'Barsha Heights (Tecom)', 'Tecom', 'Dubai', 25.0969, 55.1746, ['Tecom Two Towers', 'Al Thanyah First', 'Sheikha Noora Tower', 'The Greens']],
