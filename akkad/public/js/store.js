@@ -77,11 +77,13 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
     ${site.services && site.services[p.id] ? `<a class="st-more" href="${p.id === 'amc' ? '/commercial' : '/services/' + site.services[p.id].slug}">Learn more about ${esc(p.id === 'amc' ? 'commercial pest control' : p.single)}${icon('right', 14)}</a>` : ''}
   </section>`;
 
+// Each card: a small label, one big figure, one short supporting line, one button.
+const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
 const offers = (cheapest) => [
-  `<article class="offer offer-doctor"><div class="of-text"><span class="of-kicker">EXPRESS</span><p>${site.fees.aboutMin} min arrival</p><button class="of-btn" data-jump="list">Book now${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/commercial-kitchen-inspection.webp')"></span></article>`,
-  `<article class="offer offer-green"><div class="of-text"><span class="of-kicker">FROM</span><p>General pest control AED ${cheapest}</p><button class="of-btn" data-add="cockroach:kitchen">Add to booking${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/cockroach-gel-kitchen.webp')"></span></article>`,
-  `<article class="offer offer-dark"><div class="of-text"><span class="of-kicker">PEACE OF MIND</span><p>6 months warranty + unlimited callouts</p><button class="of-btn" data-jump="list">See services${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/termite-soil-treatment.webp')"></span></article>`,
-  `<article class="offer offer-light"><div class="of-text"><span class="of-kicker">PAY LATER</span><p>Pay with instalments</p><button class="of-btn" data-jump="list">Choose a service${icon('arrow', 15)}</button></div><span class="of-img of-tabby" style="background-image:url('/img/brand/tabby.png')"></span></article>`,
+  offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
+  offer('offer-green', 'PEST CONTROL', `<small>From</small> AED ${cheapest}`, 'See your price first', 'Add to booking', 'data-add="cockroach:kitchen"', '/img/cockroach-gel-kitchen.webp'),
+  offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'See services', 'data-jump="list"', '/img/termite-soil-treatment.webp'),
+  offer('offer-light', 'PAY LATER', '4 instalments', 'Split it with Tabby', 'Book now', 'data-jump="list"', '/img/brand/tabby.png', 'of-tabby'),
 ].join('');
 
 /* ---------- "Your booking" ---------- */

@@ -1180,10 +1180,18 @@ button.card.ic-row { display: flex; }
   .st-help .sh-btns { margin-top: 16px; }
 }
 
-/* ---------- offer cards: original text size and height, narrower ---------- */
-.offer-track { scroll-padding: 0 16px; }  /* keeps the first card off the screen edge */
-.offer { flex: 0 0 66%; max-width: 260px; grid-template-columns: 1.3fr .7fr; }
-.of-btn { white-space: nowrap; }
+/* ---------- offer cards: label, one big figure, one short line, one button ---------- */
+.offer-track { gap: 12px; scroll-padding: 0 16px; }  /* keeps the first card off the screen edge */
+.offer { flex: 0 0 68%; min-width: 236px; max-width: 268px; min-height: 150px; grid-template-columns: 1.45fr .55fr; border-radius: 18px; }
+.of-text { gap: 0; padding: 16px 8px 16px 16px; min-width: 0; }
+.of-kicker { font-size: 10.5px; font-weight: 700; letter-spacing: .09em; opacity: .85; white-space: nowrap; }
+.of-text p.of-big { margin-top: 6px; font-size: clamp(21px, 6.2vw, 25px); font-weight: 800; line-height: 1.05; letter-spacing: -.02em; white-space: nowrap; }
+.of-big small { font-size: 13px; font-weight: 600; letter-spacing: 0; opacity: .9; }
+.of-text p.of-sub { margin-top: 6px; white-space: nowrap; font-size: 13px; font-weight: 500; line-height: 1.3; letter-spacing: 0; opacity: .92; }
+.of-btn { margin-top: auto; padding: 7px 13px; font-size: 12.5px; white-space: nowrap; }
+.of-text .of-sub + .of-btn { margin-top: 14px; }
+.offer-light .of-sub { color: var(--muted); opacity: 1; }
+.of-tabby { background-size: 86% auto !important; }
 @media (min-width: 900px) {
   .offer-track { scroll-padding: 0; }
   .offer { flex: 0 0 280px; max-width: 280px; }
