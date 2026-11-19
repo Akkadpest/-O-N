@@ -192,6 +192,7 @@ export const setShell = (s) => { shell = s; };
 export async function render() {
   const mine = ++navToken;
   closeLayer(true);
+  $('#toast').classList.remove('on'); // a message belongs to the page it appeared on
   cleanup.forEach((fn) => fn()); cleanup = [];
   const url = new URL(location.href);
   const view = $('#view');

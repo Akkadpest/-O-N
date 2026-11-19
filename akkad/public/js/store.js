@@ -107,7 +107,7 @@ function cartHtml() {
 function barHtml() {
   const p = S.draft.pest && pestById(S.draft.pest);
   const c = p && chosen(p);
-  if (!c) return `<a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 17)}Call</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">${icon('chat', 17)}WhatsApp</a><button class="btn" data-jump="list">Choose a service</button>`;
+  if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><a class="btn ghost cb-ico" href="${site.company.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp Akkad">${icon('chat', 20)}</a><button class="btn" data-jump="list">Choose a service</button>`;
   const fee = express() ? site.fees.expressNew : 0;
   return `<div class="cb-sum"><b>${aed(c.price + fee)}</b><small>${esc(p.service)} · ${esc(c.line)}</small></div><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }
@@ -128,7 +128,7 @@ export function storePage(ctx = {}) {
         <p class="eyebrow"><span class="live"></span>${area ? `Team near ${esc(area.short)} today` : 'Technicians available today'}</p>
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
-        <ul class="st-pills"><li>${icon('shield', 15)}Municipality approved</li><li>${icon('calendar', 15)}Up to 6-month warranty</li><li>${icon('check', 15)}Safe for kids and pets</li></ul>
+        <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">Up to 6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
       </section>
 
       <section class="card st-bugs"><h2>What's bugging you?</h2>
@@ -251,8 +251,8 @@ function whenSheet() {
   const f = site.fees;
   openLayer('sheet', `<h2 class="plain">When do you need us?</h2>
     <p class="muted">${esc(p.service)} · ${esc(c.line)} · ${aed(c.price)}</p>
-    <button class="card ic-row ${express() ? 'on' : ''}" data-go="express">${icon('truck', 28)}<span class="grow"><h3>Express now</h3><p class="sub">Arrives in about ${f.aboutMin} min · + ${aed(f.expressNew)}</p></span><b>${aed(c.price + f.expressNew)}</b></button>
-    <button class="card ic-row ${express() ? '' : 'on'}" data-go="scheduled">${icon('calendar', 28)}<span class="grow"><h3>Schedule a visit</h3><p class="sub">From ${esc(site.firstDay)} · no extra fee</p></span><b>${aed(c.price)}</b></button>`, {
+    <button class="card ic-row ${express() ? 'on' : ''}" data-go="express">${icon('truck', 28)}<span class="grow"><h3>Express now</h3><p class="sub">About ${f.aboutMin} min · +${aed(f.expressNew)}</p></span><b>${aed(c.price + f.expressNew)}</b></button>
+    <button class="card ic-row ${express() ? '' : 'on'}" data-go="scheduled">${icon('calendar', 28)}<span class="grow"><h3>Schedule a visit</h3><p class="sub">From ${esc(site.firstDay)} · free</p></span><b>${aed(c.price)}</b></button>`, {
     mount(box) { on(box, '[data-go]', (b) => { setDraft({ timing: b.dataset.go }); go(`/book/${p.id}/${b.dataset.go === 'express' ? 'pay' : 'time'}`); }); },
   });
 }

@@ -183,7 +183,7 @@ route('/booking/:id/report', async ({ id }) => {
       <div class="card"><h3>What the technician did</h3>${p.steps.map(([t, d], i) => `<div class="ic-row" style="align-items:flex-start;margin-top:12px"><span class="num">${i + 1}</span><div class="grow"><b style="color:var(--ink)">${esc(t)}</b><p class="sub" style="margin:0">${esc(d)}</p></div></div>`).join('')}</div>
       ${b.kind === 'new' && b.warrantyUntilLabel ? `<div class="card ${b.warrantyActive ? 'on' : ''}"><h3 class="ic-row" style="gap:8px">${icon('shield')}${b.warrantyMonths}-month warranty</h3><p class="sub">${b.warrantyActive ? 'Active until' : 'Ended on'} ${esc(b.warrantyUntilLabel)}. ${b.warrantyActive ? 'If the same pest returns, we come back free.' : ''}</p></div>` : ''}
       <p class="note">Products used are Dubai Municipality approved. The technician's own notes and product list are added to this report by dispatch.</p>
-      <div class="row noprint"><button class="btn ghost" data-print>Print or save as PDF</button><a class="btn ghost" href="/my-bookings">My bookings</a></div></div>`,
+      <div class="row noprint"><button class="btn ghost" data-print>Save as PDF</button><a class="btn ghost" href="/my-bookings">My bookings</a></div></div>`,
     mount(root) { on(root, '[data-print]', () => window.print()); },
   };
 });

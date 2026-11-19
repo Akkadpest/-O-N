@@ -111,7 +111,7 @@ export function homePopup() {
       <h2>${up.tracking ? 'Your technician is on the way' : `Your visit is on ${esc(up.when)}`}</h2>
       <p class="muted">${esc(up.kind === 'warranty' ? 'Warranty visit' : up.service)} · Booking ${esc(up.id)}</p>
       ${up.tracking ? `<a class="btn lg" href="/booking/${up.id}/track">${icon('truck', 22)}Track my technician</a>` : `<a class="btn lg" href="/booking/${up.id}/reschedule">${icon('calendar', 22)}Reschedule</a>`}
-      <div class="row"><a class="btn ghost" href="/booking/${up.id}">View my booking</a><a class="btn ghost" href="${site.company.phoneHref}">Call us</a></div>
+      <div class="row"><a class="btn ghost" href="/booking/${up.id}">My booking</a><a class="btn ghost" href="${site.company.phoneHref}">Call us</a></div>
       <p class="center"><button class="link" data-new>Book a new service instead</button></p>`;
   } else if (w) {
     html = `<div class="kicker">${icon('shield', 20)}Welcome back</div>

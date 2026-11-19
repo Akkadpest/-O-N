@@ -1188,3 +1188,116 @@ button.card.ic-row { display: flex; }
   .offer-track { scroll-padding: 0; }
   .offer { flex: 0 0 280px; max-width: 280px; }
 }
+
+/* ================= phone design pass: every screen ================= */
+/* package details: one tick per line, no stray bullets */
+.st-inc { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.st-inc li { display: flex; align-items: flex-start; gap: 9px; color: var(--ink); }
+.st-inc li svg { flex: none; margin-top: 3px; color: var(--green); }
+/* live tracking: the tick on the line marks "Nearby"; the row below names the three stages */
+.route-l span:nth-child(2) { display: none; }
+.menu-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px !important; }
+.menu-actions .btn:last-child { grid-column: 1 / -1; }
+.cb-ico { flex: 0 0 48px !important; padding: 0 !important; }
+
+@media (max-width: 899px) {
+  /* --- messages appear under the header, never on top of buttons --- */
+  #toast { top: 68px; bottom: auto; padding: 9px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; box-shadow: 0 6px 20px rgba(20, 40, 10, .22); }
+
+  /* --- top of the shop page --- */
+  .st-pills { flex-wrap: nowrap; gap: 6px; }
+  .st-pills li { padding: 5px 10px; white-space: nowrap; }
+  .st-rating .st-dot { display: none; }
+  .st-rating > span:last-child { flex-basis: 100%; }
+  .bug-grid { row-gap: 14px; }
+
+  /* --- bottom bars: one line, comfortable to tap --- */
+  .cart-bar { gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgba(20, 40, 10, .06); }
+  .cart-bar .btn { min-height: 48px; font-size: 15.5px; white-space: nowrap; }
+  .cart-bar .btn:last-child { flex: 1; }
+  .cb-sum { min-width: 0; flex: 1; }
+  .cb-sum small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #bar { gap: 10px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); box-shadow: 0 -6px 18px rgba(20, 40, 10, .06); border-top-width: 1px; }
+  #banner a { padding: 10px 0; font-size: 14px; }
+  #banner a span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* --- header --- */
+  #hdr .wrap { gap: 10px; }
+  .areachip { font-size: 15px; font-weight: 500; }
+
+  /* --- booking and account screens (the single-column flow) --- */
+  .flow { padding: 16px 16px 40px; }
+  .flow > * + * { margin-top: 16px; }
+  .flow > h1 { font-size: 24px; font-weight: 800; letter-spacing: -.015em; margin: 6px 0 2px; }
+  .flow > h1.big { font-size: 28px; }
+  .flow > h1 + p, .flow > h1 + .muted { margin-top: 8px; }
+  .flow > .pill.lg { margin: 2px 0 0; }
+  .flow > .pill.lg + h1 { margin-top: 14px; }
+  .flow h2 { font-size: 19px; margin-top: 28px; }
+  .flow .card { padding: 18px; border-width: 1.5px; }
+  .flow .card.pay { padding: 16px 18px; }
+  .flow .lines { gap: 10px; }
+  .flow > .btn, .flow form > .btn { min-height: 52px; }
+  .flow > p.center, .flow > .note { margin-top: 14px; }
+  .flow > .row { margin-top: 20px; }
+  .daycard h3 { margin-bottom: 12px; }
+  .chip { padding: 7px 14px; }
+  .chips { gap: 8px 8px; }
+  .next li { padding-bottom: 22px; }
+  .eta .big { font-size: 60px; }
+  .route { margin-top: 22px; }
+  .route-l { margin-top: 10px; }
+  .phases span { font-size: 15px; }
+  .fromto b { font-size: 18px; }
+
+  /* --- pop-ups and bottom sheets --- */
+  #layer .box.sheet { padding: 10px 16px calc(22px + env(safe-area-inset-bottom)); max-height: 88vh; }
+  #layer .box.popup { padding: 20px; border-width: 1.5px; border-radius: 20px; }
+  #layer h2 { font-size: 23px; line-height: 1.2; }
+  #layer h2.plain { font-size: 19px; }
+  #layer .box > * + * { margin-top: 14px; }
+  #layer .box .card { padding: 16px; border-width: 1.5px; }
+  #layer .box .row .btn { padding-left: 10px; padding-right: 10px; white-space: nowrap; }
+  #layer .box .ic-row b { white-space: nowrap; }
+  .menu-row { padding: 12px 14px; font-size: 16px; border-width: 1px !important; border-radius: 14px; }
+  #layer .box > .menu-row + .menu-row { margin-top: 6px; }
+  .menu-row svg:first-child { color: var(--green); }
+  .explain h4 { margin-top: 22px; }
+
+  /* --- information pages: the same breathing room as the shop page --- */
+  .info-page { padding-top: 18px; padding-bottom: 56px; }
+  .crumbs { margin-bottom: 18px; }
+  .info-h1 { font-size: 28px; line-height: 1.15; }
+  .info-lead { margin-top: 10px; }
+  .info-sec { margin-top: 44px; }
+  .info-sec h2, .info-cta h2 { font-size: 22px; letter-spacing: -.015em; }
+  .info-sec > h2 + * { margin-top: 16px; }
+  .info-cta { margin-top: 44px; padding: 22px 20px; }
+  .info-cta .btn { width: 100%; }
+  .info-cta .row-btns { display: grid; gap: 10px; width: 100%; }
+  .sv-hero { padding: 20px 18px; gap: 20px; }
+  .sv-cta { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+  .sv-cta .btn { width: 100%; }
+  .svc-grid, .value-grid { gap: 14px; }
+  .sv-others { gap: 12px; }
+  .contact-ways { gap: 12px; }
+  .legal h2 { margin-top: 34px; }
+
+  /* --- footer --- */
+  #foot { padding-top: 36px; }
+  .f-grid { row-gap: 30px; }
+  .f-contact { margin-top: 18px; }
+}
+
+/* amounts never break across lines */
+.lines > div > :last-child { white-space: nowrap; }
+.lines > div > :first-child { min-width: 0; }
+@media (max-width: 899px) {
+  /* the three trust badges fit one line on any phone */
+  .st-pills { gap: 5px; }
+  .st-pills li { padding: 4px 8px; gap: 4px; font-size: 12px; }
+  .st-pills li svg { width: 13px; height: 13px; }
+  .st-hero { overflow: hidden; }
+}
+@media (max-width: 359px) { .st-pills li { padding: 4px 6px; font-size: 11px; } .st-pills li svg { display: none; } }
+@media (max-width: 359px) { .timing { gap: 8px; } .timing button { min-width: 0; } .timing b { white-space: normal; } .flow { padding-left: 14px; padding-right: 14px; } }

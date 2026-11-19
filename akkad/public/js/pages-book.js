@@ -162,7 +162,7 @@ const demoNote = () => (site.demo ? `<p class="demo-note"><b>Online payment is n
 // Screen 28: "Your service, explained".
 function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done }) {
   openLayer('popup', `<div class="explain"><h2 class="plain">${title || 'Your service, explained'}</h2>
-    <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows)}
+    <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows.map(([label, value, cls]) => [label, typeof value === 'number' ? aed(value) : /^from \d/.test(String(value)) ? 'from ' + aed(Number(String(value).slice(5))) : value, cls]))}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
     <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
     <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
