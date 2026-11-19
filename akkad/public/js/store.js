@@ -37,14 +37,13 @@ function neighborsBlock(ctx, area) {
   const list = ctx.neighborReviews || site.neighborReviews || [];
   if (!list.length) return '';
   const top = ctx.top && list.some((r) => r.pest === ctx.top) ? ctx.top : '';
-  const pests = [...new Set(list.map((r) => r.pest))].filter((p) => p !== top);
-  const filters = [...(top ? [[top, pestName(top)]] : []), ['', 'All pests'], ...pests.map((p) => [p, pestName(p)])];
+  // Reviews for the pest most booked in this area come first.
+  const ordered = top ? [...list.filter((r) => r.pest === top), ...list.filter((r) => r.pest !== top)] : list;
   const where = ctx.area ? area.short : '';
   return `<section class="st-block" id="neighbors" data-first="${top}">
     <h2>${where ? `What your neighbours in ${esc(where)} say about Akkad` : 'What your neighbours say about Akkad'}</h2>
     <p class="rev-score"><b>${ctx.stats ? ctx.stats.rating : site.company.rating}</b>${stars(5)}<span>${ctx.stats ? `from ${ctx.stats.homes} verified Akkad jobs in ${esc(where)}` : 'from verified Akkad jobs'}</span></p>
-    <div class="chips" id="filters">${filters.map(([id, n], i) => `<button class="chip ${i ? '' : 'on'}" data-f="${id}">${esc(n)}</button>`).join('')}</div>
-    ${sliderHtml(list.map((r) => jobCard(r, ctx.area ? area : null)))}</section>`;
+    ${sliderHtml(ordered.map((r) => jobCard(r, ctx.area ? area : null)))}</section>`;
 }
 
 /* ---------- pieces of the page ---------- */
@@ -209,13 +208,6 @@ export function storePage(ctx = {}) {
     mountBooking(root);
     $$('.offer-track, .st-tabs', root).forEach(arrows);
 
-    // Neighbour reviews: filter by pest.
-    on(root, '[data-f]', (b) => {
-      $$('#filters .chip', root).forEach((c) => c.classList.toggle('on', c === b));
-      $$('.rev.job', root).forEach((c) => { c.hidden = !!b.dataset.f && c.dataset.pest !== b.dataset.f; });
-      const tr = $('#neighbors .track', root); if (tr) { tr.scrollLeft = 0; tr.dispatchEvent(new Event('scroll')); }
-    });
-    const first = $('#filters .chip', root); if (first) first.click();
 
     // Jump to a service (pest tiles, tabs, offers).
     on(root, '[data-jump]', (b) => {
