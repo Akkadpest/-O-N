@@ -50,26 +50,26 @@ function neighborsBlock(ctx, area) {
 /* ---------- pieces of the page ---------- */
 const bugTile = (p) => `<button class="bug" data-jump="${p.id}"><span class="bug-img" style="background-image:url('${esc(pestIcon(p.id))}')"></span><span>${esc(p.name)}</span></button>`;
 
-export const pkgCard = (p, pk) => {
-  const options = pk.sized ? p.sizes[pk.sized].length : 0;
-  return `<article class="card pkg st-pkg"><div>${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pk.title)}</h3>
-    <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span><span>${icon('calendar', 15)}${esc(pk.duration)}</span></div>
-    <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(fromOf(p, pk))}</div>
-    <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
-    <button class="link b" data-info="${p.id}:${pk.id}">View details ›</button></div>
-    <div class="side">${photo(pk.photo, imgFor(pk.photo) || imgFor(p.photo))}<button class="btn add" data-add="${p.id}:${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button>${options ? `<small class="opts">${options} sizes</small>` : ''}</div></article>`;
-};
+// A package card: name, two facts, price and one button. The picture and the details open on the next screen.
+const pkName = (pk) => { const n = pk.title.split(': ')[1] || pk.title; return n.charAt(0).toUpperCase() + n.slice(1); };
+const pkPhoto = (p, pk) => imgFor(pk.photo) || imgFor(p.photo);
+export const pkgCard = (p, pk) => `<article class="card pk">
+    <div class="pk-main">${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pkName(pk))}</h3>
+      <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span>${p.warrantyMonths ? `<span>${icon('calendar', 15)}${esc(pk.duration)}</span>` : ''}</div>
+      <button class="link b" data-info="${p.id}:${pk.id}">Details ›</button></div>
+    <div class="pk-side"><div class="price">${pk.sized ? '<small>From</small> ' : ''}${aed(fromOf(p, pk))}</div>
+      <button class="btn add" data-add="${p.id}:${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;
 
 // Inspection-first services: what the survey is, in plain words.
 const SURVEY = {
   termites: ['Termite inspection and treatment plan', 'A specialist checks walls, floors and door frames, then gives you a fixed price before any work starts.'],
   amc: ['Annual contract for your business', 'Scheduled visits, service reports for your inspections, and call-outs included. Restaurants, offices, buildings and warehouses.'],
 };
-export const surveyCard = (p) => `<article class="card pkg st-pkg"><div><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
+export const surveyCard = (p) => `<article class="card pk pk-survey"><div class="pk-main"><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
     <div class="st-meta"><span>${icon('doc', 15)}${esc(p.fromLabel)}</span><span>${icon('calendar', 15)}We call you to arrange it</span></div>
     <p class="muted st-blurb">${esc((SURVEY[p.id] || [0, p.blurb])[1])}</p>
     <a class="btn ghost sm st-survey" href="/inspection?job=${p.commercial ? 'amc' : 'termite'}">Request inspection${icon('arrow', 16)}</a></div>
-    <div class="side">${photo(p.photo)}</div></article>`;
+    </article>`;
 
 const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec="${p.id}">
     <h2>${esc(p.service)}${topIn ? `<span class="st-top">Most booked in ${esc(topIn)}</span>` : ''}</h2><p class="st-intro">${esc(p.intro || p.blurb)}</p>
@@ -119,6 +119,7 @@ function arrows(track) {
   const make = (dir) => {
     const b = document.createElement('button');
     b.type = 'button';
+    b.dataset.arrow = dir < 0 ? 'prev' : 'next';
     b.className = 'row-arrow ' + (dir < 0 ? 'prev' : 'next');
     b.setAttribute('aria-label', dir < 0 ? 'Scroll back' : 'Scroll forward');
     b.innerHTML = '<span>' + icon(dir < 0 ? 'left' : 'right', 18) + '</span>';
@@ -303,6 +304,7 @@ function sizePicker(p, pkgId, done) {
     const c = chosen(p);
     openLayer('sheet', `
       <h2 class="plain">${esc(p.service)}</h2>
+      ${pkPhoto(p, pk) ? `<div class="pk-photo" style="background-image:url('${esc(pkPhoto(p, pk))}')" role="img" aria-label="${esc(pk.title)}"></div>` : ''}
       
       ${sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
       ${sizeControls(p, pk)}
@@ -332,7 +334,7 @@ function sizePicker(p, pkgId, done) {
 /* ---------- package details ---------- */
 function details(p, pkgId, add) {
   const pk = p.packages.find((x) => x.id === pkgId);
-  openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>
+  openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>${pkPhoto(p, pk) ? `<div class="pk-photo" style="background-image:url('${esc(pkPhoto(p, pk))}')" role="img" aria-label="${esc(pk.title)}"></div>` : ''}
     <p class="muted">${esc(p.intro)}</p>
     <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}</li>` : ''}</ul>
     <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
