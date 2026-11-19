@@ -143,18 +143,19 @@ export function storePage(ctx = {}) {
       <div id="st-list">${list.map((p) => section(p, ctx.top === p.id ? area.short : '')).join('')}
       </div>
 
+      <section class="st-block" id="how"><h2>How it works</h2>
+        <ol class="card st-how">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol>
+      </section>
+
+      ${neighborsBlock(ctx, area)}
+
+      <!-- the team card sits between the two review sections so they do not run together -->
       <section class="card st-team">
         ${photo('The Akkad Pest Control team and vans', '/img/akkad-team.jpg')}
         <div class="st-team-body"><span class="of-kicker green">MUNICIPALITY-APPROVED TEAM</span><h2>Trained experts, at your door</h2>
           <p class="muted">Uniformed technicians, approved products, and a clear report on WhatsApp after every visit.</p>
           <div class="st-stats"><div><b>${c.rating}★</b><small>Google rating</small></div><div><b>~${site.fees.aboutMin} min</b><small>Express arrival</small></div><div><b>6 mo</b><small>Max warranty</small></div><div><b>3</b><small>Emirates covered</small></div></div></div>
       </section>
-
-      <section class="st-block" id="how"><h2>How it works</h2>
-        <ol class="card st-how">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol>
-      </section>
-
-      ${neighborsBlock(ctx, area)}
 
       <section class="st-block" id="reviews">${googleBlock(ctx.googleReviews || site.googleReviews, area ? `Loved by families in ${esc(area.short)}` : 'Loved by families in the UAE')}</section>
 
