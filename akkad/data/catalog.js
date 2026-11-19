@@ -45,6 +45,27 @@ const shortSize = (homeType, label) => {
 // A pest has packages. A package is either fixed-price or sized (apartment / villa).
 const PESTS = [
   {
+    // One visit that covers the common household pests together. SAMPLE prices: replace with Akkad's own.
+    id: 'general', name: 'General', single: 'common household pests', service: 'General pest control', short: 'General', general: true,
+    signs: 'Cockroaches, ants, spiders and other crawling insects', from: 99, warrantyMonths: 3, sample: true,
+    blurb: 'One treatment for the common household pests: cockroaches, ants, spiders, silverfish and other crawling insects.',
+    intro: 'One treatment for the common household pests: cockroaches, ants, spiders and other crawling insects.',
+    photo: 'Photo: technician treating a kitchen',
+    prep: 'Clear kitchen counters and keep pets in one room.',
+    steps: [
+      ['Inspect', 'Checks kitchen, bathrooms, balcony and entry points.'],
+      ['Treat', 'Gel and spray for crawling insects with municipality-approved products.'],
+      ['Explain and hand over', 'Shows what was done, gives safety advice, starts your warranty.'],
+    ],
+    packages: [
+      { id: 'apartment', title: 'General pest control: apartment', badge: 'MOST BOOKED', duration: '45–60 mins', sized: 'apartment',
+        photo: 'Photo: apartment treatment', points: ['Cockroaches, ants, spiders and crawling insects', 'Whole apartment, kitchen and bathrooms'] },
+      { id: 'villa', title: 'General pest control: villa', duration: '60–90 mins', sized: 'villa',
+        photo: 'Photo: villa treatment', points: ['Cockroaches, ants, spiders and crawling insects', 'Whole villa and garden perimeter'] },
+    ],
+    sizes: { apartment: sizes(APT, [99, 129, 159, 199, 239]), villa: sizes(VILLA, [249, 299, 349, 399, 449]) },
+  },
+  {
     id: 'cockroach', name: 'Cockroaches', single: 'cockroaches', service: 'Cockroach control', short: 'Cockroach',
     signs: 'Seen at night, in kitchen or drains', from: 99, warrantyMonths: 6,
     blurb: 'Gel and spray for kitchens, bathrooms and drains. Most homes are clear within days.',

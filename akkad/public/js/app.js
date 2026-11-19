@@ -22,11 +22,12 @@ function paint(page) {
   $('#hdr').innerHTML = `<div class="wrap">
     <a class="brand ${areaHead ? 'compact' : ''}" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="Akkad" width="32" height="32"><span>Pest Control</span></a>
     ${areaHead ? `<div class="areachip mob">${icon('pin', 22)}<span>${esc(S.area.name)}</span><a class="link" href="/area">Change</a></div>` : ''}
-    <nav aria-label="Main"><a href="/services">Services</a><a href="/commercial">Commercial</a><a href="/about">About</a><a href="/contact">Contact</a></nav>
+    <nav aria-label="Main"><a href="/services">Services</a><a href="/warranty">Warranty</a><a href="/commercial">Commercial</a><a href="/about">About</a><a href="/contact">Contact</a></nav>
     <div class="tools">
       <a class="phone desk" href="${c.phoneHref}">${icon('phone', 20)}${c.phone}</a>
       ${known ? `<a class="mybk ${areaHead ? 'compact' : ''}" href="/my-bookings" aria-label="My bookings">${icon('calendar', 18)}<span>${me.upcoming.length + me.warranties.length > 1 ? 'My bookings' : 'My booking'}</span>${up ? '<i></i>' : ''}</a>`
         : `<a class="link desk" href="/find" style="white-space:nowrap">My booking</a>`}
+      ${known || areaHead ? '' : `<a class="hd-warranty mob" href="/warranty">${icon('shield', 16)}Warranty</a>`}
       ${known || areaHead ? '' : `<a class="icon-btn mob" href="${c.phoneHref}" aria-label="Call Akkad">${icon('phone')}</a>`}
       <button class="icon-btn" data-chat aria-label="Chat with an agent" aria-haspopup="dialog">${icon('chat')}</button>
       <button class="btn desk" data-book>Book</button>

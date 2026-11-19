@@ -1341,3 +1341,21 @@ button.icon-btn { cursor: pointer; }
 .chat-send { flex: 0 0 48px; width: 48px; min-height: 48px; padding: 0; }
 .chat-alt { text-align: center; color: var(--muted); font-size: 13px; }
 #layer .box > .chat > * + * { margin-top: 0; }
+
+/* ---------- phone cart bar: remove, see or change, continue ---------- */
+.cb-x { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; padding: 0; border: 1px solid var(--line-d); border-radius: 50%; background: #fff; color: var(--muted); }
+.cb-x:hover { color: var(--red); border-color: var(--red-line); }
+button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
+.cb-sum u { color: var(--green); font-weight: 600; text-underline-offset: 2px; }
+.ci-change { display: block; margin-top: 3px; font-size: 12.5px; font-weight: 600; }
+.cart-sheet .cart-h { font-size: 19px; padding-right: 36px; }
+#layer .cart-sheet > * + * { margin-top: 14px; }
+.cart-sheet .cart-go { min-height: 52px; }
+/* header: a visible way in for warranty customers */
+.hd-warranty { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px; border: 1.5px solid var(--accent); border-radius: 999px; background: var(--pale); color: var(--ink-green); font-size: 13.5px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.hd-warranty svg { color: var(--green); }
+@media (max-width: 379px) { #hdr .brand span { display: none; } }
+.cb-sum b u { margin-left: 8px; font-size: 12.5px; }
+.cb-sum b { white-space: nowrap; }
+@media (max-width: 899px) { .cart-bar .cb-x ~ .btn:last-child { flex: 0 0 auto; width: auto; padding-left: 18px; padding-right: 18px; } }
+@media (max-width: 359px) { .cart-bar { gap: 8px; padding-left: 12px; padding-right: 12px; } .cb-sum b { font-size: 15px; } .cb-sum b u { margin-left: 6px; font-size: 12px; } .cart-bar .cb-x ~ .btn:last-child { padding-left: 12px; padding-right: 12px; font-size: 14.5px; } .cart-bar .cb-x ~ .btn:last-child svg { display: none; } }

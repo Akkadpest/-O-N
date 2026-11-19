@@ -81,7 +81,7 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
 const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
 const offers = (cheapest) => [
   offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
-  offer('offer-green', 'PEST CONTROL', `<small>From</small> AED ${cheapest}`, 'See your price first', 'Add to booking', 'data-add="cockroach:kitchen"', '/img/cockroach-gel-kitchen.webp'),
+  offer('offer-green', 'PEST CONTROL', `<small>From</small> AED ${cheapest}`, 'See your price first', 'Add to booking', 'data-add="general:apartment"', '/img/cockroach-gel-kitchen.webp'),
   offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'See services', 'data-jump="list"', '/img/termite-soil-treatment.webp'),
   offer('offer-light', 'PAY LATER', '4 instalments', 'Split it with Tabby', 'Book now', 'data-jump="list"', '/img/brand/tabby.png', 'of-tabby'),
 ].join('');
@@ -96,7 +96,7 @@ function cartHtml() {
   const fee = express() ? site.fees.expressNew : 0;
   return `<h3 class="cart-h">Your booking</h3>
     <div class="cart-item"><span class="ci-img" style="background-image:url('${esc(pestIcon(p.id))}')"></span>
-      <div class="ci-text"><b>${esc(p.service)}</b><small>${esc(c.line)}</small></div><b class="ci-price">${aed(c.price)}</b>
+      <div class="ci-text"><b>${esc(p.service)}</b><small>${esc(c.line)}</small>${p.packages.some((x) => x.sized) ? '<button class="link ci-change" data-change>Change home type or size</button>' : ''}</div><b class="ci-price">${aed(c.price)}</b>
       <button class="ci-x" data-remove aria-label="Remove">${icon('x', 16)}</button></div>
     <div class="cart-timing" role="radiogroup" aria-label="When do you need us?">
       <button role="radio" data-when="express" class="${express() ? 'on' : ''}" aria-checked="${express()}"><b>Express now</b><small>~${site.fees.aboutMin} min · +AED ${site.fees.expressNew}</small></button>
@@ -111,7 +111,7 @@ function barHtml() {
   const c = p && chosen(p);
   if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><button class="btn ghost cb-ico" data-chat aria-label="Chat with an agent">${icon('chat', 20)}</button><button class="btn" data-jump="list">Choose a service</button>`;
   const fee = express() ? site.fees.expressNew : 0;
-  return `<div class="cb-sum"><b>${aed(c.price + fee)}</b><small>${esc(p.service)} · ${esc(c.line)}</small></div><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
+  return `<button class="cb-x" data-remove aria-label="Remove ${esc(p.service)} from your booking">${icon('x', 18)}</button><button class="cb-sum" data-cart aria-label="See or change your booking"><b>${aed(c.price + fee)}<u>Change</u></b><small>${esc(p.short)} · ${esc(c.sz ? shortSize(c.pk.sized, c.sz.label) : c.line)}</small></button><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }
 
 /* ---------- the page ---------- */
@@ -134,7 +134,7 @@ export function storePage(ctx = {}) {
       </section>
 
       <section class="card st-bugs"><h2>What's bugging you?</h2>
-        <div class="bug-grid">${list.filter((p) => !p.commercial).map(bugTile).join('')}<a class="bug bug-ask" href="/photos?mode=identify"><span class="bug-img">${icon('camera', 24)}</span><span>Not sure? Ask us</span></a></div>
+        <div class="bug-grid">${list.filter((p) => !p.commercial && !p.general).map(bugTile).join('')}<a class="bug bug-ask" href="/photos?mode=identify"><span class="bug-img">${icon('camera', 24)}</span><span>Not sure? Ask us</span></a></div>
       </section>
 
       <section class="st-offers"><div class="st-row-h"><h2>Offers and benefits</h2></div>
@@ -235,27 +235,31 @@ export function mountBooking(root) {
   };
   on(root, '[data-add]', (b) => { const [pe, pk] = b.dataset.add.split(':'); add(pe, pk); });
   on(root, '[data-info]', (b) => { const [pe, pk] = b.dataset.info.split(':'); details(pestById(pe), pk, () => add(pe, pk)); });
-  on(root, '[data-remove]', () => { setDraft({ pest: null, pkg: null, size: null }); refresh(); });
+  const clear = () => { setDraft({ pest: null, pkg: null, size: null }); refresh(); toast('Removed from your booking'); };
+  const change = (after) => {
+    const p = pestById(S.draft.pest);
+    const pk = p.packages.find((x) => x.id === S.draft.pkg);
+    sizePicker(p, pk && pk.sized ? pk.id : p.packages.find((x) => x.sized).id, () => { refresh(); if (after) after(); });
+  };
+  const checkout = () => (S.area ? go(`/book/${S.draft.pest}/${express() ? 'pay' : 'time'}`) : checkAvailability());
+  // Phone: the whole booking in one sheet, so the customer can see it, change it, remove it or continue.
+  const cartSheet = () => {
+    if (!(S.draft.pest && chosen(pestById(S.draft.pest)))) return;
+    openLayer('sheet', `<div class="cart-sheet">${cartHtml()}</div>`, { mount(box) {
+      on(box, '[data-when]', (b) => { setDraft({ timing: b.dataset.when }); refresh(); cartSheet(); });
+      on(box, '[data-remove]', () => { closeLayer(); clear(); });
+      on(box, '[data-change]', () => change(cartSheet));
+      on(box, '[data-checkout]', checkout);
+    } });
+  };
+  on(root, '[data-remove]', clear);
+  on(root, '[data-change]', () => change());
+  on(root, '[data-cart]', cartSheet);
   on(root, '[data-when]', (b) => { setDraft({ timing: b.dataset.when }); refresh(); });
   on(root, '[data-checkout]', (btn) => {
     if (!S.area) return checkAvailability();
-    // On phones the cart panel (with the Express / Schedule switch) is hidden, so ask here.
-    if (btn.closest('#cartbar')) return whenSheet();
-    go(`/book/${S.draft.pest}/${express() ? 'pay' : 'time'}`);
-  });
-}
-
-/* ---------- phone: express now or schedule, chosen before the price is paid ---------- */
-function whenSheet() {
-  const p = pestById(S.draft.pest);
-  const c = p && chosen(p);
-  if (!c) return;
-  const f = site.fees;
-  openLayer('sheet', `<h2 class="plain">When do you need us?</h2>
-    <p class="muted">${esc(p.service)} · ${esc(c.line)} · ${aed(c.price)}</p>
-    <button class="card ic-row ${express() ? 'on' : ''}" data-go="express">${icon('truck', 28)}<span class="grow"><h3>Express now</h3><p class="sub">About ${f.aboutMin} min · +${aed(f.expressNew)}</p></span><b>${aed(c.price + f.expressNew)}</b></button>
-    <button class="card ic-row ${express() ? '' : 'on'}" data-go="scheduled">${icon('calendar', 28)}<span class="grow"><h3>Schedule a visit</h3><p class="sub">From ${esc(site.firstDay)} · free</p></span><b>${aed(c.price)}</b></button>`, {
-    mount(box) { on(box, '[data-go]', (b) => { setDraft({ timing: b.dataset.go }); go(`/book/${p.id}/${b.dataset.go === 'express' ? 'pay' : 'time'}`); }); },
+    if (btn.closest('#cartbar')) return cartSheet(); // phone: review the booking and pick the time first
+    checkout();
   });
 }
 

@@ -221,6 +221,7 @@ route('/warranty', async () => {
       <p class="muted">Enter the booking number from your receipt or WhatsApp message.</p>
       <form class="stack" novalidate><label class="field"><span class="sr">Booking number</span><input name="no" placeholder="AK-10482" autocapitalize="characters" autocomplete="off" value="${esc(known ? known.id : '')}"></label>
       <p class="err"></p><button class="btn">Find my booking</button></form>
+      <p class="center"><a class="link" href="/find">Booked by phone, or no booking number? Use my mobile number</a></p>
       ${helpBox("Can't find your booking number?", "Message us and we'll look it up for you.")}</div>`,
     mount(root) {
       $('form', root).addEventListener('submit', (e) => {
