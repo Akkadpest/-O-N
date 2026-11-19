@@ -21,6 +21,13 @@ if [ ! -f "$SITE" ] && [ "${FORCE:-0}" != "1" ]; then
     if ! command -v nginx >/dev/null || [ -n "$others" ] || ! ss -ltnpH '( sport = :80 or sport = :443 )' | grep -q nginx; then
       echo "STOP: something on this server already answers on port 80 or 443:"
       ss -ltnpH '( sport = :80 or sport = :443 )' || true
+      # Say what it is, so the owner can decide (read-only).
+      for pid in $(ss -ltnpH '( sport = :80 or sport = :443 )' | grep -o 'pid=[0-9]*' | cut -d= -f2 | sort -u); do
+        echo "  process $pid: $(ps -o user=,lstart=,args= -p "$pid" 2>/dev/null | cut -c1-200)"
+        echo "  started in: $(readlink -f "/proc/$pid/cwd" 2>/dev/null || echo unknown)"
+        echo "  managed by: $(ps -o unit= -p "$pid" 2>/dev/null | tr -d ' ' || true) $(command -v pm2 >/dev/null && echo '(pm2 is installed)' || true)"
+      done
+      echo "  page title: $(curl -fsS -m 5 http://127.0.0.1/ 2>/dev/null | grep -o -i '<title>[^<]*' | head -1 | cut -c8-120 || true)"
       echo "Nothing was changed. If it is safe to replace it, run again with FORCE=1."
       exit 2
     fi
