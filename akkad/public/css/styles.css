@@ -1180,15 +1180,11 @@ button.card.ic-row { display: flex; }
   .st-help .sh-btns { margin-top: 16px; }
 }
 
-/* ---------- offer cards: smaller and better proportioned ---------- */
-.offer-track { gap: 10px; scroll-padding: 0 16px; }  /* keeps the first card off the screen edge */
-.offer { flex: 0 0 72%; max-width: 290px; min-height: 118px; grid-template-columns: 1.35fr .65fr; border-radius: 16px; }
-.of-text { gap: 4px; padding: 13px 6px 13px 14px; }
-.of-kicker { font-size: 10px; }
-.of-text p { font-size: 14px; line-height: 1.22; }
-.of-btn { margin-top: 8px; padding: 5px 11px; font-size: 12px; white-space: nowrap; }
+/* ---------- offer cards: original text size and height, narrower ---------- */
+.offer-track { scroll-padding: 0 16px; }  /* keeps the first card off the screen edge */
+.offer { flex: 0 0 66%; max-width: 260px; grid-template-columns: 1.3fr .7fr; }
+.of-btn { white-space: nowrap; }
 @media (min-width: 900px) {
   .offer-track { scroll-padding: 0; }
-  .offer { flex: 0 0 calc(50% - 5px); max-width: 360px; min-height: 128px; }
-  .of-text p { font-size: 16px; }
+  .offer { flex: 0 0 280px; max-width: 280px; }
 }
