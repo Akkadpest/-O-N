@@ -70,7 +70,7 @@ install -d -o akkad -g akkad -m 0750 "$DATA" "$DATA/uploads"
 rm -rf "$APP.new"
 mkdir -p "$APP.new"
 cp -a "$SRC"/. "$APP.new"/
-rm -rf "$APP.new/data/db.json" "$APP.new/data/uploads" "$APP.new/node_modules" "$APP.new/test"
+rm -rf "$APP.new/data/db.json" "$APP.new/data/uploads" "$APP.new/node_modules" "$APP.new/test" "$APP.new/.env" "$APP.new/.env.deploy"
 chown -R root:root "$APP.new"
 chmod -R u=rwX,go=rX "$APP.new"
 rm -rf "$APP.old"
@@ -93,6 +93,21 @@ ENV
   umask 022
 fi
 chmod 600 "$ENV_FILE"
+
+# --- secrets sent by the deploy (never stored in the repository or the code folder) ---
+if [ -f "$SRC/.env.deploy" ]; then
+  key="$(sed -n 's/^GOOGLE_MAPS_API_KEY=\([A-Za-z0-9_-]\{20,80\}\)$/\1/p' "$SRC/.env.deploy" | head -1)"
+  rm -f "$SRC/.env.deploy"
+  if [ -n "$key" ]; then
+    umask 077
+    { grep -v '^GOOGLE_MAPS_API_KEY=' "$ENV_FILE" || true; echo "GOOGLE_MAPS_API_KEY=$key"; } > "$ENV_FILE.tmp"
+    mv "$ENV_FILE.tmp" "$ENV_FILE"
+    umask 022
+    chmod 600 "$ENV_FILE"
+    echo "Google address search key saved in $ENV_FILE."
+  fi
+fi
+grep -q '^GOOGLE_MAPS_API_KEY=.' "$ENV_FILE" || echo "Note: no Google key on this server yet, so address search uses the built-in area list."
 
 # --- the service: starts on boot, restarts if it stops, cannot write outside its data folder ---
 cat > /etc/systemd/system/akkad.service <<UNIT

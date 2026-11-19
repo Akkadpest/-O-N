@@ -19,7 +19,7 @@ function paint(page) {
     ${S.area ? '<a class="chg" href="/area">Change area</a>' : ''}<span class="right">Technicians available today in Dubai, Sharjah and Ajman</span></div>`;
 
   $('#hdr').innerHTML = `<div class="wrap">
-    <a class="brand ${areaHead ? 'compact' : ''}" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="" width="32" height="32"><b>${c.brand}</b><span>Pest Control</span></a>
+    <a class="brand ${areaHead ? 'compact' : ''}" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="Akkad" width="32" height="32"><span>Pest Control</span></a>
     ${areaHead ? `<div class="areachip mob">${icon('pin', 22)}<span>${esc(S.area.name)}</span><a class="link" href="/area">Change</a></div>` : ''}
     <nav aria-label="Main"><a href="/services">Services</a><a href="/commercial">Commercial</a><a href="/about">About</a><a href="/contact">Contact</a></nav>
     <div class="tools">
@@ -44,7 +44,7 @@ function paint(page) {
   foot.innerHTML = `<div class="wrap">
     <div class="f-grid">
       <div class="f-brand">
-        <a class="f-logo" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="" width="36" height="36"><b>${c.brand}</b><span>Pest Control</span></a>
+        <a class="f-logo" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="Akkad" width="36" height="36"><span>Pest Control</span></a>
         <p>Licensed pest control for homes and businesses in Dubai, Sharjah and Ajman. Pests gone, or we come back free.</p>
         <ul class="f-contact">
           <li>${icon('pin', 17)}<a href="/contact">${esc(c.address)}</a></li>
@@ -55,7 +55,7 @@ function paint(page) {
         </ul>
       </div>
       <div><h4>Services</h4><ul>${svc}</ul></div>
-      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Areas we serve</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Check your area</a></li></ul></div>
       <div><h4>Your booking</h4><ul><li><a href="/manage">Manage my booking</a></li><li><a href="/find">Find my bookings</a></li><li><a href="/warranty">Warranty visit</a></li><li><a href="/cancellation-policy">Cancellation policy</a></li></ul></div>
     </div>
     <div class="f-pay"><span>We accept</span>${payLogos()}</div>
@@ -69,7 +69,7 @@ on(document, '[data-book]', () => book());
 on(document, '[data-menu]', () => {
   const row = (ic, label, href, attr = '') => `<a class="card ic-row menu-row" href="${href}" ${attr}>${icon(ic, 24)}<span class="grow">${label}</span>${icon('right', 18)}</a>`;
   const box = openLayer('sheet', `<h2 class="plain">Menu</h2>
-    ${row('bug', 'Services and prices', '/services')}${row('doc', 'Commercial', '/commercial')}${row('check', 'About us', '/about')}${row('chat', 'Contact', '/contact')}${row('pin', 'Areas we serve', '/area')}${row('info', 'Pest guide', '/guide')}
+    ${row('bug', 'Services and prices', '/services')}${row('doc', 'Commercial', '/commercial')}${row('check', 'About us', '/about')}${row('chat', 'Contact', '/contact')}${row('pin', 'Check your area', '/area')}${row('info', 'Pest guide', '/guide')}
     <p class="muted" style="margin-top:16px">Your booking</p>
     ${row('calendar', me.state !== 'none' || me.verified ? 'My bookings' : 'Find my bookings', me.state !== 'none' || me.verified ? '/my-bookings' : '/find')}${row('calendar', 'Manage my booking', '/manage')}
     <button class="card ic-row menu-row" data-menu-warranty>${icon('shield', 24)}<span class="grow">Request a warranty visit</span>${icon('right', 18)}</button>

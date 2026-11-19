@@ -2,6 +2,7 @@ name: Deploy Akkad website to Lightsail
 
 # Runs the server tests, then copies the akkad/ folder to the Lightsail server and restarts the site.
 # Needs one repository secret: LIGHTSAIL_SSH_KEY (the contents of the Lightsail .pem key file).
+# Optional secret: GOOGLE_MAPS_API_KEY (turns on the Google address search).
 on:
   push:
     branches: [main, claude/wizardly-ride-hz4jv5]
@@ -41,10 +42,14 @@ jobs:
           chmod 600 ~/.ssh/lightsail.pem
           ssh-keyscan -T 10 "$DEPLOY_HOST" >> ~/.ssh/known_hosts
       - name: Upload and install
+        env:
+          GOOGLE_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
         run: |
           SSH="ssh -i $HOME/.ssh/lightsail.pem -o BatchMode=yes -o ConnectTimeout=20 $SSH_USER@$DEPLOY_HOST"
-          tar -C akkad --exclude=./node_modules --exclude=./data/db.json --exclude=./data/uploads -czf - . \
+          tar -C akkad --exclude=./node_modules --exclude=./data/db.json --exclude=./data/uploads --exclude=./.env -czf - . \
             | $SSH 'rm -rf ~/akkad-release && mkdir -p ~/akkad-release && tar -xzf - -C ~/akkad-release'
+          # Optional secret GOOGLE_MAPS_API_KEY: sent over SSH and saved in /etc/akkad.env on the server.
+          if [ -n "$GOOGLE_KEY" ]; then printf 'GOOGLE_MAPS_API_KEY=%s\n' "$GOOGLE_KEY" | $SSH 'umask 077; cat > ~/akkad-release/.env.deploy'; fi
           # The owner chose to replace the earlier placeholder site ("New Website", website.service).
           $SSH 'sudo REPLACE_SERVICE=website bash ~/akkad-release/deploy/server-setup.sh'
       - name: Check the public address

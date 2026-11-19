@@ -1,7 +1,7 @@
 // The booking shop: one page used by the homepage and by every area page.
 // The customer picks a service, adds it to "Your booking" and continues to time and payment.
 // Same page for everyone, personalised by the customer's area (S.area) or by the area page it is on.
-import { S, save, site, api, go, esc, icon, aed, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
+import { S, save, site, go, esc, icon, aed, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
 import { checkAvailability } from './flows.js';
 import { chosen, shortSize } from './pages-book.js';
 
@@ -161,8 +161,6 @@ export function storePage(ctx = {}) {
 
       <section class="st-block" id="reviews">${googleBlock(ctx.googleReviews || site.googleReviews, area ? `Loved by families in ${esc(area.short)}` : 'Loved by families in the UAE')}</section>
 
-      <section class="st-block" id="areas"><h2>Areas we serve</h2><p class="st-intro">Same-day teams across ${site.emirates.join(', ').replace(/, ([^,]*)$/, ' and $1')}.</p><div class="area-chips" id="area-chips"></div></section>
-
       <section class="st-block" id="guide"><h2>Frequently asked questions</h2>
         <div class="card st-faq">${site.faq.map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${esc(q)}${icon('down', 18)}</summary><p>${esc(a)}</p></details>`).join('')}</div>
       </section>
@@ -187,12 +185,6 @@ export function storePage(ctx = {}) {
       const tr = $('#neighbors .track', root); if (tr) { tr.scrollLeft = 0; tr.dispatchEvent(new Event('scroll')); }
     });
     const first = $('#filters .chip', root); if (first) first.click();
-
-    // Areas we serve: every community links to its own page.
-    api('/areas').then(({ areas }) => {
-      const box = $('#area-chips', root);
-      if (box) box.innerHTML = areas.map((a) => `<a class="area-chip ${area && area.slug === a.slug ? 'on' : ''}" href="/pest-control/${a.slug}">${icon('pin', 13)}${esc(a.name)}</a>`).join('');
-    }).catch(() => {});
 
     // Jump to a service (pest tiles, tabs, offers).
     on(root, '[data-jump]', (b) => {

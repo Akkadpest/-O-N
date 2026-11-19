@@ -7,8 +7,8 @@ const mark = (k) => { try { sessionStorage.setItem(k, '1'); } catch { /* ignore 
 
 /* Screens 13-15: Check availability finds the area in the same pop-up. */
 let locating = 0;
-export function checkAvailability() {
-  if (S.area) return go(areaUrl());
+export function checkAvailability(again) {
+  if (S.area && again !== true) return go(areaUrl());
   if (!navigator.geolocation) return go('/area');
   const mine = ++locating;
   const box = openLayer('popup', `

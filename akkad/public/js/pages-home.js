@@ -1,6 +1,6 @@
 // Homepage, area search, the area page, inspection and photo requests.
-import { S, save, site, api, route, go, esc, icon, photo, pestTile, on, $, $$, busy, showErr, toast } from './core.js';
-import { book, foundPopup, homePopup } from './flows.js';
+import { S, save, site, api, route, go, esc, icon, photo, pestTile, on, $, $$, busy, showErr, toast, onLeave } from './core.js';
+import { book, foundPopup, homePopup, checkAvailability } from './flows.js';
 import { storePage } from './store.js';
 
 /* ---------- office location and contact details ---------- */
@@ -85,33 +85,55 @@ route('/', async () => {
   };
 });
 
-/* ---------- screen 15: enter your area ---------- */
-route('/area', async (_, q) => {
-  const emirate = q.get('emirate') || '';
-  return {
-    title: 'Enter your area', flow: true, bar: false,
-    html: `<div class="flow"><h1>${emirate ? 'Choose your community in ' + esc(emirate) : 'Enter your area'}</h1>
-      ${q.get('far') ? '<p class="note">We could not match your location to a community we serve. Please type it below.</p>' : ''}
-      <label class="field">${icon('search')}<span class="sr">Community or tower</span><input id="q" autocomplete="off" placeholder="Community or tower name" autofocus></label>
-      <div class="chips">${['', ...site.emirates].map((e) => `<a class="chip ${e === emirate ? 'on' : ''}" href="/area${e ? '?emirate=' + e : ''}" style="text-decoration:none;${e === emirate ? '' : 'color:inherit'}">${e || 'All'}</a>`).join('')}</div>
-      <div id="results" class="area-list"></div><p class="note">Can't see your area? Type a community or tower name.</p></div>`,
-    mount(root) {
-      const out = $('#results', root);
-      let n = 0;
-      const search = async () => {
-        const mine = ++n;
-        const { areas } = await api(`/areas?q=${encodeURIComponent($('#q', root).value.trim())}&emirate=${encodeURIComponent(emirate)}`);
-        if (mine !== n) return;
-        out.innerHTML = areas.length ? areas.map((a, i) => `<button class="area-row" data-i="${i}">${icon('pin', 18)}<span class="ar-name">${esc(a.label)}${a.label !== a.name ? `<small>${esc(a.name)}</small>` : ''}</span><span class="ar-em">${esc(a.emirate)}</span>${icon('right', 16)}</button>`).join('')
-          : `<div class="card"><h3>We could not find that area</h3><p class="sub">Check the spelling, or message us and we will tell you if we cover it.</p><a class="btn ghost" style="margin-top:12px" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp us</a></div>`;
-        out.areas = areas;
-      };
-      $('#q', root).addEventListener('input', search);
-      on(out, '[data-i]', (b) => { const a = out.areas[b.dataset.i]; foundPopup({ slug: a.slug, name: a.name, short: a.short, emirate: a.emirate }); });
-      search();
-    },
-  };
-});
+/* ---------- screen 15: enter your area (Google address search, with our own list as the fallback) ---------- */
+route('/area', async (_, q) => ({
+  title: 'Enter your area', flow: true, bar: false,
+  html: `<div class="flow"><h1>Enter your area</h1>
+    ${q.get('far') ? '<p class="note">We could not match your location to a community we serve. Please type it below.</p>' : '<p class="muted">Type your building, street or community and pick it from the list.</p>'}
+    <label class="field">${icon('search')}<span class="sr">Building, street or community</span><input id="q" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Building, street or community" autofocus></label>
+    <div id="results" class="area-list" aria-live="polite"></div>
+    <p class="note powered" id="powered" hidden>Powered by Google</p>
+    <button class="btn ghost" id="locate">${icon('pin', 20)}Use my current location</button></div>`,
+  mount(root) {
+    const out = $('#results', root), input = $('#q', root), powered = $('#powered', root);
+    const session = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+    const row = (i, main, small, tag) => `<button class="area-row" data-i="${i}">${icon('pin', 18)}<span class="ar-name">${esc(main)}${small ? `<small>${esc(small)}</small>` : ''}</span>${tag ? `<span class="ar-em">${esc(tag)}</span>` : ''}${icon('right', 16)}</button>`;
+    const none = (title, text) => `<div class="card"><h3>${title}</h3><p class="sub">${text}</p><a class="btn ghost" style="margin-top:12px" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp us</a></div>`;
+    let n = 0, items = [], timer;
+    const search = async () => {
+      const mine = ++n, text = input.value.trim();
+      if (text.length < 2) { items = []; out.innerHTML = ''; powered.hidden = true; return; }
+      let fromGoogle = false;
+      try {
+        if (site.places) {
+          const r = await api(`/places?q=${encodeURIComponent(text)}&session=${session}`);
+          if (mine !== n) return;
+          if (r.google) { fromGoogle = true; items = r.places.map((p) => ({ place: p.id, main: p.main, small: p.secondary })); }
+        }
+        if (!fromGoogle) {
+          const { areas } = await api(`/areas?q=${encodeURIComponent(text)}`);
+          if (mine !== n) return;
+          items = areas.map((a) => ({ area: { slug: a.slug, name: a.name, short: a.short, emirate: a.emirate }, main: a.label, small: a.label !== a.name ? a.name : '', tag: a.emirate }));
+        }
+      } catch { if (mine !== n) return; items = []; }
+      powered.hidden = !fromGoogle || !items.length;
+      out.innerHTML = items.length ? items.map((it, i) => row(i, it.main, it.small, it.tag)).join('')
+        : none('We could not find that place', 'Check the spelling, or message us and we will tell you if we cover it.');
+    };
+    input.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(search, 220); });
+    onLeave(() => clearTimeout(timer));
+    on(out, '[data-i]', (b) => busy(b, async () => {
+      const it = items[b.dataset.i];
+      if (it.area) return foundPopup(it.area);
+      try {
+        const r = await api(`/places/${encodeURIComponent(it.place)}?session=${session}`);
+        if (r.area) foundPopup(r.area);
+        else out.innerHTML = none(`We do not cover ${esc(it.main)} yet`, 'We serve Dubai, Sharjah and Ajman. Message us and we will tell you when a team can come.');
+      } catch (e) { toast(e.message); }
+    }));
+    on(root, '#locate', () => checkAvailability(true));
+  },
+}));
 
 /* ---------- area pages: the same shop, fixed to one community (one page per area) ---------- */
 route('/pest-control/:slug', async ({ slug }) => {

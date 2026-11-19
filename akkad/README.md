@@ -75,6 +75,10 @@ The script installs Node.js and nginx, runs the site as a locked-down `akkad` se
 and keeps bookings in `/var/lib/akkad` so updates never erase them. Settings live in `/etc/akkad.env`.
 It refuses to run if another website already answers on the server (override with `FORCE=1`).
 
+**Google address search:** add the repository secret `GOOGLE_MAPS_API_KEY`. The deploy saves it in `/etc/akkad.env`; the key stays on the server
+and is never sent to browsers (the page calls `/api/places`, and the server calls Google). For local use, copy `.env.example` to `.env`.
+In Google Cloud, restrict the key to the Places API and to the server's IP address. Without a key the area search uses the built-in list.
+
 To install by hand instead, copy this folder to the server and run `sudo bash deploy/server-setup.sh`.
 
 For a domain with https: point the domain at the server, run `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx -d yourdomain`,

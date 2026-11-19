@@ -108,7 +108,7 @@ route('/about', async () => {
 
       <section class="info-sec"><h2>Where we work</h2>
         <p class="muted">Same-day teams across ${site.emirates.join(', ').replace(/, ([^,]*)$/, ' and $1')}. Our office is at ${esc(c.address)}.</p>
-        <div class="em-chips" style="margin-top:12px">${site.emirates.map((e) => `<a class="em-chip" href="/area?emirate=${e}">${e}${icon('right', 14)}</a>`).join('')}</div>
+        <div class="em-chips" style="margin-top:12px">${site.emirates.map((e) => `<a class="em-chip" href="/area">${e}${icon('right', 14)}</a>`).join('')}</div>
       </section>
 
       <div class="info-cta card"><div><h2>Ready when you are</h2><p class="muted">Book in a minute and see your price before you pay.</p></div><div class="row-btns"><a class="btn" href="/#st-list">Book now${icon('arrow', 18)}</a>${contactBtns()}</div></div>

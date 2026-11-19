@@ -8,7 +8,17 @@ const C = require('./data/catalog');
 const CONTENT = require('./data/content');
 const store = require('./lib/store');
 
+// Settings can also come from a local .env file (KEY=value per line). It is git-ignored, so keys never reach the repository.
+try {
+  for (const line of fs.readFileSync(path.join(__dirname, '.env'), 'utf8').split(/\r?\n/)) {
+    const m = /^\s*([A-Z][A-Z0-9_]*)\s*=\s*(.*?)\s*$/.exec(line);
+    if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+} catch { /* no .env file */ }
+
 const PORT = process.env.PORT || 3000;
+// Google Places key for the address search. It stays on the server: the browser only ever talks to /api/places.
+const GOOGLE_KEY = process.env.GOOGLE_MAPS_API_KEY || '';
 // Payments, WhatsApp codes and dispatch are simulated until the real services
 // are connected (Network International, Tabby, WhatsApp Business, dispatch).
 const DEMO = process.env.AKKAD_LIVE !== '1';
@@ -198,7 +208,7 @@ app.get('/api/site', (req, res) => {
   const first = days(1)[0];
   res.json({
     company: C.COMPANY, photos: C.PHOTOS, services: CONTENT.SERVICES, neighborReviews: C.NEIGHBOR_REVIEWS, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
-    emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO,
+    emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO, places: !!GOOGLE_KEY,
     firstDay: first.label, statusClock: fmtClock(new Date(Date.now() - (now.minute % 30) * 60000)),
   });
 });
@@ -215,16 +225,60 @@ app.get('/api/areas', (req, res) => {
   }
   res.json({ areas: out.slice(0, q ? 8 : 40) });
 });
-app.get('/api/areas/near', (req, res) => {
-  const lat = Number(req.query.lat), lng = Number(req.query.lng);
-  if (!isFinite(lat) || !isFinite(lng)) return fail(res, 400, 'Location missing.');
+// The community we serve that is closest to a point, or null when it is outside our coverage.
+function nearestArea(lat, lng) {
   let best = null;
   for (const a of C.AREAS) {
     const km = Math.hypot((a.lat - lat) * 111, (a.lng - lng) * 100);
     if (!best || km < best.km) best = { a, km };
   }
-  if (best.km > 25) return res.json({ area: null });
-  res.json({ area: areaOut(best.a) });
+  return best && best.km <= 25 ? areaOut(best.a) : null;
+}
+app.get('/api/areas/near', (req, res) => {
+  const lat = Number(req.query.lat), lng = Number(req.query.lng);
+  if (!isFinite(lat) || !isFinite(lng)) return fail(res, 400, 'Location missing.');
+  res.json({ area: nearestArea(lat, lng) });
+});
+
+/* ---------- address search (Google Places, called from the server only) ---------- */
+const PLACES = 'https://places.googleapis.com/v1';
+const COVERAGE = { rectangle: { low: { latitude: 24.75, longitude: 54.85 }, high: { latitude: 25.55, longitude: 55.75 } } }; // Dubai, Sharjah, Ajman
+const placeCache = new Map();
+const cached = (key, ms, load) => {
+  const hit = placeCache.get(key);
+  if (hit && hit.exp > Date.now()) return hit.value;
+  const value = load().catch((e) => { placeCache.delete(key); throw e; });
+  placeCache.set(key, { value, exp: Date.now() + ms });
+  if (placeCache.size > 2000) for (const [k, v] of placeCache) if (v.exp < Date.now() || placeCache.size > 1500) placeCache.delete(k);
+  return value;
+};
+async function google(url, options = {}) {
+  const res = await fetch(url, { ...options, signal: AbortSignal.timeout(5000), headers: { 'X-Goog-Api-Key': GOOGLE_KEY, 'Content-Type': 'application/json', ...options.headers } });
+  if (!res.ok) throw new Error(`Google Places answered ${res.status}`);
+  return res.json();
+}
+const sessionOf = (req) => (/^[A-Za-z0-9_-]{16,64}$/.test(req.query.session || '') ? req.query.session : undefined);
+app.get('/api/places', limit('places', 90, 5), async (req, res) => {
+  const q = clean(req.query.q, 80);
+  if (!GOOGLE_KEY || q.length < 2) return res.json({ places: [], google: !!GOOGLE_KEY });
+  try {
+    const data = await cached('q:' + q.toLowerCase(), 10 * 60000, () => google(`${PLACES}/places:autocomplete`, { method: 'POST',
+      body: JSON.stringify({ input: q, includedRegionCodes: ['ae'], locationRestriction: COVERAGE, languageCode: 'en', sessionToken: sessionOf(req) }) }));
+    const places = (data.suggestions || []).map((s) => s.placePrediction).filter(Boolean).slice(0, 6).map((p) => ({
+      id: p.placeId, main: clean((p.structuredFormat && p.structuredFormat.mainText && p.structuredFormat.mainText.text) || (p.text && p.text.text), 90),
+      secondary: clean(p.structuredFormat && p.structuredFormat.secondaryText && p.structuredFormat.secondaryText.text, 120) }));
+    res.json({ places, google: true });
+  } catch (e) { console.error('Places search failed:', e.message); res.json({ places: [], google: false }); } // the page falls back to our own area list
+});
+app.get('/api/places/:id', limit('places', 90, 5), async (req, res) => {
+  if (!GOOGLE_KEY) return fail(res, 404, 'Address search is not set up.');
+  if (!/^[A-Za-z0-9_-]{10,300}$/.test(req.params.id)) return fail(res, 400, 'Unknown place.');
+  try {
+    const session = sessionOf(req);
+    const p = await cached('p:' + req.params.id, 24 * 3600000, () => google(`${PLACES}/places/${req.params.id}${session ? '?sessionToken=' + session : ''}`, { headers: { 'X-Goog-FieldMask': 'location,displayName' } }));
+    if (!p.location) return fail(res, 404, 'We could not find that place.');
+    res.json({ name: clean(p.displayName && p.displayName.text, 90), area: nearestArea(p.location.latitude, p.location.longitude) });
+  } catch (e) { console.error('Place lookup failed:', e.message); fail(res, 502, 'We could not look up that address. Please try again, or type your community name.'); }
 });
 app.get('/api/areas/:slug', (req, res) => {
   const a = area(req.params.slug);
