@@ -272,9 +272,13 @@ delete byId.general.sample;
 // ASSUMPTION: the sheet has no separate cockroach, ant or fly prices, so they use the general table.
 for (const id of ['cockroach', 'ants', 'flies']) {
   byId[id].sizes = { apartment: sizes(APT_LABELS, APT_PRICES), villa: sizes(VILLA_LABELS, VILLA_PRICES) };
-  if (id !== 'cockroach') byId[id].from = APT_PRICES[0]; // cockroach keeps its AED 99 kitchen-only package from the approved flow
+  byId[id].from = APT_PRICES[0];
   delete byId[id].sample; byId[id].assumedPrices = true;
 }
+
+// Cockroach control is sold exactly like general pest control: apartment or villa, by bedrooms (no kitchen-only package).
+byId.cockroach.packages = byId.cockroach.packages.filter((pk) => pk.id !== 'kitchen');
+byId.cockroach.packages[0].badge = 'BESTSELLER';
 
 // Bed bugs. Apartments from the sheet; villas are the villa bedroom price + AED 30 per mattress.
 {

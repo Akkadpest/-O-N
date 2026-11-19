@@ -1397,3 +1397,51 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
 .size-sum small { color: var(--muted); }
 .size-sum .size-total { margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line-d); font-weight: 700; }
 .size-sum .size-total b { font-size: 20px; }
+
+/* ================= calmer phone screens: less to read, more room ================= */
+/* size picker: the counter and price first; details fold away until asked for */
+#layer h2.plain + .seg, #layer h2.plain + .size-box { margin-top: 18px; }
+.sz-facts { margin-top: 18px !important; justify-content: flex-start; }
+.sz-more { margin-top: 16px !important; border-top: 1px solid var(--line); }
+.sz-more details { border-bottom: 1px solid var(--line); }
+.sz-more summary { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 2px; cursor: pointer; list-style: none; font-size: 15.5px; font-weight: 600; color: var(--ink); }
+.sz-more summary::-webkit-details-marker { display: none; }
+.sz-more summary svg { color: var(--green); transition: transform .2s; }
+.sz-more details[open] summary svg { transform: rotate(180deg); }
+.sz-more details > :not(summary) { margin-bottom: 14px; }
+.sz-more .do { display: flex; gap: 12px; }
+.sz-more .do b { display: block; color: var(--ink); font-size: 15px; }
+.sz-more .do span:not(.num) { color: var(--muted); font-size: 14px; }
+.sz-more .muted { font-size: 14.5px; line-height: 1.5; }
+.sz-more .muted b { color: var(--ink); }
+.sz-foot { margin-top: 22px !important; }
+.size-box .stp-row { padding: 18px 16px; }
+.size-sum { padding: 16px; }
+
+@media (max-width: 899px) {
+  /* service cards: title, two facts, price and one button. Details are one tap away. */
+  .st-pkg ul { display: none; }
+  .st-pkg { margin-top: 18px; padding: 20px 18px; }
+  .st-pkg h3 { font-size: 17px; line-height: 1.25; }
+  .st-pkg .st-meta { margin-top: 8px; gap: 4px 12px; }
+  .st-pkg .price { margin-top: 14px; font-size: 21px; }
+  .st-pkg .link.b { margin-top: 14px; }
+  .st-sec + .st-sec { margin-top: 56px; }
+  .st-sec h2 { margin-bottom: 6px; }
+  .st-more { margin-top: 20px; }
+  /* page rhythm: a little more air between the big blocks */
+  .store .st-main > * + * { margin-top: 48px; }
+  .store .st-main > .st-bugs { margin-top: 30px; }
+  .store .st-main > .st-tabs { margin-top: 36px; }
+  .store .st-main > #st-list { margin-top: 28px; }
+  .store .st-main > .st-offers, .store .st-main > .st-block { margin-top: 52px; padding-top: 52px; }
+  .store .st-main > .st-team, .store .st-main > .st-help { margin-top: 52px; }
+  .bug-grid { row-gap: 18px; }
+  .st-bugs { padding: 22px 16px 24px; }
+  /* sheets: roomier, with larger tap targets */
+  #layer .box.sheet { padding-top: 12px; }
+  #layer .box > * + * { margin-top: 16px; }
+  .cart-sheet .cart-item { padding: 14px; }
+  .cart-sheet .cart-timing button { padding: 14px 12px; }
+  .cart-sheet .cart-total { padding-top: 16px; }
+}

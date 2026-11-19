@@ -274,21 +274,25 @@ function sizePicker(p, pkgId, done) {
     const c = chosen(p);
     openLayer('sheet', `
       <h2 class="plain">${esc(p.service)}</h2>
-      <p class="muted">Tap + or − to set your bedrooms. The price changes as you go. VAT included.</p>
+      
       ${sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
       ${sizeControls(p, pk)}
-      <div class="sz-details">
-        <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
-        <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}: pests back, we return free</li>` : ''}</ul>
-        <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
-        <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
-        ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
-        <h4>Timing and payment</h4><p class="muted">Express in about ${site.fees.aboutMin} min (+${aed(site.fees.expressNew)}), or schedule from ${esc(site.firstDay)} at no extra fee. Pay by card or in 4 instalments with Tabby.</p>
+      <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
+      <div class="sz-more">
+        <details><summary>What's included${icon('down', 18)}</summary><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}</ul></details>
+        <details><summary>What the technician does${icon('down', 18)}</summary>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}</details>
+        <details><summary>Before and after the visit${icon('down', 18)}</summary><p class="muted"><b>Before:</b> ${esc(p.prep)}</p>${p.after ? `<p class="muted"><b>After:</b> ${esc(p.after)}</p>` : ''}</details>
       </div>
       <div class="sz-foot"><button class="btn" data-done>Add · ${aed(c.price)}</button></div>`, {
       mount(box) {
         on(box, '[data-seg]', (b) => { setDraft({ pkg: b.dataset.seg }); paint(); });
-        wireSizeControls(box, p, () => { const y = box.scrollTop; paint(); $('#layer .box').scrollTop = y; });
+        wireSizeControls(box, p, () => {
+          const y = box.scrollTop, open = [...box.querySelectorAll('.sz-more details')].map((d) => d.open);
+          paint();
+          const fresh = $('#layer .box');
+          [...fresh.querySelectorAll('.sz-more details')].forEach((d, k) => { d.open = !!open[k]; });
+          fresh.scrollTop = y;
+        });
         on(box, '[data-done]', () => { closeLayer(); done(); });
       },
     });
