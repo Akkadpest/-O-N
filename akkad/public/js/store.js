@@ -146,7 +146,8 @@ export function storePage(ctx = {}) {
       </div>
 
       <section class="st-block" id="how"><h2>How it works</h2>
-        <ol class="card st-how">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol>
+        <div class="card how-card"><img class="how-img" src="/img/hero-pest-doctor.webp" alt="Hire your pest doctor in just 30 minutes, near you, anywhere in the UAE" width="1320" height="1200" loading="lazy">
+          <ol class="st-how">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol></div>
       </section>
 
       ${neighborsBlock(ctx, area)}

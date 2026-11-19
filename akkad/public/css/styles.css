@@ -1445,3 +1445,13 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
   .cart-sheet .cart-timing button { padding: 14px 12px; }
   .cart-sheet .cart-total { padding-top: 16px; }
 }
+
+/* ---------- how it works: the pest doctor picture with the four steps ---------- */
+.how-card { display: grid; gap: 0; margin-top: 12px; padding: 0; overflow: hidden; border-width: 1px; border-radius: 18px; }
+.how-img { display: block; width: 100%; height: auto; aspect-ratio: 1320 / 1200; background: var(--soft); }
+.how-card .st-how { margin: 0; padding: 22px 18px; border: 0; border-radius: 0; background: none; }
+@media (min-width: 900px) {
+  .how-card { grid-template-columns: minmax(0, 360px) 1fr; align-items: center; }
+  .how-card .st-how { padding: 28px 32px; gap: 22px; }
+}
+.how-card .st-how { grid-template-columns: 1fr !important; }
