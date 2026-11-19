@@ -128,7 +128,7 @@ route('/contact', async () => {
       <p class="info-lead">The fastest way to reach us is WhatsApp. You can also call, or send a message and we'll get back to you.</p>
       <div class="contact-grid">
         <div class="contact-ways">
-          <a class="card way" href="${c.whatsapp}" target="_blank" rel="noopener"><span class="ic-circle">${icon('chat', 22)}</span><div><b>WhatsApp</b><small>Message us on ${esc(c.phone)}</small></div>${icon('right', 16)}</a>
+          <a class="card way" href="${c.whatsapp}" target="_blank" rel="noopener"><span class="ic-circle">${icon('chat', 22)}</span><div><b>WhatsApp</b><small>Message us on ${esc(c.whatsappNumber)}</small></div>${icon('right', 16)}</a>
           <a class="card way" href="${c.phoneHref}"><span class="ic-circle">${icon('phone', 22)}</span><div><b>Call us</b><small>${esc(c.phone)}</small></div>${icon('right', 16)}</a>
           ${c.email ? `<a class="card way" href="mailto:${esc(c.email)}"><span class="ic-circle">${icon('doc', 22)}</span><div><b>Email</b><small>${esc(c.email)}</small></div>${icon('right', 16)}</a>` : ''}
           <a class="card way" href="${c.mapsUrl || '/#contact'}" target="_blank" rel="noopener"><span class="ic-circle">${icon('pin', 22)}</span><div><b>Our office</b><small>${esc(c.address)}</small></div>${icon('right', 16)}</a>

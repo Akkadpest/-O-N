@@ -9,9 +9,11 @@
 const COMPANY = {
   name: 'Akkad Pest Control Services',
   brand: 'AKKAD',
-  phone: '+971 50 400 1344',
-  phoneHref: 'tel:+971504001344',
+  // Calls go to the office landline; WhatsApp goes to the mobile number.
+  phone: '04 425 1557',
+  phoneHref: 'tel:+97144251557',
   whatsapp: 'https://wa.me/971504001344',
+  whatsappNumber: '+971 50 400 1344',
   address: 'Sheikha Noora Tower, Office 403, Barsha Heights (Tecom), Dubai',
   building: 'Sheikha Noora Tower, Office 403',
   district: 'Barsha Heights (Tecom), Dubai, UAE',

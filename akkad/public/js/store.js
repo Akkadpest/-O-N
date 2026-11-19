@@ -107,7 +107,7 @@ function cartHtml() {
 function barHtml() {
   const p = S.draft.pest && pestById(S.draft.pest);
   const c = p && chosen(p);
-  if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><a class="btn ghost cb-ico" href="${site.company.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp Akkad">${icon('chat', 20)}</a><button class="btn" data-jump="list">Choose a service</button>`;
+  if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><button class="btn ghost cb-ico" data-chat aria-label="Chat with an agent">${icon('chat', 20)}</button><button class="btn" data-jump="list">Choose a service</button>`;
   const fee = express() ? site.fees.expressNew : 0;
   return `<div class="cb-sum"><b>${aed(c.price + fee)}</b><small>${esc(p.service)} · ${esc(c.line)}</small></div><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }

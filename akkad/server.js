@@ -52,7 +52,8 @@ app.use((req, res, next) => {
 // Every change goes through POST with a custom header. Browsers will not let another
 // website send that header, so a page elsewhere cannot act with a customer's session cookie.
 app.use('/api', (req, res, next) => {
-  if (req.method !== 'GET' && req.method !== 'HEAD' && (req.method !== 'POST' || req.get('x-akkad') !== '1')) return fail(res, 403, 'This request was not sent from the Akkad website.');
+  const agentTool = req.path.startsWith('/api/ops/chats') && req.method === 'POST'; // authenticated by OPS_SECRET instead
+  if (!agentTool && req.method !== 'GET' && req.method !== 'HEAD' && (req.method !== 'POST' || req.get('x-akkad') !== '1')) return fail(res, 403, 'This request was not sent from the Akkad website.');
   next();
 });
 
@@ -575,6 +576,58 @@ app.get('/api/bookings/:id/calendar.ics', authed, (req, res) => {
   const stamp = (hour) => new Date(Date.parse(`${b.date}T${String(hour).padStart(2, '0')}:00:00+04:00`)).toISOString().replace(/[-:]|\.\d{3}/g, '');
   res.type('text/calendar').attachment(`akkad-${b.id}.ics`).send(['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Akkad Pest Control//EN', 'BEGIN:VEVENT', `UID:${b.id}@pestcontrol.ae`,
     `DTSTAMP:${stamp(h)}`, `DTSTART:${stamp(h)}`, `DTEND:${stamp(h + 2)}`, `SUMMARY:Akkad Pest Control visit (${b.id})`, `DESCRIPTION:${String(b.label).replace(/[\\;,\r\n]/g, ' ')}. ${C.COMPANY.phone}`, 'END:VEVENT', 'END:VCALENDAR'].join('\r\n'));
+});
+
+/* ---------- website chat: customer <-> agent ---------- */
+// The customer side works now. The agent side is the two /api/ops/chats routes below:
+// connect an inbox or bot to them (with OPS_SECRET) and replies appear in the customer's chat.
+const CHAT_DAYS = 30, CHAT_MAX = 200;
+const chats = () => { const d = db(); if (!d.chats) d.chats = {}; return d.chats; };
+const chatOf = (req) => { const t = req.get('x-akkad-chat') || ''; return /^[A-Za-z0-9_-]{20,80}$/.test(t) ? chats()[sha(t)] : null; };
+const chatOut = (c, after = 0) => ({ messages: c.messages.filter((m) => m.n > after).map((m) => ({ n: m.n, from: m.from, text: m.text, time: fmtClock(new Date(m.at)) })), agentConnected: !!c.agentSeen });
+function say(c, from, text) { c.messages.push({ n: (c.messages.length ? c.messages[c.messages.length - 1].n : 0) + 1, from, text, at: Date.now() }); c.updatedAt = Date.now(); }
+app.post('/api/chat/start', limit('chat-start', 10, 60), (req, res) => {
+  const all = chats();
+  for (const [k, c] of Object.entries(all)) if (Date.now() - c.updatedAt > CHAT_DAYS * 86400000) delete all[k];
+  const token = store.token(32);
+  const d = db(); d.chatSeq = (d.chatSeq || 500) + 1;
+  all[sha(token)] = { id: 'CH-' + d.chatSeq, createdAt: Date.now(), updatedAt: Date.now(), messages: [], area: clean(req.body.area, 60) };
+  store.save();
+  res.json({ token });
+});
+app.get('/api/chat', limit('chat-read', 240, 5), (req, res) => {
+  const c = chatOf(req);
+  if (!c) return fail(res, 404, 'This chat has ended. Please start a new one.');
+  res.json(chatOut(c, Number(req.query.after) || 0));
+});
+app.post('/api/chat/messages', limit('chat-send', 30, 5), (req, res) => {
+  const c = chatOf(req);
+  if (!c) return fail(res, 404, 'This chat has ended. Please start a new one.');
+  const text = clean(req.body.text, 1000);
+  if (!text) return fail(res, 400, 'Please type a message.');
+  if (c.messages.length >= CHAT_MAX) return fail(res, 400, 'This chat is full. Please call us or start a new chat.');
+  const first = !c.messages.some((m) => m.from === 'customer');
+  say(c, 'customer', text);
+  // LIVE: notify the agent inbox here (email, WhatsApp Business, help desk...).
+  if (first) say(c, 'system', `Thanks, we have your message. An agent will reply here. For urgent help call ${C.COMPANY.phone}.`);
+  store.save();
+  res.json(chatOut(c, Number(req.body.after) || 0));
+});
+// Agent side. Needs OPS_SECRET; without one configured these routes are closed.
+const agentOnly = (req, res, next) => {
+  const secret = process.env.OPS_SECRET;
+  if (secret && req.get('x-ops-secret') && same(req.get('x-ops-secret'), secret)) return next();
+  fail(res, 403, 'Not allowed.');
+};
+app.get('/api/ops/chats', agentOnly, (req, res) => res.json({ chats: Object.values(chats()).filter((c) => c.messages.length).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100)
+  .map((c) => ({ id: c.id, area: c.area, updatedAt: new Date(c.updatedAt).toISOString(), waiting: c.messages[c.messages.length - 1].from !== 'agent', messages: c.messages.map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() })) })) }));
+app.post('/api/ops/chats/:id/reply', agentOnly, (req, res) => {
+  const c = Object.values(chats()).find((x) => x.id === req.params.id);
+  const text = clean(req.body.text, 1000);
+  if (!c) return fail(res, 404, 'Chat not found.');
+  if (!text) return fail(res, 400, 'Empty reply.');
+  c.agentSeen = true; say(c, 'agent', text); store.save();
+  res.json({ ok: true });
 });
 
 app.use('/api', (req, res) => fail(res, 404, 'Not found.'));

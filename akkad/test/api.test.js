@@ -19,7 +19,7 @@ const contact = { name: 'Test', mobile: '0507654321', building: 'Test Tower', ap
 const order = { area: 'barsha-heights-tecom', pest: 'cockroach', pkg: 'apartment', size: 's1', ...contact };
 
 before(async () => {
-  server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: { ...process.env, PORT, AKKAD_DB: DB, AKKAD_HOST: '127.0.0.1' }, stdio: 'ignore' });
+  server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: { ...process.env, PORT, AKKAD_DB: DB, AKKAD_HOST: '127.0.0.1', OPS_SECRET: 'test-secret' }, stdio: 'ignore' });
   for (let i = 0; i < 50; i++) { try { await fetch(B + '/api/site'); return; } catch { await new Promise((r) => setTimeout(r, 100)); } }
   throw new Error('server did not start');
 });
@@ -97,4 +97,27 @@ test('guessing booking numbers is cut off', async () => {
   let last;
   for (let i = 0; i < 10; i++) last = await call('/api/warranty/lookup', { bookingNo: 'AK-2' + i });
   assert.equal(last.status, 429);
+});
+
+test('chat: a customer can message, only an agent with the secret can read or reply', async () => {
+  const start = await call('/api/chat/start', { area: 'JLT' });
+  const chat = { 'x-akkad-chat': start.data.token };
+  const sent = await call('/api/chat/messages', { text: 'Do you treat ants?<script>' }, chat);
+  assert.equal(sent.status, 200);
+  assert.equal(sent.data.messages[0].from, 'customer');
+  assert.ok(!sent.data.messages[0].text.includes('<'), 'markup is stripped');
+  assert.equal(sent.data.messages[1].from, 'system');
+  assert.equal((await call('/api/chat', null, { 'x-akkad-chat': 'x'.repeat(40) })).status, 404, 'another token sees nothing');
+  assert.equal((await call('/api/ops/chats')).status, 403);
+  assert.equal((await call('/api/ops/chats', null, { 'x-ops-secret': 'wrong' })).status, 403);
+  const inbox = await call('/api/ops/chats', null, { 'x-ops-secret': 'test-secret' });
+  assert.equal(inbox.status, 200);
+  const id = inbox.data.chats[0].id;
+  // an agent tool is not the website: it sends the secret, not the website header
+  const reply = await fetch(`${B}/api/ops/chats/${id}/reply`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-ops-secret': 'test-secret' }, body: JSON.stringify({ text: 'Yes, from AED 210.' }) });
+  assert.equal(reply.status, 200);
+  assert.equal((await fetch(`${B}/api/ops/chats/${id}/reply`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"text":"x"}' })).status, 403);
+  const after = await call('/api/chat?after=2', null, chat);
+  assert.equal(after.data.messages[0].from, 'agent');
+  assert.equal(after.data.agentConnected, true);
 });

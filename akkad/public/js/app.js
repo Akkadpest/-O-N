@@ -5,6 +5,7 @@ import './pages-home.js';
 import './pages-book.js';
 import './pages-manage.js';
 import './pages-info.js';
+import './chat.js';
 
 function paint(page) {
   const c = site.company;
@@ -26,8 +27,8 @@ function paint(page) {
       <a class="phone desk" href="${c.phoneHref}">${icon('phone', 20)}${c.phone}</a>
       ${known ? `<a class="mybk ${areaHead ? 'compact' : ''}" href="/my-bookings" aria-label="My bookings">${icon('calendar', 18)}<span>${me.upcoming.length + me.warranties.length > 1 ? 'My bookings' : 'My booking'}</span>${up ? '<i></i>' : ''}</a>`
         : `<a class="link desk" href="/find" style="white-space:nowrap">My booking</a>`}
-      ${known || areaHead ? '' : `<a class="icon-btn mob" href="${c.phoneHref}" aria-label="Call Akkad">${icon('phone')}</a><a class="icon-btn mob" href="${c.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp Akkad">${icon('chat')}</a>`}
-      <a class="icon-btn desk" href="${c.whatsapp}" target="_blank" rel="noopener" aria-label="WhatsApp Akkad">${icon('chat')}</a>
+      ${known || areaHead ? '' : `<a class="icon-btn mob" href="${c.phoneHref}" aria-label="Call Akkad">${icon('phone')}</a>`}
+      <button class="icon-btn" data-chat aria-label="Chat with an agent" aria-haspopup="dialog">${icon('chat')}</button>
       <button class="btn desk" data-book>Book</button>
       <button class="icon-btn mob" data-menu aria-label="Menu" aria-haspopup="dialog">${icon('menu')}</button>
     </div></div>`;
@@ -74,7 +75,7 @@ on(document, '[data-menu]', () => {
     ${row('calendar', me.state !== 'none' || me.verified ? 'My bookings' : 'Find my bookings', me.state !== 'none' || me.verified ? '/my-bookings' : '/find')}${row('calendar', 'Manage my booking', '/manage')}
     <button class="card ic-row menu-row" data-menu-warranty>${icon('shield', 24)}<span class="grow">Request a warranty visit</span>${icon('right', 18)}</button>
     ${row('doc', 'Termite or commercial inspection', '/inspection')}${row('camera', 'Send a photo, we identify it free', '/photos?mode=identify')}
-    <div class="menu-actions"><a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 18)}Call</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">${icon('chat', 18)}WhatsApp</a><button class="btn" data-book>Book</button></div>`);
+    <div class="menu-actions"><a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 18)}Call</a><button class="btn ghost" data-chat>${icon('chat', 18)}Chat</button><button class="btn" data-book>Book</button></div>`);
   on(box, '[data-menu-warranty]', () => warrantyEntry());
 });
 on(document, '[data-check]', (el) => { if (!el.closest('#layer')) checkAvailability(); });

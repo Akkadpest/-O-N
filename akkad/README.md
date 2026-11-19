@@ -48,6 +48,16 @@ Everything on the site works except the connections to outside services, which a
 Sample customer for the warranty and "my bookings" flows: mobile `+971 50 123 4567`, booking `AK-10482`.
 Delete `data/db.json` to reset all bookings.
 
+## Chat with an agent
+
+The speech-bubble button opens a chat inside the site. Customer messages are stored on the server.
+The agent side is two routes, protected by `OPS_SECRET` (sent as the `x-ops-secret` header):
+
+- `GET /api/ops/chats` lists conversations, newest first, with `waiting: true` when the customer is waiting for a reply.
+- `POST /api/ops/chats/<id>/reply` with `{"text": "..."}` sends a reply, which appears in the customer's chat within a few seconds.
+
+No agent inbox is connected yet: connect a help desk, bot or simple admin page to those two routes.
+
 ## Security
 
 - Strict Content-Security-Policy and the usual protective headers on every response; no inline scripts, nothing loaded from other sites.
