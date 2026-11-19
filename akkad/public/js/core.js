@@ -72,7 +72,24 @@ export const icon = (name, size = 24, extra = '') =>
   `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.900" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ${extra}>${P[name]}</svg>`;
 export const stars = (n = 5) => `<span class="stars" aria-label="${n} out of 5 stars">${'★'.repeat(n)}${n < 5 ? `<span style="opacity:.3">${'★'.repeat(5 - n)}</span>` : ''}</span>`;
 // Photo slot. Drop real images in /public/img and pass `src` to show them.
-export const photo = (label, src) => `<div class="photo"${src ? ` style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(label)}"` : ''}>${src ? '' : icon('image') + `<span>${esc(label)}</span>`}</div>`;
+// Image for a photo slot label (from data/catalog.js PHOTOS), or for a service id.
+export const imgFor = (label) => (site && site.photos && site.photos[label]) || '';
+export const pestImg = (id) => { const p = site && site.pests.find((x) => x.id === id); return p ? imgFor(p.photo) : ''; };
+// Accepted payment logos (images in /img/brand).
+const PAY_NAMES = { visa: 'Visa', mastercard: 'Mastercard', 'apple-pay': 'Apple Pay', tabby: 'Tabby' };
+export const payLogos = (list = ['visa', 'mastercard', 'apple-pay', 'tabby'], cls = '') => `<span class="pay-logos ${cls}">${list.map((n) => `<img src="/img/brand/${n}.png" alt="${PAY_NAMES[n]}" width="51" height="20" loading="lazy">`).join('')}</span>`;
+// "Need a hand?" box with Call and WhatsApp, for pages where a customer can get stuck.
+export const helpBox = (title = 'Need a hand?', text = 'Our team can find your booking for you.') => `<div class="help-box"><span class="ic-circle">${icon('chat', 22)}</span><div class="hb-text"><b>${esc(title)}</b><span>${esc(text)}</span></div><div class="hb-btns"><a class="btn ghost sm" href="${site.company.phoneHref}">${icon('phone', 16)}Call</a><a class="btn sm" href="${site.company.whatsapp}" target="_blank" rel="noopener">${icon('chat', 16)}WhatsApp</a></div></div>`;
+// One tile of the "which pest" picker: photo, name, signs and starting price.
+export const pestTile = (p, pressed) => {
+  const img = pestImg(p.id);
+  return `<button data-p="${p.id}"${pressed ? ' aria-pressed="false"' : ''}>
+    <span class="pt-img"${img ? ` style="background-image:url('${esc(img)}')"` : ''}>${img ? '' : icon('bug', 34)}</span>
+    <span class="pt-body"><b>${esc(p.name)}</b><span class="pt-signs">${esc(p.signs)}</span>
+      <span class="pt-price${p.from ? '' : ' survey'}">${p.from ? `From <strong>AED ${p.from}</strong>` : esc(p.fromLabel)}</span></span>
+    <span class="pt-check" aria-hidden="true">${icon('tick', 16)}</span></button>`;
+};
+export const photo = (label, src = imgFor(label)) => `<div class="photo"${src ? ` style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(label)}"` : ''}>${src ? '' : icon('image') + `<span>${esc(label)}</span>`}</div>`;
 export const lines = (rows, total) => `<div class="lines">${rows.map(([a, b, cls]) => `<div><span>${a}</span><span class="${cls || ''}">${b}</span></div>`).join('')}${total ? `<div class="total"><span>${total[0]}</span><span>${total[1]}</span></div>` : ''}</div>`;
 
 /* ---------- pop-ups (centered) and sheets (from the bottom on phones) ---------- */

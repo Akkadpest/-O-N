@@ -13,6 +13,17 @@ const COMPANY = {
   phoneHref: 'tel:+971504001344',
   whatsapp: 'https://wa.me/971504001344',
   address: 'Sheikha Noora Tower, Office 403, Barsha Heights (Tecom), Dubai',
+  building: 'Sheikha Noora Tower, Office 403',
+  district: 'Barsha Heights (Tecom), Dubai, UAE',
+  // Office location on the map. Check the pin and adjust lat/lng if needed.
+  lat: 25.0969,
+  lng: 55.1746,
+  // Akkad's Google business listing (address, map, reviews).
+  mapsUrl: 'https://share.google/dDQepk50PiM6oUOwk',
+  mapsQuery: 'Akkad Pest Control Services, Sheikha Noora Tower, Barsha Heights, Dubai',
+  // Leave empty to hide. Example: 'info@pestcontrol.ae', 'Every day, 8am to 10pm'.
+  email: '',
+  hours: '',
   domain: 'pestcontrol.ae',
   googleReviewsUrl: 'https://www.google.com/search?q=Akkad+Pest+Control+Services+Dubai+reviews',
   rating: 4.8,
@@ -108,6 +119,34 @@ const PESTS = [
   },
 ];
 
+// Real photos in public/img, by the label of the photo slot they fill.
+// Any slot without a photo here shows a labelled placeholder. Package cards
+// without their own photo use the photo of their service.
+const PHOTOS = {
+  'Photo: gel treatment in a kitchen': '/img/cockroach-gel-kitchen.webp',
+  'Photo: gel in kitchen cabinet': '/img/cockroach-gel-kitchen.webp',
+  'Photo: mattress inspection': '/img/bedbug-bed-frame.webp',
+  'Photo: bedroom treatment': '/img/bedbug-bed-frame.webp',
+  'Photo: villa bedroom treatment': '/img/bedbug-bed-frame.webp',
+  'Photo: ant bait placement': '/img/ant-gel-skirting.webp',
+  'Photo: bait station placement': '/img/rodent-bait-station.webp',
+  'Photo: termite inspection': '/img/termite-soil-treatment.webp',
+  'Photo: garden fogging': '/img/mosquito-garden-fogging.webp',
+  'Photo: fly treatment near bins': '/img/fly-light-trap.webp',
+  'Photo: commercial kitchen inspection': '/img/commercial-kitchen-inspection.webp',
+  // Homepage
+  'Photo: technician treating a kitchen': '/img/cockroach-gel-kitchen.webp',
+  "Photo: Akkad technician at a customer's door": '/img/rodent-bait-station.webp',
+  'Photo: technician explaining the treatment': '/img/akkad-team.jpg',
+  // Neighbour reviews ("photo of the work")
+  'Photo of the work: gel under the kitchen sink': '/img/cockroach-gel-kitchen.webp',
+  'Photo of the work: gel behind the fridge': '/img/cockroach-gel-kitchen.webp',
+  'Photo of the work: kitchen cabinet hinges': '/img/cockroach-gel-kitchen.webp',
+  'Photo of the work: mattress treatment': '/img/bedbug-bed-frame.webp',
+  'Photo of the work: bed frame treatment': '/img/bedbug-bed-frame.webp',
+  'Photo of the work: balcony bait points': '/img/ant-gel-skirting.webp',
+};
+
 function genericPest(id, name, single, service, short, signs, from, intro, photo, apt, villa) {
   return {
     id, name, single, service, short, signs, from, warrantyMonths: 3, sample: true,
@@ -201,4 +240,4 @@ const WHY = [
   ['calendar', 'Pay your way', 'Card or Tabby in 4 payments.'],
 ];
 
-module.exports = { COMPANY, FEES, PESTS, AREAS, areaStats, NEIGHBOR_REVIEWS, GOOGLE_REVIEWS, FAQ, WHY, shortSize };
+module.exports = { COMPANY, PHOTOS, FEES, PESTS, AREAS, areaStats, NEIGHBOR_REVIEWS, GOOGLE_REVIEWS, FAQ, WHY, shortSize };

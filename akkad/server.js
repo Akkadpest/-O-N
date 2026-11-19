@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const C = require('./data/catalog');
+const CONTENT = require('./data/content');
 const store = require('./lib/store');
 
 const PORT = process.env.PORT || 3000;
@@ -134,7 +135,7 @@ app.get('/api/site', (req, res) => {
   const now = dubaiNow();
   const first = days(1)[0];
   res.json({
-    company: C.COMPANY, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
+    company: C.COMPANY, photos: C.PHOTOS, services: CONTENT.SERVICES, neighborReviews: C.NEIGHBOR_REVIEWS, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
     emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO,
     firstDay: first.label, statusClock: fmtClock(new Date(Date.now() - (now.minute % 30) * 60000)),
   });
@@ -182,6 +183,16 @@ function newRequest(type, body) {
   d.requests.push(r); store.save();
   return r;
 }
+// Contact form: saved with the other customer requests for the team to answer.
+app.post('/api/messages', (req, res) => {
+  const mobile = normMobile(req.body.mobile);
+  const name = clean(req.body.name, 80), message = clean(req.body.message, 1000);
+  if (!name) return fail(res, 400, 'Please add your name.');
+  if (!mobile) return fail(res, 400, 'Please enter a valid mobile number.');
+  if (!message) return fail(res, 400, 'Please write your message.');
+  const r = newRequest('message', { name, mobile, topic: clean(req.body.topic, 40), message });
+  res.json({ id: r.id });
+});
 app.post('/api/inspections', (req, res) => {
   const mobile = normMobile(req.body.mobile);
   const name = clean(req.body.name, 80), where = clean(req.body.area, 80);
