@@ -9,8 +9,11 @@ const mark = (k) => { try { sessionStorage.setItem(k, '1'); } catch { /* ignore 
 let locating = 0;
 export function checkAvailability(again) {
   if (S.area && again !== true) return go(areaUrl());
-  if (!navigator.geolocation) return go('/area');
+  // Browsers only share location on a secure (https) page; say so instead of failing silently.
+  if (!window.isSecureContext) return go('/area?loc=insecure', { replace: location.pathname === '/area' });
+  if (!navigator.geolocation) return go('/area?loc=unavailable', { replace: location.pathname === '/area' });
   const mine = ++locating;
+  const failed = (why) => { if (mine === locating) go('/area?loc=' + why, { replace: location.pathname === '/area' }); };
   const box = openLayer('popup', `
     <div class="kicker"><span class="live"></span>Checking who's near you</div>
     <h2>Finding technicians near you</h2>
@@ -23,9 +26,9 @@ export function checkAvailability(again) {
     try {
       const { area } = await api(`/areas/near?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}`);
       if (mine !== locating) return;
-      if (area) foundPopup(area); else go('/area?far=1');
-    } catch { if (mine === locating) go('/area'); }
-  }, () => { if (mine === locating) go('/area'); }, { timeout: 12000, maximumAge: 600000 });
+      if (area) foundPopup(area); else go('/area?far=1', { replace: location.pathname === '/area' });
+    } catch { failed('unavailable'); }
+  }, (err) => failed(err && err.code === 1 ? 'denied' : 'unavailable'), { timeout: 12000, maximumAge: 600000 });
 }
 
 export function foundPopup(area) {

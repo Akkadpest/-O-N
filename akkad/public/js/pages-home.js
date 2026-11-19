@@ -15,11 +15,19 @@ route('/', async () => {
   };
 });
 
+// Why "Use my current location" could not finish, in the customer's words.
+const LOC_NOTES = {
+  denied: 'Location is switched off for this site. Allow it in your browser settings and tap the button again, or type your area below.',
+  unavailable: 'We could not get your location just now. Please try again, or type your area below.',
+  insecure: 'Your browser only shares location on a secure (https) page. Please type your area below.',
+};
+
 /* ---------- screen 15: enter your area (Google address search, with our own list as the fallback) ---------- */
 route('/area', async (_, q) => ({
   title: 'Enter your area', flow: true, bar: false,
   html: `<div class="flow"><h1>Enter your area</h1>
-    ${q.get('far') ? '<p class="note">We could not match your location to a community we serve. Please type it below.</p>' : '<p class="muted">Type your building, street or community and pick it from the list.</p>'}
+    ${q.get('far') ? '<p class="card warn">Your location is outside the communities we serve. Type your area below to check.</p>'
+      : LOC_NOTES[q.get('loc')] ? `<p class="card warn">${LOC_NOTES[q.get('loc')]}</p>` : '<p class="muted">Type your building, street or community and pick it from the list.</p>'}
     <label class="field">${icon('search')}<span class="sr">Building, street or community</span><input id="q" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Building, street or community" autofocus></label>
     <div id="results" class="area-list" aria-live="polite"></div>
     <p class="note powered" id="powered" hidden>Powered by Google</p>

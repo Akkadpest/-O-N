@@ -19,6 +19,9 @@ concurrency:
 env:
   DEPLOY_HOST: 13.212.142.149
   SSH_USER: ubuntu
+  # Your own domain once its DNS points at the server (for example pestcontrol.ae).
+  # Empty = a free test address made from the server's IP, so https (and location) can work without a domain.
+  SITE_DOMAIN: ''
 
 jobs:
   deploy:
@@ -51,9 +54,20 @@ jobs:
           # Optional secret GOOGLE_MAPS_API_KEY: sent over SSH and saved in /etc/akkad.env on the server.
           if [ -n "$GOOGLE_KEY" ]; then printf 'GOOGLE_MAPS_API_KEY=%s\n' "$GOOGLE_KEY" | $SSH 'umask 077; cat > ~/akkad-release/.env.deploy'; fi
           # The owner chose to replace the earlier placeholder site ("New Website", website.service).
-          $SSH 'sudo REPLACE_SERVICE=website bash ~/akkad-release/deploy/server-setup.sh'
+          $SSH "sudo REPLACE_SERVICE=website PUBLIC_IP=$DEPLOY_HOST SITE_DOMAIN='$SITE_DOMAIN' bash ~/akkad-release/deploy/server-setup.sh"
       - name: Check the public address
         run: curl -fsS -o /dev/null -m 20 "http://$DEPLOY_HOST/" && echo "Live at http://$DEPLOY_HOST/"
+      - name: Turn on https once it answers from outside
+        run: |
+          SSH="ssh -i $HOME/.ssh/lightsail.pem -o BatchMode=yes -o ConnectTimeout=20 $SSH_USER@$DEPLOY_HOST"
+          D="$($SSH 'cat /etc/akkad.domain 2>/dev/null || true')"
+          if [ -z "$D" ]; then echo "::warning::No https certificate yet. The site works on http, but browsers will not share location."; exit 0; fi
+          if curl -fsS -o /dev/null -m 20 "https://$D/"; then
+            $SSH "sudo HTTPS_VERIFIED=1 PUBLIC_IP=$DEPLOY_HOST SITE_DOMAIN='$SITE_DOMAIN' bash ~/akkad-release/deploy/server-setup.sh" | tail -3
+            echo "Secure address: https://$D/"
+          else
+            echo "::warning::The certificate for $D is ready, but https does not answer from outside. Open port 443 (HTTPS) in the Lightsail firewall: instance > Networking > IPv4 Firewall > Add rule > HTTPS."
+          fi
       - name: Remove the key
         if: always()
         run: rm -f ~/.ssh/lightsail.pem

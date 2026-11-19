@@ -141,14 +141,12 @@ systemctl enable akkad >/dev/null 2>&1
 systemctl restart akkad
 
 # --- nginx in front: the only thing that talks to the internet ---
-cat > "$SITE" <<'NGINX'
-server {
-  listen 80 default_server;
-  listen [::]:80 default_server;
-  server_name _;
-  server_tokens off;
-  client_max_body_size 13m;
-
+# Browsers only share a visitor's location on secure (https) pages, so the site also gets a
+# certificate. SITE_DOMAIN is your own domain once it points here; without one, a free
+# address made from the server's IP is used (for example 13-212-142-149.sslip.io).
+DOMAIN_FILE=/etc/akkad.domain
+HTTPS_FLAG=/etc/akkad.https-ok
+PROXY='
   location / {
     proxy_pass http://127.0.0.1:3000;
     proxy_http_version 1.1;
@@ -156,14 +154,63 @@ server {
     proxy_set_header X-Forwarded-For $remote_addr;
     proxy_set_header X-Forwarded-Proto $scheme;
     proxy_read_timeout 30s;
-  }
+  }'
+write_site() {  # $1 = domain with a certificate, or empty
+  local domain="$1" port80="$PROXY"
+  # Only send visitors to https once it has been reached from outside (HTTPS_FLAG).
+  if [ -n "$domain" ] && [ -f "$HTTPS_FLAG" ]; then port80="
+  location / { return 301 https://$domain\$request_uri; }"; fi
+  {
+    printf 'server {\n  listen 80 default_server;\n  listen [::]:80 default_server;\n  server_name _;\n  server_tokens off;\n  client_max_body_size 13m;\n%s\n}\n' "$port80"
+    if [ -n "$domain" ]; then
+      printf 'server {\n  listen 443 ssl default_server;\n  listen [::]:443 ssl default_server;\n  server_name %s;\n  server_tokens off;\n  client_max_body_size 13m;\n' "$domain"
+      printf '  ssl_certificate /etc/letsencrypt/live/%s/fullchain.pem;\n  ssl_certificate_key /etc/letsencrypt/live/%s/privkey.pem;\n  ssl_protocols TLSv1.2 TLSv1.3;\n%s\n}\n' "$domain" "$domain" "$PROXY"
+    fi
+  } > "$SITE"
 }
-NGINX
+has_cert() { [ -n "$1" ] && [ -f "/etc/letsencrypt/live/$1/fullchain.pem" ]; }
+
+candidates="${SITE_DOMAIN:-}"
+if [ -z "$candidates" ] && [ -n "${PUBLIC_IP:-}" ]; then ip_dashed="$(echo "$PUBLIC_IP" | tr . -)"; candidates="$ip_dashed.sslip.io $ip_dashed.nip.io"; fi
+case "$candidates" in *[!A-Za-z0-9.\ -]*) echo "SITE_DOMAIN has an invalid name."; exit 1 ;; esac
+DOMAIN="$(cat "$DOMAIN_FILE" 2>/dev/null || true)"
+case " $candidates " in *" $DOMAIN "*) ;; *) DOMAIN="" ;; esac   # the wanted address changed
+has_cert "$DOMAIN" || DOMAIN=""
+[ -n "$DOMAIN" ] || rm -f "$HTTPS_FLAG"
+
+write_site "$DOMAIN"
 ln -sfn "$SITE" /etc/nginx/sites-enabled/akkad
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl enable nginx >/dev/null 2>&1
 systemctl reload nginx || systemctl restart nginx
+
+if [ -z "$DOMAIN" ] && [ -n "$candidates" ]; then
+  command -v certbot >/dev/null || { apt-get update -y; apt-get install -y certbot python3-certbot-nginx; }
+  for c in $candidates; do
+    if has_cert "$c" || certbot certonly --nginx --non-interactive --agree-tos --register-unsafely-without-email --deploy-hook "systemctl reload nginx" -d "$c"; then
+      DOMAIN="$c"; break
+    fi
+    echo "Could not get a certificate for $c."
+  done
+  if [ -n "$DOMAIN" ]; then
+    echo "$DOMAIN" > "$DOMAIN_FILE"; chmod 644 "$DOMAIN_FILE"
+    write_site "$DOMAIN"; nginx -t; systemctl reload nginx
+    echo "Certificate ready for https://$DOMAIN/"
+  else
+    rm -f "$DOMAIN_FILE"
+    echo "Note: no https certificate yet, so the site stays on http and browsers will not share location."
+  fi
+fi
+
+# The deploy confirms https answers from outside, then asks for this switch:
+# http visitors are sent to https, and cookies become https-only.
+if [ "${HTTPS_VERIFIED:-0}" = "1" ] && [ -n "$DOMAIN" ] && [ ! -f "$HTTPS_FLAG" ]; then
+  touch "$HTTPS_FLAG"
+  write_site "$DOMAIN"; nginx -t; systemctl reload nginx
+  if ! grep -q '^AKKAD_HTTPS=1$' "$ENV_FILE"; then echo 'AKKAD_HTTPS=1' >> "$ENV_FILE"; systemctl restart akkad; fi
+  echo "https is on: http visitors are now sent to https://$DOMAIN/"
+fi
 
 # --- check it really answers ---
 for i in $(seq 1 20); do

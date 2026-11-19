@@ -81,8 +81,10 @@ In Google Cloud, restrict the key to the Places API and to the server's IP addre
 
 To install by hand instead, copy this folder to the server and run `sudo bash deploy/server-setup.sh`.
 
-For a domain with https: point the domain at the server, run `sudo apt install certbot python3-certbot-nginx && sudo certbot --nginx -d yourdomain`,
-then add `AKKAD_HTTPS=1` to `/etc/akkad.env` and `sudo systemctl restart akkad`.
+**https:** the installer gets a free certificate automatically (browsers only share a visitor's location on https pages).
+Set `SITE_DOMAIN` in the workflow to your own domain once its DNS points at the server; while it is empty, a free test address made from
+the server's IP is used. Port 443 must be open in the Lightsail firewall (instance > Networking). Once the deploy sees https answering from
+outside, http visitors are redirected to it and cookies become https-only.
 
 ## Sample content to replace
 
