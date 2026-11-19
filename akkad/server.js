@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const C = require('./data/catalog');
+const CONTENT = require('./data/content');
 const store = require('./lib/store');
 
 const PORT = process.env.PORT || 3000;
@@ -24,8 +25,9 @@ app.disable('x-powered-by');
 /* ---------- security ---------- */
 const sha = (v) => crypto.createHash('sha256').update(String(v)).digest('hex');
 const same = (a, b) => { const x = Buffer.from(sha(a)), y = Buffer.from(sha(b)); return crypto.timingSafeEqual(x, y); };
-const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self'", "style-src-attr 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self'",
-  "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join('; ');
+// Google is allowed for one thing only: the live office map on the contact section (and its online check).
+const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self'", "style-src-attr 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self' https://www.google.com",
+  "frame-src https://www.google.com", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join('; ');
 app.use((req, res, next) => {
   req.ip = (TRUST_PROXY && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || 'unknown';
   res.setHeader('Content-Security-Policy', CSP);
@@ -194,7 +196,7 @@ app.get('/api/site', (req, res) => {
   const now = dubaiNow();
   const first = days(1)[0];
   res.json({
-    company: C.COMPANY, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
+    company: C.COMPANY, photos: C.PHOTOS, services: CONTENT.SERVICES, neighborReviews: C.NEIGHBOR_REVIEWS, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
     emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO,
     firstDay: first.label, statusClock: fmtClock(new Date(Date.now() - (now.minute % 30) * 60000)),
   });
@@ -242,6 +244,16 @@ function newRequest(type, body) {
   d.requests.push(r); store.save();
   return r;
 }
+// Contact form: saved with the other customer requests for the team to answer.
+app.post('/api/messages', limit('request', 10, 60), (req, res) => {
+  const mobile = normMobile(req.body.mobile);
+  const name = clean(req.body.name, 80), message = clean(req.body.message, 1000);
+  if (!name) return fail(res, 400, 'Please add your name.');
+  if (!mobile) return fail(res, 400, 'Please enter a valid mobile number.');
+  if (!message) return fail(res, 400, 'Please write your message.');
+  const r = newRequest('message', { name, mobile, topic: clean(req.body.topic, 40), message });
+  res.json({ id: r.id });
+});
 app.post('/api/inspections', limit('request', 10, 60), (req, res) => {
   const mobile = normMobile(req.body.mobile);
   const name = clean(req.body.name, 80), where = clean(req.body.area, 80);

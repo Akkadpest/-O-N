@@ -1,5 +1,5 @@
 // After the sale: confirmation, live tracking, reschedule, cancel, and finding a booking (screens 33-36, 41-56).
-import { S, save, site, me, api, bookingApi, download, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell } from './core.js';
+import { S, save, site, me, api, bookingApi, download, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell, helpBox } from './core.js';
 
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const getBooking = async (id) => (await bookingApi(id)).booking;
@@ -20,7 +20,7 @@ route('/booking/:id/confirmed', async ({ id }) => {
       <h1>See you on ${esc(b.weekday)}</h1>
       <div class="card">${lines([['Date', `<b>${esc(b.dateLabel)}</b>`], ['Time slot', `<b>${esc(b.slot)}</b>`], ['Service', esc(b.kind === 'warranty' ? 'Warranty visit' : b.label)],
         ['Total', !b.total ? '<span class="green">AED 0 · nothing to pay</span>' : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)} paid`]])}</div>${pendingNote(b)}
-      <div class="card"><p class="muted">Before we arrive</p><p style="font-size:18px;color:var(--ink);margin-top:8px">${esc(b.prep)}</p></div>
+      <div class="card"><p class="muted">Before we arrive</p><p style="font-size:16px;color:var(--ink);margin-top:8px">${esc(b.prep)}</p></div>
       <p class="muted">A reminder is sent on WhatsApp the day before, and live tracking starts when the technician sets off.</p>
       <div class="row"><a class="btn ghost" href="/booking/${b.id}/reschedule">Reschedule</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp</a></div>
       <p class="center"><a class="link" href="/booking/${b.id}">Manage this booking</a> · <a class="link" href="/reminder/${b.id}">See the WhatsApp reminder</a></p></div>`,
@@ -90,10 +90,10 @@ async function onTheWay(b) {
   const { slots } = await bookingApi(b.id, '/later-today');
   const t = b.tracking;
   openLayer('sheet', `<h2>Your technician is already on the way</h2>
-    <p style="font-size:18px">He set off at ${esc(t.setOffClock)} and is about ${t.remaining} min away.</p>
-    <div class="card on"><div class="ic-row">${icon('calendar', 34)}<div class="grow"><h3 style="font-size:21px">Come later today</h3><p class="sub">${slots.length ? 'Pick a time below. No extra fee.' : 'No later slots are left today.'}</p></div></div>
+    <p style="font-size:16px">He set off at ${esc(t.setOffClock)} and is about ${t.remaining} min away.</p>
+    <div class="card on"><div class="ic-row">${icon('calendar', 34)}<div class="grow"><h3 style="font-size:18px">Come later today</h3><p class="sub">${slots.length ? 'Pick a time below. No extra fee.' : 'No later slots are left today.'}</p></div></div>
       ${slots.length ? `<div class="chips" style="margin-top:12px">${slots.map((s) => `<button class="chip" data-later="${esc(s)}">${esc(s)}</button>`).join('')}</div>` : ''}</div>
-    <a class="card ic-row" href="/booking/${b.id}/reschedule" style="text-decoration:none">${icon('calendar', 28)}<span class="grow"><h3 style="font-size:21px">Move to another day</h3><p class="sub">${b.expressFee ? `The ${aed(b.expressFee)} express fee is not refunded once he has set off.` : 'Free. Pick any open day.'}</p></span></a>
+    <a class="card ic-row" href="/booking/${b.id}/reschedule" style="text-decoration:none">${icon('calendar', 28)}<span class="grow"><h3 style="font-size:18px">Move to another day</h3><p class="sub">${b.expressFee ? `The ${aed(b.expressFee)} express fee is not refunded once he has set off.` : 'Free. Pick any open day.'}</p></span></a>
     <p class="err"></p><a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 22)}Call the technician</a>`, {
     mount(box) {
       on(box, '[data-later]', (btn) => busy(btn, async () => {
@@ -157,7 +157,7 @@ function cancelSheet(b) {
     <p class="muted">Tell us why you're cancelling</p>
     <div class="chips">${['Not at home', 'Pests gone', 'Found cheaper', 'Other'].map((r) => `<button class="chip" data-r="${r}">${r}</button>`).join('')}</div>
     ${pending(b) ? `<div class="card warn"><p><b>Nothing has been charged.</b> Payment for this booking is still pending, so there is nothing to refund.</p></div>`
-      : amount ? `<div class="card warn"><p><b style="font-size:19px">No cash refund.</b> If you cancel, your ${aed(amount)} stays as Akkad credit for 90 days, to use on any service.</p></div>`
+      : amount ? `<div class="card warn"><p><b style="font-size:17px">No cash refund.</b> If you cancel, your ${aed(amount)} stays as Akkad credit for 90 days, to use on any service.</p></div>`
       : `<div class="card warn"><p><b>Nothing was charged.</b> Your warranty stays active, so you can book this free visit again.</p></div>`}
     <p class="err"></p><button class="btn danger" data-go>Cancel anyway</button>`, {
     mount(box) {
@@ -247,7 +247,7 @@ route('/booking/:id/moved', async ({ id }) => {
   return {
     title: 'Your visit is moved', head: 'area', flow: true, banner: false,
     html: `<div class="flow center"><div class="bigcheck">${icon('tick', 40, 'stroke-width="3"')}</div>
-      <h1 class="big">Your visit is moved</h1><p style="font-size:18px" class="muted">${esc(b.when)} · Booking ${esc(b.id)}</p>
+      <h1 class="big">Your visit is moved</h1><p style="font-size:16px" class="muted">${esc(b.when)} · Booking ${esc(b.id)}</p>
       <div class="card" style="text-align:left">${lines([[`<span class="ic-row" style="gap:8px">${icon('chat', 22)}WhatsApp confirmation</span>`, '<span class="green">Sent</span>'],
         [`<span class="ic-row" style="gap:8px">${icon('calendar', 22)}Reminder</span>`, esc(b.reminderLabel)], [`<span class="ic-row" style="gap:8px">${icon('truck', 22)}Live tracking</span>`, 'On the day']])}</div>
       ${b.slot ? `<button class="btn ghost" data-cal>${icon('calendar', 22)}Add to my calendar</button>` : ''}
@@ -272,7 +272,8 @@ route('/manage', async () => ({
       <label class="field">${icon('phone')}<span class="sr">Mobile number used to book</span><input name="mobile" type="tel" inputmode="tel" placeholder="Mobile number used to book" autocomplete="tel"></label>
       <p class="err"></p><button class="btn">Send me a code</button></form>
     <p class="note center">We send a 4-digit code on WhatsApp to keep your booking safe.</p>
-    <div class="card"><p class="muted">Can't find your booking number?</p><p style="font-size:18px;color:var(--ink);margin-top:8px">It is in your WhatsApp confirmation and payment receipt.</p><p style="margin-top:8px"><a class="link" href="/find">Use my mobile number only</a></p></div></div>`,
+    <p class="center"><a class="link" href="/find">No booking number? Use my mobile number only</a></p>
+    ${helpBox("Can't find your booking number?", "It's in your WhatsApp confirmation and receipt. Or ask us.")}</div>`,
   mount(root) {
     $('form', root).addEventListener('submit', (e) => {
       e.preventDefault();
@@ -290,6 +291,7 @@ route('/find', async () => ({
     <p class="note center">We'll show every booking and warranty on this number.</p>
     <div class="card"><p class="muted">Have your booking number?</p><p style="margin-top:8px"><a class="link" href="/manage">Use booking number instead</a></p></div>
     <div class="card ic-row">${icon('chat', 22)}<div class="grow"><h3>Fastest way</h3><p class="sub">Open the link in your Akkad WhatsApp message. It opens your booking directly.</p></div></div>
+    ${helpBox()}
     ${site.demo ? '<p class="demo-note">Demo mode: try the sample customer <b>+971 50 123 4567</b> (booking AK-10482, warranty active).</p>' : ''}</div>`,
   mount(root) {
     $('form', root).addEventListener('submit', (e) => { e.preventDefault(); busy($('form .btn', root), () => sendCode(root, { mobile: $('[name=mobile]', root).value.trim() })); });
@@ -365,7 +367,7 @@ route('/b/:key', async ({ key }, q) => {
     go(`/booking/${r.id}${q.get('to') === 'reschedule' ? '/reschedule' : ''}`, { replace: true });
     return null;
   } catch (e) {
-    return { title: 'Link expired', flow: true, html: `<div class="flow"><h1>This link no longer works</h1><p class="muted">${esc(e.message)}</p><a class="btn" href="/find">Find my bookings</a></div>` };
+    return { title: 'Link expired', flow: true, html: `<div class="flow"><span class="ic-circle big">${icon('info', 28)}</span><h1>This link no longer works</h1><p class="muted">${esc(e.message)}</p><a class="btn" href="/find">Find my bookings${icon('arrow', 18)}</a>${helpBox()}</div>` };
   }
 });
 

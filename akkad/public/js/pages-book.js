@@ -1,15 +1,15 @@
 // New booking (screens 21-32) and warranty call-out (screens 37-40).
-import { S, save, site, me, api, route, go, esc, icon, aed, photo, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
+import { S, save, site, me, api, route, go, esc, icon, aed, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
 import { areaUrl } from './flows.js';
 
 const needArea = () => { if (!S.area) { go('/area', { replace: true }); return true; } return false; };
 const pestOf = (id) => site.pests.find((p) => p.id === id && !p.inspection);
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const express = () => S.draft.timing !== 'scheduled';
-const shortSize = (type, label) => (type === 'villa' ? label.replace(' bedrooms', '-bed') + ' villa' : label === 'Studio' ? 'studio' : label.replace(/ bedrooms?/, '-bed') + ' apt');
+export const shortSize = (type, label) => (type === 'villa' ? label.replace(' bedrooms', '-bed') + ' villa' : label === 'Studio' ? 'studio' : label.replace(/ bedrooms?/, '-bed') + ' apt');
 
 // What the customer has chosen so far, priced. The server prices it again on booking.
-function chosen(p) {
+export function chosen(p) {
   const pk = p.packages.find((x) => x.id === S.draft.pkg);
   if (!pk) return null;
   if (!pk.sized) return { pk, price: pk.price, label: pk.label, line: pk.title.split(': ')[1].replace(/^./, (c) => c.toUpperCase()) };
@@ -36,7 +36,7 @@ route('/book', async () => {
   return {
     title: 'What are you seeing?', head: 'area', bar: true, flow: true,
     html: `<div class="flow">${miniMap(`Recent treatments in ${S.area.short}`)}
-      <div class="card on"><h3 style="font-size:21px">${d.stats.share} of 10 jobs here were ${esc(top.single)}</h3><p class="sub">Last 90 days, from Akkad job records</p></div>
+      <div class="card on"><h3 style="font-size:18px">${d.stats.share} of 10 jobs here were ${esc(top.single)}</h3><p class="sub">Last 90 days, from Akkad job records</p></div>
       <h1 class="big">Is that what you're seeing?</h1>
       <a class="btn lg" href="/book/${top.id}">Yes, ${esc(top.single)}</a>
       <a class="btn ghost" href="/book/services">Something else</a>
@@ -52,7 +52,7 @@ route('/book/services', async () => {
   return {
     title: 'Which pest are you seeing?', head: 'area', bar: true, flow: true,
     html: `<div class="flow"><h1>Which pest are you seeing?</h1><p class="muted">Tap a card. Prices include VAT.</p>
-      <div class="pests">${list.map((p) => `<button data-p="${p.id}" aria-pressed="false">${icon('bug', 30)}<b>${esc(p.name)}</b><span>${esc(p.signs)}</span><i>${p.from ? 'From AED ' + p.from : esc(p.fromLabel)}</i></button>`).join('')}</div>
+      <div class="pests">${list.map((p) => pestTile(p, true)).join('')}</div>
       <button class="btn" id="cont" disabled>Choose a pest to continue</button></div>`,
     mount(root) {
       const cont = $('#cont', root);
@@ -78,7 +78,7 @@ route('/book/:pest', async ({ pest }) => {
       <div class="meta">${icon('shield', 20)}${p.warrantyMonths}-month warranty</div><div class="meta">${icon('calendar', 20)}${esc(pk.duration)}</div>
       <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(from)}</div>
       <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><button class="link b" data-details="${pk.id}">View details ›</button></div>
-      <div class="side">${photo(pk.photo)}<button class="btn add" data-add="${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;
+      <div class="side">${photo(pk.photo, imgFor(pk.photo) || imgFor(p.photo))}<button class="btn add" data-add="${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;
   };
   return {
     title: p.service, head: 'area', bar: true, flow: true,
@@ -151,8 +151,8 @@ export function pickSlots(root, fn) {
 
 /* ---------- screens 27, 28, 32: review and pay ---------- */
 const payMethods = (total) => `
-  <button class="card pay on" data-pay="card" aria-pressed="true"><b>${icon('card')}Credit or debit card</b><small>Secure checkout by Network International</small></button>
-  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed(total / 4)}, if eligible</small></button>`;
+  <button class="card pay on" data-pay="card" aria-pressed="true"><b>${icon('card')}Credit or debit card</b><small>Secure checkout by Network International</small>${payLogos(['visa', 'mastercard', 'apple-pay'], 'in-pay')}</button>
+  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed(total / 4)}, if eligible</small>${payLogos(['tabby'], 'in-pay')}</button>`;
 function wirePay(root) {
   on(root, '[data-pay]', (b) => $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }));
   return () => $('[data-pay].on', root).dataset.pay;
@@ -165,7 +165,7 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
     <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows)}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
     <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
-    <h4>How you pay</h4><p style="font-size:17px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
+    <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }
 
@@ -221,7 +221,7 @@ route('/warranty', async () => {
       <p class="muted">Enter the booking number from your receipt or WhatsApp message.</p>
       <form class="stack" novalidate><label class="field"><span class="sr">Booking number</span><input name="no" placeholder="AK-10482" autocapitalize="characters" autocomplete="off" value="${esc(known ? known.id : '')}"></label>
       <p class="err"></p><button class="btn">Find my booking</button></form>
-      <p class="muted">Can't find it? <a href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp us</a> and we'll look it up.</p></div>`,
+      ${helpBox("Can't find your booking number?", "Message us and we'll look it up for you.")}</div>`,
     mount(root) {
       $('form', root).addEventListener('submit', (e) => {
         e.preventDefault();

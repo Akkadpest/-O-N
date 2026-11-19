@@ -27,6 +27,9 @@ Offline, the links that leave the site (WhatsApp, Google reviews) and location d
 | `public/js/pages-home.js` | Homepage, area search, area page, inspection and photo requests (screens 1-18) |
 | `public/js/pages-book.js` | New booking and warranty call-out (screens 20-32, 37-40) |
 | `public/js/pages-manage.js` | Confirmation, live tracking, reschedule, cancel, find my bookings (screens 33-36, 41-56) |
+| `public/js/store.js` | The shop: service list, search, cart and the size and timing choices |
+| `public/js/pages-info.js` | Services, About, Commercial, Contact and the policy pages |
+| `data/content.js` | The text for the service and information pages |
 | `public/js/flows.js` | The pop-ups: location, nearby team, new or warranty, booking help, welcome back |
 
 ## Adding photos

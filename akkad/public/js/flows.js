@@ -127,7 +127,7 @@ export function homePopup() {
     html = `<div class="kicker"><span class="live"></span>Technicians available today</div>
       <h2>Check who's near you</h2>
       <p>See pests treated nearby, local reviews and available technicians.</p>
-      <button class="btn lg" data-check><span class="live"></span>Check availability</button>
+      <button class="btn lg" data-check>Check availability${icon('arrow', 18)}</button>
       <p class="note center">Takes 5 seconds</p>
       <p class="center"><a class="link" href="/area">Enter my area instead</a></p>`;
   }
