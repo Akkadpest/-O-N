@@ -14,6 +14,20 @@ export DEBIAN_FRONTEND=noninteractive
 [ "$(id -u)" -eq 0 ] || { echo "Run this script with sudo."; exit 1; }
 [ -f "$SRC/server.js" ] || { echo "server.js not found next to this script."; exit 1; }
 
+# --- replace a named earlier website, only when the owner asked for it ---
+# REPLACE_SERVICE=name stops and disables that systemd service. Its files are not touched,
+# so it can be switched back on with: sudo systemctl enable --now name
+if [ -n "${REPLACE_SERVICE:-}" ]; then
+  case "$REPLACE_SERVICE" in *[!A-Za-z0-9_.@-]*) echo "REPLACE_SERVICE has an invalid name."; exit 1 ;; esac
+  if [ "$REPLACE_SERVICE" != "akkad" ] && systemctl cat "$REPLACE_SERVICE.service" >/dev/null 2>&1; then
+    if systemctl is-active --quiet "$REPLACE_SERVICE" || systemctl is-enabled --quiet "$REPLACE_SERVICE" 2>/dev/null; then
+      echo "Stopping the previous website service '$REPLACE_SERVICE' (its files are left in place)."
+      systemctl disable --now "$REPLACE_SERVICE"
+      sleep 1
+    fi
+  fi
+fi
+
 # --- never take over a server that is already serving another website ---
 if [ ! -f "$SITE" ] && [ "${FORCE:-0}" != "1" ]; then
   if command -v ss >/dev/null && ss -ltnH '( sport = :80 or sport = :443 )' | grep -q .; then
