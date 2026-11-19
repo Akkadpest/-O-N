@@ -19,7 +19,7 @@ const contact = { name: 'Test', mobile: '0507654321', building: 'Test Tower', ap
 const order = { area: 'barsha-heights-tecom', pest: 'cockroach', pkg: 'apartment', size: 's1', ...contact };
 
 before(async () => {
-  server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: { ...process.env, PORT, AKKAD_DB: DB }, stdio: 'ignore' });
+  server = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], { env: { ...process.env, PORT, AKKAD_DB: DB, AKKAD_HOST: '127.0.0.1' }, stdio: 'ignore' });
   for (let i = 0; i < 50; i++) { try { await fetch(B + '/api/site'); return; } catch { await new Promise((r) => setTimeout(r, 100)); } }
   throw new Error('server did not start');
 });

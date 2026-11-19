@@ -537,7 +537,7 @@ app.use((err, req, res, next) => {
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: DEMO ? 0 : 3600 }));
 app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
-const server = app.listen(PORT, process.env.HOST || undefined, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
+const server = app.listen(PORT, process.env.AKKAD_HOST || undefined, () => console.log(`Akkad Pest Control website running on http://localhost:${PORT}${DEMO ? '  (demo mode: payments, WhatsApp and dispatch are simulated)' : ''}`));
 server.headersTimeout = 15000; // slow or stalled connections are dropped
 server.requestTimeout = 30000;
 server.keepAliveTimeout = 10000;

@@ -61,7 +61,7 @@ if [ ! -f "$ENV_FILE" ]; then
   umask 077
   cat > "$ENV_FILE" <<ENV
 PORT=3000
-HOST=127.0.0.1
+AKKAD_HOST=127.0.0.1
 TRUST_PROXY=1
 AKKAD_DB=$DATA/db.json
 AKKAD_UPLOADS=$DATA/uploads
