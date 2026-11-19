@@ -1560,3 +1560,14 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
 @media (min-width: 900px) {
   .pk { grid-template-columns: 140px minmax(0, 1fr); column-gap: 16px; padding: 16px; }
 }
+
+/* ---------- how it works on phones: a smaller pest doctor picture, still shown whole ---------- */
+@media (max-width: 899px) {
+  .how-card { display: grid; justify-items: center; }
+  .how-img { width: min(62%, 240px); border-radius: 16px; box-shadow: 0 6px 18px rgba(20, 40, 10, .1); }
+  .how-steps { justify-self: stretch; }
+}
+@media (max-width: 899px) {
+  .how-card { justify-items: start; }
+  .how-img { width: clamp(216px, 62%, 250px); }
+}
