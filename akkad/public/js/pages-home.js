@@ -3,83 +3,13 @@ import { S, save, site, api, route, go, esc, icon, photo, pestTile, on, $, $$, b
 import { book, foundPopup, homePopup, checkAvailability } from './flows.js';
 import { storePage } from './store.js';
 
-/* ---------- office location and contact details ---------- */
-const mapsLink = (c) => c.mapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.mapsQuery || c.address)}`;
-
-// Drawn map: always works, even with no internet. Replaced by Google Maps when online.
-const officeSvg = (c) => `
-  <svg viewBox="0 0 600 340" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Map: Akkad office at ${esc(c.address)}">
-    <rect width="600" height="340" fill="#eef3ea"/>
-    ${[[20, 20, 120, 70], [160, 20, 150, 70], [330, 20, 120, 50], [470, 20, 110, 90], [20, 210, 110, 110], [150, 240, 150, 80], [420, 230, 160, 90], [20, 110, 100, 80]].map(([x, y, w, h]) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="6" fill="#e1eada"/>`).join('')}
-    <path d="M-20 300 620 60" stroke="#f3d48f" stroke-width="30"/>
-    <path d="M-20 300 620 60" stroke="#fff" stroke-width="2" stroke-dasharray="14 12"/>
-    <path d="M140 -10 230 350M330 -10 380 350M-10 200 600 150" stroke="#fff" stroke-width="12"/>
-    <rect x="236" y="96" width="92" height="60" rx="6" fill="#cfe1c2"/>
-    <path d="M440 120c30-14 70-6 100 10v60c-34-8-70-4-100 14z" fill="#cde8bd"/>
-    <text x="490" y="168" text-anchor="middle" font-size="14" fill="#5c7a4a">The Greens</text>
-    <text x="20" y="270" font-size="14" font-weight="600" fill="#8a6a1c" transform="rotate(-20.5 20 270)">Sheikh Zayed Road</text>
-    <g transform="translate(282 124)">
-      <circle r="34" fill="rgba(60,122,34,.18)"/>
-      <path d="M0 0c-14-18-22-28-22-40a22 22 0 0 1 44 0c0 12-8 22-22 40z" fill="#3c7a22" stroke="#fff" stroke-width="3"/>
-      <circle cy="-40" r="8" fill="#fff"/>
-    </g>
-    <rect x="160" y="168" width="244" height="58" rx="10" fill="#fff" stroke="#3c7a22" stroke-width="2"/>
-    <text x="282" y="192" text-anchor="middle" font-size="17" font-weight="700" fill="#1c2a16">Akkad Pest Control</text>
-    <text x="282" y="213" text-anchor="middle" font-size="13" fill="#4b5745">Sheikha Noora Tower, Office 403</text>
-  </svg>`;
-
-const contactSection = (c) => `
-  <section class="sec tint" id="contact"><div class="wrap">
-    <h2>Visit or contact us</h2>
-    <div class="contact">
-      <div class="office-map" data-map>${officeSvg(c)}<span class="map-tag">${icon('pin', 18)}Barsha Heights (Tecom)</span></div>
-      <div class="stack contact-info">
-        <div class="card ic-row">${icon('pin', 28)}<div class="grow"><h3>Our office</h3><p class="sub">${esc(c.building || c.address)}<br>${esc(c.district || '')}</p></div></div>
-        <div class="card ic-row">${icon('phone', 28)}<div class="grow"><h3>Call us</h3><p class="sub"><a class="link" href="${c.phoneHref}">${esc(c.phone)}</a></p></div></div>
-        <div class="card ic-row">${icon('chat', 28)}<div class="grow"><h3>WhatsApp</h3><p class="sub"><a class="link" href="${c.whatsapp}" target="_blank" rel="noopener">Message us on ${esc(c.phone)}</a></p></div></div>
-        ${c.email ? `<div class="card ic-row">${icon('doc', 28)}<div class="grow"><h3>Email</h3><p class="sub"><a class="link" href="mailto:${esc(c.email)}">${esc(c.email)}</a></p></div></div>` : ''}
-        ${c.hours ? `<div class="card ic-row">${icon('calendar', 28)}<div class="grow"><h3>Opening hours</h3><p class="sub">${esc(c.hours)}</p></div></div>` : ''}
-        <div class="card ic-row">${icon('truck', 28)}<div class="grow"><h3>We come to you</h3><p class="sub">Homes and businesses across Dubai, Sharjah and Ajman.</p></div></div>
-      </div>
-    </div>
-  </div></section>`;
-
-// Resolves only when the internet is reachable (the drawn maps stay otherwise).
-let onlineCheck;
-function online() {
-  if (!navigator.onLine) return Promise.reject(new Error('offline'));
-  if (!onlineCheck) {
-    const ctl = new AbortController();
-    setTimeout(() => ctl.abort(), 4000);
-    onlineCheck = fetch('https://www.google.com/generate_204', { mode: 'no-cors', signal: ctl.signal, cache: 'no-store' });
-    onlineCheck.catch(() => { onlineCheck = null; });
-  }
-  return onlineCheck;
-}
-
-// Swap the drawn map for live Google Maps only if the internet is reachable.
-function mountOfficeMap(root, c) {
-  const box = root.querySelector('[data-map]');
-  if (!box) return;
-  online().then(() => {
-    const f = document.createElement('iframe');
-    f.title = 'Akkad office on Google Maps';
-    f.referrerPolicy = 'no-referrer-when-downgrade';
-    f.src = `https://www.google.com/maps?q=${encodeURIComponent(c.mapsQuery || c.address)}&z=15&output=embed`;
-    f.onload = () => box.classList.add('map-on');
-    box.appendChild(f);
-  }).catch(() => {});
-}
-
 /* ---------- homepage: the booking shop, personalised to the customer's area ---------- */
 route('/', async () => {
-  const c = site.company;
   const page = storePage();
   return {
-    title: '', html: page.html + contactSection(c), loc: true, bar: false,
+    title: '', html: page.html, loc: true, bar: false,
     mount(root) {
       page.mount(root);
-      mountOfficeMap(root, c);
       setTimeout(homePopup, 350);
     },
   };
@@ -142,10 +72,9 @@ route('/pest-control/:slug', async ({ slug }) => {
   const a = d.area, st = d.stats, top = d.topPest;
   const page = storePage({ area: a, stats: st, top: top.id, neighborReviews: d.neighborReviews, googleReviews: d.googleReviews });
   return {
-    title: `Pest control in ${a.name}`, html: page.html + contactSection(site.company), head: 'area', bar: false, loc: false,
+    title: `Pest control in ${a.name}`, html: page.html, head: 'area', bar: false, loc: false,
     mount(root) {
       page.mount(root);
-      mountOfficeMap(root, site.company);
     },
   };
 });
