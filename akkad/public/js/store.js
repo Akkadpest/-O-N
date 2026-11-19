@@ -114,6 +114,32 @@ function barHtml() {
   return `<button class="cb-x" data-remove aria-label="Remove ${esc(p.service)} from your booking">${icon('x', 18)}</button><button class="cb-sum" data-cart aria-label="See or change your booking"><b>${aed(c.price + fee)}<u>Change</u></b><small>${esc(p.short)} · ${esc(c.sz ? shortSize(c.pk.sized, c.sz.label) : c.line)}</small></button><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }
 
+// Desktop: left and right arrows on a sideways row, plus click-and-drag, so a mouse can slide it like a finger does.
+function arrows(track) {
+  const make = (dir) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'row-arrow ' + (dir < 0 ? 'prev' : 'next');
+    b.setAttribute('aria-label', dir < 0 ? 'Scroll back' : 'Scroll forward');
+    b.innerHTML = '<span>' + icon(dir < 0 ? 'left' : 'right', 18) + '</span>';
+    b.addEventListener('click', (e) => { e.stopPropagation(); track.scrollBy({ left: dir * Math.max(240, track.clientWidth * 0.7), behavior: 'smooth' }); });
+    return b;
+  };
+  const prev = make(-1), next = make(1);
+  track.prepend(prev); track.append(next);
+  const sync = () => { const max = track.scrollWidth - track.clientWidth; prev.hidden = track.scrollLeft < 8; next.hidden = max < 8 || track.scrollLeft > max - 8; };
+  track.addEventListener('scroll', () => requestAnimationFrame(sync), { passive: true });
+  // click-and-drag with a mouse
+  let startX = null, startLeft = 0, moved = false;
+  track.addEventListener('pointerdown', (e) => { if (e.pointerType !== 'mouse' || e.button !== 0 || e.target.closest('.row-arrow')) return; startX = e.clientX; startLeft = track.scrollLeft; moved = false; });
+  const move = (e) => { if (startX == null) return; const dx = e.clientX - startX; if (Math.abs(dx) > 6) { moved = true; track.classList.add('dragging'); } if (moved) track.scrollLeft = startLeft - dx; };
+  const end = () => { startX = null; setTimeout(() => track.classList.remove('dragging'), 0); };
+  window.addEventListener('pointermove', move); window.addEventListener('pointerup', end); window.addEventListener('resize', sync);
+  onLeave(() => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', end); window.removeEventListener('resize', sync); });
+  track.addEventListener('click', (e) => { if (moved) { e.preventDefault(); e.stopPropagation(); moved = false; } }, true);
+  sync(); setTimeout(sync, 400);
+}
+
 /* ---------- the page ---------- */
 // ctx: { area, stats, extraHtml } – area pages pass their area; the homepage passes the customer's area if known.
 export function storePage(ctx = {}) {
@@ -179,6 +205,7 @@ export function storePage(ctx = {}) {
 
   function mount(root) {
     mountBooking(root);
+    $$('.offer-track, .st-tabs', root).forEach(arrows);
 
     // Neighbour reviews: filter by pest.
     on(root, '[data-f]', (b) => {

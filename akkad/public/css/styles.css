@@ -1473,3 +1473,18 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
 .how-step .of-text p.of-sub { opacity: .9; }
 .how-step.offer-light .of-text p.of-big { color: var(--ink); }
 .how-step.offer-light .of-text p.of-sub { color: var(--muted); opacity: 1; }
+
+/* ---------- desktop: arrows and drag on the sideways rows (offers, service tabs) ---------- */
+.row-arrow { display: none; }
+@media (min-width: 900px) {
+  .offer-track, .st-tabs { cursor: grab; }
+  .offer-track.dragging, .st-tabs.dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .row-arrow { display: block; position: sticky; z-index: 3; flex: 0 0 0; width: 0; height: 0; align-self: center; padding: 0; border: 0; background: none; overflow: visible; }
+  .row-arrow[hidden] { display: none; }
+  .row-arrow.prev { left: 0; margin-right: -12px; }
+  .row-arrow.next { right: 0; margin-left: -12px; }
+  .row-arrow span { position: absolute; top: 50%; display: grid; place-items: center; width: 38px; height: 38px; border: 1px solid var(--line-d); border-radius: 50%; background: #fff; color: var(--green); box-shadow: 0 4px 14px rgba(20, 40, 10, .18); transform: translateY(-50%); cursor: pointer; }
+  .row-arrow.prev span { left: 6px; }
+  .row-arrow.next span { right: 6px; }
+  .row-arrow span:hover { background: var(--pale); }
+}
