@@ -1455,3 +1455,21 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
   .how-card .st-how { padding: 28px 32px; gap: 22px; }
 }
 .how-card .st-how { grid-template-columns: 1fr !important; }
+
+/* ---------- how it works on phones: the picture, then four step cards in the offer-card design ---------- */
+@media (max-width: 899px) {
+  .how-card { border: 0; background: none; overflow: visible; border-radius: 0; }
+  .how-img { border-radius: 18px; box-shadow: 0 8px 22px rgba(20, 40, 10, .1); }
+  .how-steps { display: flex; gap: 12px; margin: 14px -16px 0; padding: 2px 16px 6px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding: 0 16px; scrollbar-width: none; }
+  .how-steps::-webkit-scrollbar { display: none; }
+  .how-step { position: relative; flex: 0 0 62%; min-width: 216px; max-width: 250px; min-height: 124px; grid-template-columns: 1fr; scroll-snap-align: start; }
+  .how-step .of-text { padding: 16px 44px 16px 16px; }
+  .how-step .of-text p.of-big { font-size: 19px; white-space: normal; line-height: 1.15; }
+  .how-step .of-text p.of-sub { white-space: normal; }
+  .how-next { position: absolute; right: 12px; bottom: 12px; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, .18); }
+  .offer-light .how-next { background: var(--green); color: #fff; }
+}
+.how-step .of-text p.of-big, .how-step .of-text p.of-sub { color: #fff; opacity: 1; }
+.how-step .of-text p.of-sub { opacity: .9; }
+.how-step.offer-light .of-text p.of-big { color: var(--ink); }
+.how-step.offer-light .of-text p.of-sub { color: var(--muted); opacity: 1; }

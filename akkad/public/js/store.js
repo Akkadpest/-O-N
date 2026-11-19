@@ -147,7 +147,8 @@ export function storePage(ctx = {}) {
 
       <section class="st-block" id="how"><h2>How it works</h2>
         <div class="card how-card"><img class="how-img" src="/img/hero-pest-doctor.webp" alt="Hire your pest doctor in just 30 minutes, near you, anywhere in the UAE" width="1320" height="1200" loading="lazy">
-          <ol class="st-how">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol></div>
+          <div class="how-steps mob">${[['Pick your service', 'Choose the pest and home size'], ['Choose a time', 'Express today or any open slot'], ['We treat it', 'A trained technician, on time'], ['Stay protected', 'Pests back? We return free']].map(([t, d], i) => `<article class="offer how-step ${['offer-doctor', 'offer-green', 'offer-dark', 'offer-light'][i]}"><div class="of-text"><span class="of-kicker">STEP ${i + 1} OF 4</span><p class="of-big">${t}</p><p class="of-sub">${d}</p></div>${i < 3 ? `<span class="how-next" aria-hidden="true">${icon('arrow', 18)}</span>` : `<span class="how-next" aria-hidden="true">${icon('tick', 18)}</span>`}</article>`).join('')}</div>
+          <ol class="st-how desk">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol></div>
       </section>
 
       ${neighborsBlock(ctx, area)}
