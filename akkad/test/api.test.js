@@ -48,7 +48,7 @@ test('the server sets the price and records payment as pending', async () => {
   const { days } = (await call('/api/slots?days=3')).data;
   const r = await call('/api/bookings', { ...order, timing: 'scheduled', date: days[0].iso, slot: days[0].slots[0], price: 1, total: 1 });
   assert.equal(r.status, 200);
-  assert.equal(r.data.booking.total, 179);
+  assert.equal(r.data.booking.total, 210, 'cockroach, 1-bed apartment, from the price list');
   assert.equal(r.data.booking.paymentStatus, 'pending');
   const id = r.data.booking.id, key = r.data.booking.key;
   assert.equal((await call(`/api/bookings/${id}`)).status, 401, 'no key, no access');
@@ -120,4 +120,20 @@ test('chat: a customer can message, only an agent with the secret can read or re
   const after = await call('/api/chat?after=2', null, chat);
   assert.equal(after.data.messages[0].from, 'agent');
   assert.equal(after.data.agentConnected, true);
+});
+
+test('bed bugs in a villa: bedroom price plus AED 30 per mattress, decided by the server', async () => {
+  const base = { ...order, pest: 'bedbugs', pkg: 'villa', size: 's2', timing: 'express' };
+  const r = await call('/api/bookings', { ...base, mattresses: 4 });
+  assert.equal(r.status, 200);
+  assert.equal(r.data.booking.price, 525 + 4 * 30);
+  assert.match(r.data.booking.label, /3-bed villa · 4 mattresses/);
+  assert.equal((await call('/api/bookings', base)).status, 400, 'mattress count is required');
+  assert.equal((await call('/api/bookings', { ...base, mattresses: 500 })).status, 400);
+});
+
+test('fixed-price services follow the price list', async () => {
+  const r = await call('/api/bookings', { ...order, pest: 'mosquitoes', pkg: 'fogging', size: undefined, timing: 'express' });
+  assert.equal(r.data.booking.price, 315);
+  assert.equal(r.data.booking.warrantyMonths, 0);
 });

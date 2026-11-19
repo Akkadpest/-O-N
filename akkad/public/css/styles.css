@@ -1374,3 +1374,26 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
 @media (min-width: 900px) { .sz-foot { bottom: -28px; margin: 18px -28px -28px !important; padding: 14px 28px 20px; } }
 /* phone cards: the first two points of each package; the rest is one tap away */
 @media (max-width: 899px) { .st-pkg ul { display: block; margin: 10px 0 2px; padding: 10px 0 0 18px; font-size: 13px; line-height: 1.4; } .st-pkg ul li:nth-child(n+3) { display: none; } .st-pkg ul li + li { margin-top: 4px; } }
+
+/* ---------- size picker: count bedrooms (and mattresses) and watch the price change ---------- */
+.size-box { border: 1.5px solid var(--line); border-radius: var(--r); overflow: hidden; background: #fff; }
+.stp-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 16px; }
+.stp-row + .stp-row { border-top: 1px solid var(--line); }
+.stp-label b { display: block; font-size: 16px; color: var(--ink); }
+.stp-label small { color: var(--muted); font-size: 13px; }
+.stp { display: flex; align-items: center; gap: 4px; }
+.stp button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 1.5px solid var(--green); border-radius: 50%; background: #fff; color: var(--green); font-size: 24px; font-weight: 500; line-height: 1; }
+.stp button:hover:not([disabled]) { background: var(--pale); }
+.stp button[disabled] { border-color: var(--line); color: #b6c0ae; cursor: default; }
+.stp output { min-width: 68px; text-align: center; font-size: 20px; font-weight: 800; color: var(--ink); }
+.size-other { display: grid; gap: 0; border-top: 1px solid var(--line); padding: 10px 16px 6px; }
+.size-other > small { color: var(--muted); font-size: 12.5px; text-transform: uppercase; letter-spacing: .06em; }
+.size-other label { display: flex; align-items: center; gap: 10px; padding: 9px 0; cursor: pointer; font-size: 15px; color: var(--ink); }
+.size-other label span { flex: 1; }
+.size-other label b { white-space: nowrap; color: var(--ink-green); }
+.size-sum { display: grid; gap: 6px; padding: 14px 16px; background: var(--pale); border-top: 1px solid var(--line); }
+.size-sum > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; color: var(--ink); }
+.size-sum > div b { white-space: nowrap; font-size: 17px; color: var(--ink-green); }
+.size-sum small { color: var(--muted); }
+.size-sum .size-total { margin-top: 4px; padding-top: 8px; border-top: 1px dashed var(--line-d); font-weight: 700; }
+.size-sum .size-total b { font-size: 20px; }

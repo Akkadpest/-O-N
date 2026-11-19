@@ -1,9 +1,9 @@
 // The booking shop: one page used by the homepage and by every area page.
 // The customer picks a service, adds it to "Your booking" and continues to time and payment.
 // Same page for everyone, personalised by the customer's area (S.area) or by the area page it is on.
-import { S, save, site, go, esc, icon, aed, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
+import { S, save, site, go, esc, icon, aed, wty, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
 import { checkAvailability } from './flows.js';
-import { chosen, shortSize } from './pages-book.js';
+import { chosen, shortSize, ensureSize, sizeControls, wireSizeControls } from './pages-book.js';
 
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const express = () => S.draft.timing !== 'scheduled';
@@ -53,7 +53,7 @@ const bugTile = (p) => `<button class="bug" data-jump="${p.id}"><span class="bug
 export const pkgCard = (p, pk) => {
   const options = pk.sized ? p.sizes[pk.sized].length : 0;
   return `<article class="card pkg st-pkg"><div>${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pk.title)}</h3>
-    <div class="st-meta"><span>${icon('shield', 15)}${p.warrantyMonths}-month warranty</span><span>${icon('calendar', 15)}${esc(pk.duration)}</span></div>
+    <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span><span>${icon('calendar', 15)}${esc(pk.duration)}</span></div>
     <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(fromOf(p, pk))}</div>
     <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
     <button class="link b" data-info="${p.id}:${pk.id}">View details ›</button></div>
@@ -81,7 +81,7 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
 const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
 const offers = (cheapest) => [
   offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
-  offer('offer-green', 'PEST CONTROL', `<small>From</small> AED ${cheapest}`, 'See your price first', 'Add to booking', 'data-add="general:apartment"', '/img/cockroach-gel-kitchen.webp'),
+  offer('offer-green', 'PEST CONTROL', `<small>From</small> ${aed(pestById('general').from)}`, 'See your price first', 'Add to booking', 'data-add="general:apartment"', '/img/cockroach-gel-kitchen.webp'),
   offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'See services', 'data-jump="list"', '/img/termite-soil-treatment.webp'),
   offer('offer-light', 'PAY LATER', '4 instalments', 'Split it with Tabby', 'Book now', 'data-jump="list"', '/img/brand/tabby.png', 'of-tabby'),
 ].join('');
@@ -104,7 +104,7 @@ function cartHtml() {
     </div>
     <div class="cart-total"><span>Total incl. VAT</span><b>${aed(c.price + fee)}</b></div>
     <button class="btn cart-go" data-checkout>${S.area ? (express() ? 'Continue to payment' : 'Choose a time') : 'Choose your area to continue'}${icon('arrow', 18)}</button>
-    <div class="cart-pay">${payLogos()}<small>${p.warrantyMonths}-month warranty included</small></div>`;
+    <div class="cart-pay">${payLogos()}<small>${p.warrantyMonths ? `${wty(p)} included` : '2 visits, no warranty'}</small></div>`;
 }
 function barHtml() {
   const p = S.draft.pest && pestById(S.draft.pest);
@@ -235,7 +235,7 @@ export function mountBooking(root) {
   };
   on(root, '[data-add]', (b) => { const [pe, pk] = b.dataset.add.split(':'); add(pe, pk); });
   on(root, '[data-info]', (b) => { const [pe, pk] = b.dataset.info.split(':'); details(pestById(pe), pk, () => add(pe, pk)); });
-  const clear = () => { setDraft({ pest: null, pkg: null, size: null }); refresh(); toast('Removed from your booking'); };
+  const clear = () => { setDraft({ pest: null, pkg: null, size: null, mattresses: null }); refresh(); toast('Removed from your booking'); };
   const change = (after) => {
     const p = pestById(S.draft.pest);
     const pk = p.packages.find((x) => x.id === S.draft.pkg);
@@ -269,27 +269,26 @@ function sizePicker(p, pkgId, done) {
   const paint = () => {
     const pk = p.packages.find((x) => x.id === S.draft.pkg);
     const type = pk.sized;
-    const list = p.sizes[type];
-    if (!list.some((s) => s.id === S.draft.size) || S.draft.sizeType !== type) setDraft({ size: list[type === 'villa' ? 2 : 1].id, sizeType: type });
+    ensureSize(p, pk);
     const sizedPkgs = p.packages.filter((x) => x.sized);
     const c = chosen(p);
     openLayer('sheet', `
       <h2 class="plain">${esc(p.service)}</h2>
-      <p class="muted">Choose your home size. Price includes VAT and a ${p.warrantyMonths}-month warranty.</p>
+      <p class="muted">Tap + or − to set your bedrooms. The price changes as you go. VAT included.</p>
       ${sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
-      <div class="sizes" role="radiogroup">${list.map((s) => `<label><input type="radio" name="size" value="${s.id}" ${s.id === S.draft.size ? 'checked' : ''}>${esc(s.label)}<b>${aed(s.price)}</b></label>`).join('')}</div>
+      ${sizeControls(p, pk)}
       <div class="sz-details">
-        <div class="sz-facts"><span>${icon('shield', 16)}${p.warrantyMonths}-month warranty</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
-        <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}<li>${icon('shield', 16)}${p.warrantyMonths}-month warranty: pests back, we return free</li></ul>
+        <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
+        <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}: pests back, we return free</li>` : ''}</ul>
         <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
         <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
         ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
         <h4>Timing and payment</h4><p class="muted">Express in about ${site.fees.aboutMin} min (+${aed(site.fees.expressNew)}), or schedule from ${esc(site.firstDay)} at no extra fee. Pay by card or in 4 instalments with Tabby.</p>
       </div>
-      <div class="sz-foot"><button class="btn" data-done>Add ${esc(shortSize(type, list.find((s) => s.id === S.draft.size).label))} · ${aed(c.price)}</button></div>`, {
+      <div class="sz-foot"><button class="btn" data-done>Add · ${aed(c.price)}</button></div>`, {
       mount(box) {
         on(box, '[data-seg]', (b) => { setDraft({ pkg: b.dataset.seg }); paint(); });
-        on(box, 'input[name=size]', (i) => { const y = box.scrollTop; setDraft({ size: i.value }); paint(); $('#layer .box').scrollTop = y; }, 'change');
+        wireSizeControls(box, p, () => { const y = box.scrollTop; paint(); $('#layer .box').scrollTop = y; });
         on(box, '[data-done]', () => { closeLayer(); done(); });
       },
     });
@@ -302,7 +301,7 @@ function details(p, pkgId, add) {
   const pk = p.packages.find((x) => x.id === pkgId);
   openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>
     <p class="muted">${esc(p.intro)}</p>
-    <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}<li>${icon('shield', 16)}${p.warrantyMonths}-month warranty</li></ul>
+    <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}</li>` : ''}</ul>
     <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
     <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
     ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}

@@ -1,12 +1,17 @@
 // New booking (screens 21-32) and warranty call-out (screens 37-40).
-import { S, save, site, me, api, route, go, esc, icon, aed, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
+import { S, save, site, me, api, route, go, esc, icon, aed, wty, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
 import { areaUrl } from './flows.js';
 
 const needArea = () => { if (!S.area) { go('/area', { replace: true }); return true; } return false; };
 const pestOf = (id) => site.pests.find((p) => p.id === id && !p.inspection);
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const express = () => S.draft.timing !== 'scheduled';
-export const shortSize = (type, label) => (type === 'villa' ? label.replace(' bedrooms', '-bed') + ' villa' : label === 'Studio' ? 'studio' : label.replace(/ bedrooms?/, '-bed') + ' apt');
+export const shortSize = (type, label) => {
+  const home = type === 'villa' ? 'villa' : 'apt';
+  if (label === 'Studio') return 'studio';
+  if (/^\d+ bedrooms?$/.test(label)) return label.replace(/ bedrooms?/, '-bed') + ' ' + home;
+  return `${home === 'apt' ? 'apartment' : 'villa'}, ${label.charAt(0).toLowerCase() + label.slice(1)}`;
+};
 
 // What the customer has chosen so far, priced. The server prices it again on booking.
 export function chosen(p) {
@@ -15,7 +20,56 @@ export function chosen(p) {
   if (!pk.sized) return { pk, price: pk.price, label: pk.label, line: pk.title.split(': ')[1].replace(/^./, (c) => c.toUpperCase()) };
   const sz = p.sizes[pk.sized].find((s) => s.id === S.draft.size);
   if (!sz) return null;
-  return { pk, sz, price: sz.price, label: `${p.service} · ${shortSize(pk.sized, sz.label)}`, line: `${pk.sized === 'villa' ? 'Villa' : 'Apartment'}, ${sz.label.toLowerCase()}` };
+  const home = pk.sized === 'villa' ? 'Villa' : 'Apartment';
+  // Some packages add a price per mattress on top of the home size (bed bugs in villas).
+  const mattresses = pk.perMattress ? Math.min(site.maxMattresses, Math.max(1, Number(S.draft.mattresses) || Math.max(1, sz.beds || 1))) : 0;
+  const extra = mattresses * (pk.perMattress || 0);
+  return { pk, sz, mattresses, base: sz.price, extra, price: sz.price + extra,
+    label: `${p.service} · ${shortSize(pk.sized, sz.label)}${mattresses ? ` · ${mattresses} mattress${mattresses > 1 ? 'es' : ''}` : ''}`,
+    line: `${home}, ${sz.label.charAt(0).toLowerCase() + sz.label.slice(1)}${mattresses ? `, ${mattresses} mattress${mattresses > 1 ? 'es' : ''}` : ''}` };
+}
+
+// Makes sure a valid size is selected for the package (1 bedroom for apartments, 3 for villas to start).
+export function ensureSize(p, pk) {
+  const list = p.sizes[pk.sized];
+  if (!list.some((s) => s.id === S.draft.size) || S.draft.sizeType !== pk.sized) {
+    setDraft({ size: (list.find((s) => s.beds === (pk.sized === 'villa' ? 3 : 1)) || list[0]).id, sizeType: pk.sized, mattresses: null });
+  }
+}
+// The size controls: count bedrooms up and down and watch the price change.
+export function sizeControls(p, pk) {
+  const list = p.sizes[pk.sized];
+  const withBeds = list.filter((s) => s.beds != null).sort((a, b) => a.beds - b.beds);
+  const others = list.filter((s) => s.beds == null);
+  const c = chosen(p);
+  const i = withBeds.indexOf(c.sz);
+  const bedText = (s) => (s.beds === 0 ? 'Studio' : String(s.beds));
+  const stepper = (label, hint, value, key, canDown, canUp) => `<div class="stp-row"><div class="stp-label"><b>${label}</b><small>${hint}</small></div>
+    <div class="stp"><button type="button" data-step="${key}:-1" ${canDown ? '' : 'disabled'} aria-label="Fewer ${label.toLowerCase()}">−</button><output aria-live="polite">${value}</output><button type="button" data-step="${key}:1" ${canUp ? '' : 'disabled'} aria-label="More ${label.toLowerCase()}">+</button></div></div>`;
+  return `<div class="size-box">
+    ${stepper('Bedrooms', `${bedText(withBeds[0])}${withBeds[0].beds === 0 ? '' : ' bedroom'} to ${withBeds[withBeds.length - 1].beds} bedrooms`, i < 0 ? '–' : bedText(c.sz), 'beds', i > 0, i < withBeds.length - 1)}
+    ${pk.perMattress ? stepper('Mattresses', `${aed(pk.perMattress)} each`, c.mattresses, 'mat', c.mattresses > 1, c.mattresses < site.maxMattresses) : ''}
+    ${others.length ? `<div class="size-other"><small>Or choose</small>${others.map((s) => `<label><input type="radio" name="size" value="${s.id}" ${s.id === c.sz.id ? 'checked' : ''}><span>${esc(s.label)}</span><b>${aed(s.price)}</b></label>`).join('')}</div>` : ''}
+    <div class="size-sum">
+      <div><span>${esc(pk.sized === 'villa' ? 'Villa' : 'Apartment')}, ${esc(c.sz.label.charAt(0).toLowerCase() + c.sz.label.slice(1))}${c.sz.note ? ` <small>(${esc(c.sz.note)})</small>` : ''}</span><b>${aed(c.base)}</b></div>
+      ${pk.perMattress ? `<div><span>${c.mattresses} mattress${c.mattresses > 1 ? 'es' : ''} × ${aed(pk.perMattress)}</span><b>${aed(c.extra)}</b></div><div class="size-total"><span>Price</span><b>${aed(c.price)}</b></div>` : ''}
+    </div></div>`;
+}
+export function wireSizeControls(box, p, repaint) {
+  on(box, '[data-step]', (b) => {
+    const [key, d] = b.dataset.step.split(':');
+    const pk = p.packages.find((x) => x.id === S.draft.pkg);
+    const c = chosen(p);
+    if (key === 'mat') setDraft({ mattresses: c.mattresses + Number(d) });
+    else {
+      const withBeds = p.sizes[pk.sized].filter((s) => s.beds != null).sort((a, b) => a.beds - b.beds);
+      const i = withBeds.indexOf(c.sz);
+      const next = i < 0 ? withBeds.find((s) => s.beds === 1) || withBeds[0] : withBeds[Math.min(withBeds.length - 1, Math.max(0, i + Number(d)))];
+      setDraft({ size: next.id });
+    }
+    repaint();
+  });
+  on(box, 'input[name=size]', (i) => { setDraft({ size: i.value }); repaint(); }, 'change');
 }
 const timingToggle = () => `
   <div class="timing" role="radiogroup" aria-label="When do you need us?">
@@ -75,7 +129,7 @@ route('/book/:pest', async ({ pest }) => {
   const card = (pk) => {
     const from = pk.sized ? p.sizes[pk.sized][0].price : pk.price;
     return `<article class="card pkg"><div>${pk.badge ? `<span class="tag">${pk.badge}</span>` : ''}<h3>${esc(pk.title)}</h3>
-      <div class="meta">${icon('shield', 20)}${p.warrantyMonths}-month warranty</div><div class="meta">${icon('calendar', 20)}${esc(pk.duration)}</div>
+      <div class="meta">${icon('shield', 20)}${wty(p)}</div><div class="meta">${icon('calendar', 20)}${esc(pk.duration)}</div>
       <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(from)}</div>
       <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><button class="link b" data-details="${pk.id}">View details ›</button></div>
       <div class="side">${photo(pk.photo, imgFor(pk.photo) || imgFor(p.photo))}<button class="btn add" data-add="${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;
@@ -89,7 +143,7 @@ route('/book/:pest', async ({ pest }) => {
       on(root, '[data-add]', (b) => sizeSheet(p, b.dataset.add));
       on(root, '[data-details]', (b) => {
         const pk = p.packages.find((x) => x.id === b.dataset.details);
-        explain(p, { rows: [[`Treatment, materials, ${p.warrantyMonths}-month warranty`, (pk.sized ? 'from ' : '') + (pk.sized ? p.sizes[pk.sized][0].price : pk.price)]], title: esc(pk.title), cta: 'Add this package', done: () => sizeSheet(p, pk.id) });
+        explain(p, { rows: [[`Treatment, materials, ${wty(p)}`, (pk.sized ? 'from ' : '') + (pk.sized ? p.sizes[pk.sized][0].price : pk.price)]], title: esc(pk.title), cta: 'Add this package', done: () => sizeSheet(p, pk.id) });
       });
     },
   };
@@ -100,23 +154,20 @@ function sizeSheet(p, pkgId) {
   const paint = () => {
     const pk = p.packages.find((x) => x.id === S.draft.pkg);
     const type = pk.sized;
-    if (type) {
-      const list = p.sizes[type];
-      if (!list.some((s) => s.id === S.draft.size) || S.draft.sizeType !== type) setDraft({ size: list[type === 'villa' ? 2 : 1].id, sizeType: type });
-    }
+    if (type) ensureSize(p, pk);
     const c = chosen(p);
     const sizedPkgs = p.packages.filter((x) => x.sized);
     const fee = express() ? site.fees.expressNew : 0;
     openLayer('sheet', `
       <h2 class="plain">${esc(pk.title)}</h2>
-      <p class="muted">${type ? 'Choose your home size. ' : ''}Price includes VAT and a ${p.warrantyMonths}-month warranty.</p>
+      <p class="muted">${type ? 'Choose your home size. ' : ''}Price includes VAT${p.warrantyMonths ? ` and a ${wty(p)}` : ''}.</p>
       ${type && sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
-      ${type ? `<div class="sizes" role="radiogroup">${p.sizes[type].map((s) => `<label><input type="radio" name="size" value="${s.id}" ${s.id === S.draft.size ? 'checked' : ''}>${esc(s.label)}<b>${aed(s.price)}</b></label>`).join('')}</div>` : ''}
+      ${type ? sizeControls(p, pk) : ''}
       <div class="card">${lines([[esc(c.line), aed(c.price)], express() ? ['Express now', aed(fee)] : ['Scheduled visit', 'No extra fee', 'green']], ['Total incl. VAT', aed(c.price + fee)])}</div>
       <button class="btn lg" data-next>${express() ? 'Continue to payment' : 'Choose a time'}</button>`, {
       mount(box) {
         on(box, '[data-seg]', (b) => { setDraft({ pkg: b.dataset.seg }); paint(); });
-        on(box, 'input[name=size]', (i) => { setDraft({ size: i.value }); paint(); }, 'change');
+        wireSizeControls(box, p, paint);
         on(box, '[data-next]', () => go(`/book/${p.id}/${express() ? 'pay' : 'time'}`));
       },
     });
@@ -196,14 +247,14 @@ route('/book/:pest/pay', async ({ pest }) => {
       ${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,
     mount(root) {
       const method = total ? wirePay(root) : () => 'card';
-      on(root, '[data-explain]', () => explain(p, { rows: [[`Treatment, materials, ${p.warrantyMonths}-month warranty`, c.price], ...(express() ? [[`Express fee, team within about ${site.fees.aboutMin} min`, fee]] : [['Scheduled visit', 'No extra fee', 'green']])], total: c.price + fee }));
+      on(root, '[data-explain]', () => explain(p, { rows: [[`Treatment, materials, ${wty(p)}`, c.price], ...(express() ? [[`Express fee, team within about ${site.fees.aboutMin} min`, fee]] : [['Scheduled visit', 'No extra fee', 'green']])], total: c.price + fee }));
       on(root, '#confirm', (btn) => busy(btn, async () => {
         const f = Object.fromEntries(new FormData($('form', root)));
         setDraft(f);
         try {
-          const { booking } = await api('/bookings', { area: S.area.slug, pest: p.id, pkg: d.pkg, size: d.size, timing: express() ? 'express' : 'scheduled', date: d.date, slot: d.slot, payMethod: method(), ...f });
+          const { booking } = await api('/bookings', { area: S.area.slug, pest: p.id, pkg: d.pkg, size: d.size, mattresses: c.mattresses || undefined, timing: express() ? 'express' : 'scheduled', date: d.date, slot: d.slot, payMethod: method(), ...f });
           remember(booking);
-          setDraft({ pkg: null, size: null, date: null, slot: null, dateLabel: null });
+          setDraft({ pkg: null, size: null, mattresses: null, date: null, slot: null, dateLabel: null });
           await loadMe();
           go(`/booking/${booking.id}/${booking.tracking ? 'track' : 'confirmed'}`);
         } catch (e) { showErr(root, e); }

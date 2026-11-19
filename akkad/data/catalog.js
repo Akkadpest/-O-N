@@ -35,11 +35,14 @@ const FEES = { expressNew: 18, expressWarranty: 39, etaMin: 28, aboutMin: 30 };
 
 const APT = ['Studio', '1 bedroom', '2 bedrooms', '3 bedrooms', '4 bedrooms'];
 const VILLA = ['2 bedrooms', '3 bedrooms', '4 bedrooms', '5 bedrooms', '6+ bedrooms'];
-const sizes = (labels, prices) => labels.map((label, i) => ({ id: 's' + i, label, price: prices[i] }));
+// `beds` lets the size picker count bedrooms up and down (Studio = 0); sizes without it are listed as other options.
+const bedsOf = (label) => (label === 'Studio' ? 0 : /^(\d+) bedrooms?$/.test(label) ? Number(label.split(' ')[0]) : null);
+const sizes = (labels, prices) => labels.map((label, i) => ({ id: 's' + i, label, price: prices[i], beds: bedsOf(label) }));
 const shortSize = (homeType, label) => {
-  if (homeType === 'villa') return label.replace(' bedrooms', '-bed') + ' villa';
+  const home = homeType === 'villa' ? 'villa' : 'apt';
   if (label === 'Studio') return 'studio';
-  return label.replace(/ bedrooms?/, '-bed') + ' apt';
+  if (/^\d+ bedrooms?$/.test(label)) return label.replace(/ bedrooms?/, '-bed') + ' ' + home;
+  return `${home === 'apt' ? 'apartment' : 'villa'}, ${label.charAt(0).toLowerCase() + label.slice(1)}`;
 };
 
 // A pest has packages. A package is either fixed-price or sized (apartment / villa).
@@ -250,6 +253,87 @@ for (const p of PESTS) {
   for (const pk of p.packages) if (d.points[pk.id]) pk.points = d.points[pk.id];
 }
 
+/* ---------- PRICES: Akkad first-offer price list (sheet transcribed 19 November 2026) ----------
+   All amounts in AED, VAT included. Edit the numbers here when the price list changes. */
+const beds = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => `${from + i} bedroom${from + i > 1 ? 's' : ''}`);
+const APT_LABELS = ['Studio', ...beds(1, 6)];
+const APT_PRICES = [189, 210, 262.5, 367.5, 420, 472.5, 525];
+const VILLA_LABELS = [...beds(1, 8), 'Common areas only', 'Common areas + outside'];
+const VILLA_PRICES = [315, 472.5, 525, 577.5, 630, 735, 840, 935, 210, 367.5];
+const byId = Object.fromEntries(PESTS.map((p) => [p.id, p]));
+const fixed = (p, id, name, price, duration, points) => ({ id, title: `${p.service}: ${name}`, label: `${p.service} · ${name}`, price, duration, points });
+const NO_WARRANTY_AFTER = 'This service is 2 visits with no warranty. The second visit is arranged with you after the first.';
+
+// General pest control. The sheet's apartment and villa tables.
+byId.general.sizes = { apartment: sizes(APT_LABELS, APT_PRICES), villa: sizes(VILLA_LABELS, VILLA_PRICES) };
+byId.general.from = APT_PRICES[0];
+delete byId.general.sample;
+
+// ASSUMPTION: the sheet has no separate cockroach, ant or fly prices, so they use the general table.
+for (const id of ['cockroach', 'ants', 'flies']) {
+  byId[id].sizes = { apartment: sizes(APT_LABELS, APT_PRICES), villa: sizes(VILLA_LABELS, VILLA_PRICES) };
+  if (id !== 'cockroach') byId[id].from = APT_PRICES[0]; // cockroach keeps its AED 99 kitchen-only package from the approved flow
+  delete byId[id].sample; byId[id].assumedPrices = true;
+}
+
+// Bed bugs. Apartments from the sheet; villas are the villa bedroom price + AED 30 per mattress.
+{
+  const p = byId.bedbugs;
+  p.packages = p.packages.filter((pk) => pk.id !== 'room');
+  p.packages[0].badge = 'MOST BOOKED';
+  p.sizes = {
+    apartment: sizes(['Studio', '1 bedroom', '2 bedrooms', '3 bedrooms', '4 bedrooms', '2 bedrooms, 5–6 mattresses'], [210, 262.5, 315, 420, 472.5, 367.5]),
+    villa: sizes(beds(1, 8), VILLA_PRICES.slice(0, 8)),
+  };
+  p.sizes.apartment[2].note = '3–4 mattresses';
+  p.packages.find((pk) => pk.id === 'villa').perMattress = 30;
+  p.from = 210; delete p.sample;
+}
+// Bed bugs with general pest control (apartments, 3 mattresses unless stated).
+PESTS.splice(PESTS.indexOf(byId.bedbugs) + 1, 0, {
+  id: 'bedbugs-general', name: 'Bed bugs + general', single: 'bed bugs and household pests', service: 'Bed bugs + general pest control', short: 'Bed bugs + general', general: true,
+  signs: 'Bed bugs and other household pests in one visit plan', from: 283.5, warrantyMonths: byId.bedbugs.warrantyMonths, visits: '2 visits',
+  blurb: 'Bed bug treatment and general pest control together, at one combined price.',
+  intro: 'Bed bug treatment and general pest control together, at one combined price.',
+  photo: 'Photo: mattress inspection', prep: byId.bedbugs.prep, steps: byId.bedbugs.steps, after: byId.bedbugs.after,
+  packages: [{ id: 'apartment', title: 'Bed bugs + general pest control: apartment', duration: '2 visits', sized: 'apartment', photo: 'Photo: bedroom treatment',
+    points: ['Bed bug treatment for up to 3 mattresses, bed frames and furniture', 'General pest control for the whole apartment', 'Second bed bug visit after 14 days', 'Rooms ready to use again after about 4 hours'] }],
+  sizes: { apartment: sizes(['Studio', '1 bedroom', '2 bedrooms', '3 bedrooms', '4 bedrooms', '1 bedroom, 8 mattresses', 'Room with 6–8 partitions (6 mattresses)'], [283.5, 330.75, 367.5, 420, 472.5, 472.5, 630]) },
+});
+
+// Additional services on the sheet: fixed price, 2 visits only, no warranty.
+{
+  const r = byId.rodents;
+  Object.assign(r, { warrantyMonths: 0, visits: '2 visits', from: 262.5, after: NO_WARRANTY_AFTER });
+  delete r.sample; delete r.sizes;
+  r.packages = [
+    fixed(r, 'rbs', 'bait stations (RBS)', 262.5, '2 visits', ['Black tamper-proof boxes containing rat poison', 'Placed along the runs rodents use', 'Boxes are locked: safe around children and pets', '2 visits, no warranty']),
+    fixed(r, 'traps', 'rat traps (indoor)', 262.5, '2 visits', ['Traps set indoors where rodents are active', 'No poison used inside your home', 'Second visit to check and reset the traps', '2 visits, no warranty']),
+  ];
+  r.packages[0].badge = 'MOST BOOKED'; r.packages[0].photo = 'Photo: bait station placement'; r.packages[1].photo = 'Photo: bait station placement';
+  const m = byId.mosquitoes;
+  Object.assign(m, { warrantyMonths: 0, visits: '2 visits', from: 262.5, after: NO_WARRANTY_AFTER });
+  delete m.sample; delete m.sizes;
+  m.packages = [
+    fixed(m, 'misting', 'indoor misting', 262.5, '2 visits', ['Fine mist treatment indoors only', 'Reaches the corners and curtains where mosquitoes rest', 'Rooms ready to use again after about 2 hours', '2 visits, no warranty']),
+    fixed(m, 'fogging', 'fogging with full outdoor spray', 315, '2 visits', ['Outdoor only: garden, plants and boundary walls', 'Fogging plus a full outdoor spray', 'Garden ready to use again after about 2 hours', '2 visits, no warranty']),
+  ];
+  m.packages[0].photo = 'Photo: garden fogging'; m.packages[1].photo = 'Photo: garden fogging'; m.packages[1].badge = 'MOST BOOKED';
+  const w = { id: 'wasps', name: 'Wasps & bees', single: 'wasps and bees', service: 'Wasp nest and beehive removal', short: 'Wasp / bee', general: true,
+    signs: 'A nest or hive on the building or in the garden', from: 262.5, warrantyMonths: 0, visits: '2 visits',
+    blurb: 'Outdoor spray treatment and removal of a wasp nest or beehive.', intro: 'Outdoor spray treatment and removal of a wasp nest or beehive.',
+    photo: 'Photo: garden fogging', prep: 'Keep children and pets indoors and close nearby windows. Tell us where the nest is and how high.',
+    steps: [['Inspect', 'Locates the nest or hive and checks safe access.'], ['Treat', 'Sprays the nest from outside with municipality-approved products.'], ['Remove', 'Removes the nest where it can be reached, and returns for the second visit.']],
+    after: NO_WARRANTY_AFTER };
+  w.packages = [fixed(w, 'nest', 'outdoor spray', 262.5, '2 visits', ['Outdoor spray on the nest or hive', 'Nest removed where it can be safely reached', 'Protective equipment used throughout', '2 visits, no warranty'])];
+  w.packages[0].photo = 'Photo: garden fogging';
+  PESTS.splice(PESTS.indexOf(byId.mosquitoes) + 1, 0, w);
+}
+// On the sheet but not bookable online yet: handwritten annual contract rates (2 to 9 bedrooms, AED 1,050 to 2,520).
+const ANNUAL_CONTRACT = { 2: 1050, 3: 1260, 4: 1470, 5: 1680, 6: 1890, 7: 2100, 8: 2310, 9: 2520 };
+const MAX_MATTRESSES = 20;
+for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty';
+
 // Communities. `aliases` are towers and alternative names that map to the community.
 const AREAS = [
   ['barsha-heights-tecom', 'Barsha Heights (Tecom)', 'Tecom', 'Dubai', 25.0969, 55.1746, ['Tecom Two Towers', 'Al Thanyah First', 'Sheikha Noora Tower', 'The Greens']],
@@ -323,4 +407,4 @@ const WHY = [
   ['calendar', 'Pay your way', 'Card or Tabby in 4 payments.'],
 ];
 
-module.exports = { COMPANY, PHOTOS, FEES, PESTS, AREAS, areaStats, NEIGHBOR_REVIEWS, GOOGLE_REVIEWS, FAQ, WHY, shortSize };
+module.exports = { ANNUAL_CONTRACT, MAX_MATTRESSES, COMPANY, PHOTOS, FEES, PESTS, AREAS, areaStats, NEIGHBOR_REVIEWS, GOOGLE_REVIEWS, FAQ, WHY, shortSize };

@@ -160,7 +160,7 @@ function refresh(b) {
     if (t && t.phase === 'arrived' && b.status === 'on_the_way') b.status = 'arrived';
     if (t && t.done) {
       b.status = 'done';
-      if (b.kind === 'new') b.warrantyUntil = addMonths(b.date, b.warrantyMonths || 3);
+      if (b.kind === 'new' && b.warrantyMonths !== 0) b.warrantyUntil = addMonths(b.date, b.warrantyMonths || 3);
       store.save();
     }
   }
@@ -208,7 +208,7 @@ app.get('/api/site', (req, res) => {
   const first = days(1)[0];
   res.json({
     company: C.COMPANY, photos: C.PHOTOS, services: CONTENT.SERVICES, neighborReviews: C.NEIGHBOR_REVIEWS, fees: C.FEES, pests: C.PESTS, why: C.WHY, faq: C.FAQ, googleReviews: C.GOOGLE_REVIEWS,
-    emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO, places: !!GOOGLE_KEY,
+    emirates: ['Dubai', 'Sharjah', 'Ajman'], demo: DEMO, maxMattresses: C.MAX_MATTRESSES, places: !!GOOGLE_KEY,
     firstDay: first.label, statusClock: fmtClock(new Date(Date.now() - (now.minute % 30) * 60000)),
   });
 });
@@ -353,6 +353,11 @@ function quote(body) {
     const sz = p.sizes[pk.sized].find((s) => s.id === body.size);
     if (!sz) throw new Error('Please choose your home size.');
     price = sz.price; label = `${p.service} · ${C.shortSize(pk.sized, sz.label)}`;
+    if (pk.perMattress) {
+      const n = Math.floor(Number(body.mattresses));
+      if (!(n >= 1 && n <= C.MAX_MATTRESSES)) throw new Error('Please tell us how many mattresses need treatment.');
+      price += n * pk.perMattress; label += ` · ${n} mattress${n > 1 ? 'es' : ''}`;
+    }
   }
   const express = body.timing === 'express';
   return { p, price, label, express, expressFee: express ? C.FEES.expressNew : 0 };

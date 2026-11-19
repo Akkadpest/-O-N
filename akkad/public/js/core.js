@@ -41,6 +41,8 @@ export function remember(booking) { S.keys[booking.id] = booking.key; save(); }
 /* ---------- small helpers ---------- */
 export const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const aed = (n) => 'AED ' + (Number.isInteger(n) ? n : n.toFixed(2));
+// "6-month warranty", or "2 visits, no warranty" for the services sold without one.
+export const wty = (p) => (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 export function on(root, sel, fn, type = 'click') {
@@ -97,7 +99,7 @@ export const pestTile = (p, pressed) => {
   return `<button data-p="${p.id}"${pressed ? ' aria-pressed="false"' : ''}>
     <span class="pt-img"${img ? ` style="background-image:url('${esc(img)}')"` : ''}>${img ? '' : icon('bug', 34)}</span>
     <span class="pt-body"><b>${esc(p.name)}</b><span class="pt-signs">${esc(p.signs)}</span>
-      <span class="pt-price${p.from ? '' : ' survey'}">${p.from ? `From <strong>AED ${p.from}</strong>` : esc(p.fromLabel)}</span></span>
+      <span class="pt-price${p.from ? '' : ' survey'}">${p.from ? `From <strong>${aed(p.from)}</strong>` : esc(p.fromLabel)}</span></span>
     <span class="pt-check" aria-hidden="true">${icon('tick', 16)}</span></button>`;
 };
 export const photo = (label, src = imgFor(label)) => `<div class="photo"${src ? ` style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(label)}"` : ''}>${src ? '' : icon('image') + `<span>${esc(label)}</span>`}</div>`;

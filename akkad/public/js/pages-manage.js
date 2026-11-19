@@ -8,7 +8,7 @@ const pending = (b) => b.paymentStatus === 'pending';
 const paidText = (b) => (b.kind === 'warranty' && !b.total ? '<span class="green">AED 0 · covered by warranty</span>'
   : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)}${b.payMethod === 'tabby' ? ' with Tabby' : ' by card'}`);
 const pendingNote = (b) => (pending(b) ? '<p class="demo-note">Online payment is not connected yet, so nothing has been charged. Your visit is booked and the amount is shown as pending.</p>' : '');
-const warrantyNote = (b) => (b.kind === 'warranty' ? 'Same address. Treatment stays free under your warranty.' : `Same service, same address, same ${b.warrantyMonths}-month warranty.`);
+const warrantyNote = (b) => (b.kind === 'warranty' ? 'Same address. Treatment stays free under your warranty.' : `Same service, same address${b.warrantyMonths ? `, same ${b.warrantyMonths}-month warranty` : ''}.`);
 
 /* ---------- screens 33 and 40: booking confirmed ---------- */
 route('/booking/:id/confirmed', async ({ id }) => {
@@ -54,7 +54,7 @@ route('/booking/:id/track', async ({ id }) => {
         <div class="route-l"><span>Start</span><span>Nearby</span><span>Your home</span></div>
         ${arrived ? '' : '<div class="updating"><span class="spin"></span>Updating live location...</div>'}</div>
       <div class="phases">${ph('Set off', true)}${ph('Nearby', nearby || arrived)}${ph('Arrived', arrived)}</div>
-      ${arrived ? `<div class="card on"><h3>Treatment in progress</h3><p class="sub">You will get the service report and payment receipt on WhatsApp when he finishes. ${b.kind === 'warranty' ? 'This visit is covered by your warranty.' : 'Your warranty starts today.'}</p></div>`
+      ${arrived ? `<div class="card on"><h3>Treatment in progress</h3><p class="sub">You will get the service report and payment receipt on WhatsApp when he finishes. ${b.kind === 'warranty' ? 'This visit is covered by your warranty.' : b.warrantyMonths ? 'Your warranty starts today.' : ''}</p></div>`
         : nearby ? `<div class="card" style="background:#fafbf8"><h3>Almost there</h3><p class="sub">Please be ready to let the technician in, or tell security he is coming.</p></div>`
         : `<div class="card" style="background:#fafbf8"><h3>Before he arrives</h3><p class="sub">${esc(b.prep)}</p></div>`}
       <div class="card ic-row"><span class="ic-circle">${icon('image', 24)}</span><div class="grow"><h3>Technician name</h3><p class="sub">Akkad van · plate shown here</p></div></div>
