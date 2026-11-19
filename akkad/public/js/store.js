@@ -52,8 +52,7 @@ const bugTile = (p) => `<button class="bug" data-jump="${p.id}"><span class="bug
 
 export const pkgCard = (p, pk) => {
   const options = pk.sized ? p.sizes[pk.sized].length : 0;
-  const search = [p.name, p.service, p.single, pk.title, ...pk.points, pk.sized || ''].join(' ').toLowerCase();
-  return `<article class="card pkg st-pkg" data-search="${esc(search)}"><div>${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pk.title)}</h3>
+  return `<article class="card pkg st-pkg"><div>${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pk.title)}</h3>
     <div class="st-meta"><span>${icon('shield', 15)}${p.warrantyMonths}-month warranty</span><span>${icon('calendar', 15)}${esc(pk.duration)}</span></div>
     <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(fromOf(p, pk))}</div>
     <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
@@ -66,7 +65,7 @@ const SURVEY = {
   termites: ['Termite inspection and treatment plan', 'A specialist checks walls, floors and door frames, then gives you a fixed price before any work starts.'],
   amc: ['Annual contract for your business', 'Scheduled visits, service reports for your inspections, and call-outs included. Restaurants, offices, buildings and warehouses.'],
 };
-export const surveyCard = (p) => `<article class="card pkg st-pkg" data-search="${esc([p.name, p.service, p.signs, 'inspection survey'].join(' ').toLowerCase())}"><div><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
+export const surveyCard = (p) => `<article class="card pkg st-pkg"><div><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
     <div class="st-meta"><span>${icon('doc', 15)}${esc(p.fromLabel)}</span><span>${icon('calendar', 15)}We call you to arrange it</span></div>
     <p class="muted st-blurb">${esc((SURVEY[p.id] || [0, p.blurb])[1])}</p>
     <a class="btn ghost sm st-survey" href="/inspection?job=${p.commercial ? 'amc' : 'termite'}">Request inspection${icon('arrow', 16)}</a></div>
@@ -130,7 +129,6 @@ export function storePage(ctx = {}) {
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
         <ul class="st-pills"><li>${icon('shield', 15)}Municipality approved</li><li>${icon('calendar', 15)}Up to 6-month warranty</li><li>${icon('check', 15)}Safe for kids and pets</li></ul>
-        <label class="st-search">${icon('search', 19)}<span class="sr">Search services</span><input id="st-q" type="search" autocomplete="off" placeholder="Search 'cockroach', 'bed bugs', 'villa'…"></label>
       </section>
 
       <section class="card st-bugs"><h2>What's bugging you?</h2>
@@ -143,7 +141,6 @@ export function storePage(ctx = {}) {
       <nav class="st-tabs" aria-label="Services">${list.map((p) => `<button data-jump="${p.id}" data-tab="${p.id}"><span style="background-image:url('${esc(pestIcon(p.id))}')"></span>${esc(p.short === 'Commercial' ? 'Commercial' : p.name)}</button>`).join('')}</nav>
 
       <div id="st-list">${list.map((p) => section(p, ctx.top === p.id ? area.short : '')).join('')}
-        <div class="card st-none" id="st-none" hidden><b>No service matches that search.</b><span>Try another word, or send us a photo and we'll tell you what it is.</span><a class="btn ghost sm" href="/photos?mode=identify">${icon('camera', 16)}Send a photo</a></div>
       </div>
 
       <section class="card st-team">
@@ -206,19 +203,6 @@ export function storePage(ctx = {}) {
       $$('.st-sec', root).forEach((s) => io.observe(s));
       onLeave(() => io.disconnect());
     }
-
-    // Search: filter packages and hide empty services.
-    $('#st-q', root).addEventListener('input', (e) => {
-      const q = e.target.value.trim().toLowerCase();
-      let any = false;
-      $$('.st-sec', root).forEach((sec) => {
-        let shown = 0;
-        $$('.st-pkg', sec).forEach((c) => { const hit = !q || c.dataset.search.includes(q); c.hidden = !hit; if (hit) shown++; });
-        sec.hidden = !shown; if (shown) any = true;
-      });
-      $('#st-none', root).hidden = any;
-    });
-
   }
   return { html, mount };
 }
