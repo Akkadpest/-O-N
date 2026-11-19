@@ -1138,3 +1138,44 @@ button.card.ic-row { display: flex; }
 @media (max-width: 899px) { .brand.compact span { display: none; } }
 .powered { text-align: right; font-size: 12px; margin-top: 6px; }
 .area-list:empty { display: none; }
+
+/* ================= phone: more air between sections, fewer words ================= */
+@media (max-width: 899px) {
+  /* spacing between the blocks of the shop page */
+  .store { padding-top: 24px; padding-bottom: 48px; }
+  .store .st-main > * { margin-top: 0; margin-bottom: 0; }
+  .store .st-main > * + * { margin-top: 40px; }
+  .store .st-main > .st-bugs { margin-top: 28px; }
+  .store .st-main > .st-tabs { margin-top: 32px; }
+  .store .st-main > #st-list { margin-top: 24px; }
+  /* a soft band marks where one big section ends and the next begins */
+  .store .st-main > .st-offers, .store .st-main > .st-block { position: relative; margin-top: 44px; padding-top: 48px; }
+  .store .st-main > .st-offers::before, .store .st-main > .st-block::before { content: ''; position: absolute; left: -16px; right: -16px; top: 0; height: 8px; background: #e8ece3; }
+  .store .st-main > .st-team, .store .st-main > .st-help { margin-top: 44px; }
+
+  /* headings: larger, with room underneath */
+  .st-hero h1 { font-size: 30px; }
+  .st-rating { margin-top: 14px; }
+  .st-pills { margin-top: 16px; gap: 8px; }
+  .st-search { margin-top: 24px; min-height: 54px; }
+  .st-bugs { padding: 20px 16px; }
+  .st-bugs h2, .st-row-h h2, .st-sec h2, .st-block h2, .st-block .sec-h { font-size: 22px; font-weight: 800; letter-spacing: -.015em; }
+  .st-bugs h2, .st-row-h { margin-bottom: 18px; }
+  .st-block > h2 + *, .st-block > .rev-head + * { margin-top: 18px; }
+  .st-team h2, .st-help h2 { font-size: 22px; }
+
+  /* each service: more room around it and between its cards */
+  .st-sec + .st-sec { margin-top: 44px; }
+  .st-sec h2 { margin-bottom: 4px; }
+  .st-pkg { margin-top: 16px; padding: 18px; }
+  .st-pkg .price { margin-top: 10px; font-size: 19px; }
+  .st-pkg .link.b { display: inline-block; margin-top: 12px; }
+  .st-more { margin-top: 16px; }
+  .st-how { gap: 20px; padding: 20px 18px; }
+  .st-team-body { padding: 20px 18px 22px; }
+  .st-stats { margin-top: 18px; }
+
+  /* fewer words: the details stay one tap away under "View details" */
+  .st-intro, .st-pkg ul, .st-pkg > div > p, .st-how small, .st-team .muted, .st-help .sh-text p, #foot .f-brand > p { display: none; }
+  .st-help .sh-btns { margin-top: 16px; }
+}
