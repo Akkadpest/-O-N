@@ -118,7 +118,7 @@ function barHtml() {
 export function storePage(ctx = {}) {
   const c = site.company;
   const area = ctx.area || S.area;
-  const place = ctx.area ? ctx.area.name : S.area ? S.area.short : 'Dubai, Sharjah & Ajman';
+  const place = ctx.area ? ctx.area.name : S.area ? S.area.short : 'UAE';
   // On an area page, the pest most booked there comes first.
   const list = ctx.top ? [pestById(ctx.top), ...site.pests.filter((p) => p.id !== ctx.top)] : site.pests;
   const cheapest = Math.min(...list.filter((p) => p.from).map((p) => p.from));
@@ -127,7 +127,7 @@ export function storePage(ctx = {}) {
     <div class="st-main">
       <section class="st-hero">
         <p class="eyebrow"><span class="live"></span>${area ? `Team near ${esc(area.short)} today` : 'Technicians available today'}</p>
-        <h1>Pest control in <span class="hl">${esc(place)}</span></h1>
+        <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
         <ul class="st-pills"><li>${icon('shield', 15)}Municipality approved</li><li>${icon('calendar', 15)}Up to 6-month warranty</li><li>${icon('check', 15)}Safe for kids and pets</li></ul>
         <label class="st-search">${icon('search', 19)}<span class="sr">Search services</span><input id="st-q" type="search" autocomplete="off" placeholder="Search 'cockroach', 'bed bugs', 'villa'…"></label>
