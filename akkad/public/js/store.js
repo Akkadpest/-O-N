@@ -78,10 +78,10 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
   </section>`;
 
 const offers = (cheapest) => [
-  `<article class="offer offer-doctor"><div class="of-text"><span class="of-kicker">EXPRESS</span><p>Technician at your door in about ${site.fees.aboutMin} min</p><button class="of-btn" data-jump="list">Book now${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/commercial-kitchen-inspection.webp')"></span></article>`,
-  `<article class="offer offer-green"><div class="of-text"><span class="of-kicker">FIRST VISIT</span><p>Cockroach-free kitchen from AED ${cheapest}</p><button class="of-btn" data-add="cockroach:kitchen">Add to booking${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/cockroach-gel-kitchen.webp')"></span></article>`,
-  `<article class="offer offer-dark"><div class="of-text"><span class="of-kicker">PEACE OF MIND</span><p>Up to 6 months warranty, free call-outs</p><button class="of-btn" data-jump="list">See services${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/termite-soil-treatment.webp')"></span></article>`,
-  `<article class="offer offer-light"><div class="of-text"><span class="of-kicker">PAY LATER</span><p>Split it into 4 payments with Tabby</p><button class="of-btn" data-jump="list">Choose a service${icon('arrow', 15)}</button></div><span class="of-img of-tabby" style="background-image:url('/img/brand/tabby.png')"></span></article>`,
+  `<article class="offer offer-doctor"><div class="of-text"><span class="of-kicker">EXPRESS</span><p>${site.fees.aboutMin} min arrival</p><button class="of-btn" data-jump="list">Book now${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/commercial-kitchen-inspection.webp')"></span></article>`,
+  `<article class="offer offer-green"><div class="of-text"><span class="of-kicker">FROM</span><p>General pest control AED ${cheapest}</p><button class="of-btn" data-add="cockroach:kitchen">Add to booking${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/cockroach-gel-kitchen.webp')"></span></article>`,
+  `<article class="offer offer-dark"><div class="of-text"><span class="of-kicker">PEACE OF MIND</span><p>6 months warranty + unlimited callouts</p><button class="of-btn" data-jump="list">See services${icon('arrow', 15)}</button></div><span class="of-img" style="background-image:url('/img/termite-soil-treatment.webp')"></span></article>`,
+  `<article class="offer offer-light"><div class="of-text"><span class="of-kicker">PAY LATER</span><p>Pay with instalments</p><button class="of-btn" data-jump="list">Choose a service${icon('arrow', 15)}</button></div><span class="of-img of-tabby" style="background-image:url('/img/brand/tabby.png')"></span></article>`,
 ].join('');
 
 /* ---------- "Your booking" ---------- */
