@@ -86,7 +86,7 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
 const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
 const offers = (cheapest) => [
   offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
-  offer('offer-green', 'ONE-TIME VISIT', `<small>From</small> ${aed(pestById('general-once').from)}`, 'General pest control', 'Add to booking', 'data-add="general-once:apartment"', '/img/cockroach-gel-kitchen.webp'),
+  offer('offer-green', 'ONE-TIME VISIT', aed(pestById('general-once').from), 'General pest control', 'Add to booking', 'data-add="general-once:apartment"', '/img/cockroach-gel-kitchen.webp'),
   offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'How it works', 'data-href="/warranty-cover"', '/img/termite-soil-treatment.webp'),
   offer('offer-light', 'PAY LATER', '4 instalments', 'Split it with Tabby', 'Book now', 'data-jump="list"', '/img/brand/tabby.png', 'of-tabby'),
 ].join('');
@@ -259,6 +259,8 @@ export function mountBooking(root) {
   const add = (pestId, pkgId) => {
     const p = pestById(pestId);
     const pk = p.packages.find((x) => x.id === pkgId);
+    // Until the customer picks Express, the bar shows the same price as the card (no express fee added).
+    if (!S.draft.timing) setDraft({ timing: 'scheduled' });
     if (!pk.sized) { setDraft({ pest: p.id, pkg: pk.id, size: null }); refresh(); toast(`${p.service} added`); return; }
     sizePicker(p, pk.id, () => { refresh(); toast(`${p.service} added`); });
   };

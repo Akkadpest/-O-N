@@ -235,14 +235,14 @@ route('/cancellation-policy', legal('Cancellation policy', 'How to reschedule or
 route('/warranty-cover', legal('Warranty and call-outs', '6-month warranty with unlimited call-outs. If the pests come back, so do we, free.', [
   ['What you get', [['6 months of cover from the day of your treatment', 'Unlimited call-outs: if the same pest returns, we treat again as many times as needed', 'No charge for the treatment or materials on a warranty visit']]],
   ['Which services are covered', [['General pest control', 'Cockroach control', 'Ant control', 'Bed bug treatment, and bed bugs + general pest control', 'Fly control: 6-month warranty with 2 follow-up visits']]],
-  ['Not covered', [['The one-time general pest control visit (from AED 99): one visit, no warranty', 'Rodents, mosquitoes, and wasp or bee nest removal: 2 visits, no warranty', 'A different pest from the one we treated', 'Problems that come from outside the treated property']]],
+  ['Not covered', [['The one-time general pest control visit (AED 99 apartment, AED 210 villa): one visit, no warranty', 'Rodents, mosquitoes, and wasp or bee nest removal: 2 visits, no warranty', 'A different pest from the one we treated', 'Problems that come from outside the treated property']]],
   ['How to ask for a warranty visit', ['Tap <a href="/warranty">Warranty</a> at the top of the site and enter your booking number, or the mobile number you booked with. Choose a time and we come back.', 'A scheduled warranty visit is free. If you want us there within about 30 minutes, only the express call-out fee applies.']],
   ['Keeping your warranty valid', ['Please follow the preparation and aftercare advice your technician gives you. It is what makes the treatment last.']],
 ]));
 
 route('/refund-policy', legal('Refund policy', 'When we refund a payment, and how to ask for it.', [
   ['When we refund', ['We refund your payment in two cases:', ['We did not carry out the treatment you paid for', 'You paid twice for the same booking by mistake']]],
-  ['When we do not refund', [['After the treatment has been carried out', 'For a one-time visit (from AED 99): it is a single service with no warranty', 'If pests return during your warranty: we come back and treat again free instead, with unlimited call-outs for 6 months']]],
+  ['When we do not refund', [['After the treatment has been carried out', 'For a one-time visit (AED 99 apartment, AED 210 villa): it is a single service with no warranty', 'If pests return during your warranty: we come back and treat again free instead, with unlimited call-outs for 6 months']]],
   ['If you cancel before the visit', ['See our <a href="/cancellation-policy">cancellation policy</a>. You can also move the visit to another day free of charge.']],
   ['How to ask for a refund', ['Call or WhatsApp us with your booking number. If you paid twice, please send both payment receipts. We refund to the same card or payment method you used.']],
 ]));

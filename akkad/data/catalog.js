@@ -344,27 +344,25 @@ for (const id of ['general', 'cockroach', 'ants', 'bedbugs', 'bedbugs-general'])
 Object.assign(byId.flies, { warrantyMonths: 6, callouts: '2 follow-up visits' });
 
 // ONE-TIME general pest control: a single visit with no warranty and no call-outs.
-// Confirmed by Akkad: studio AED 99, villa AED 210.
-// PROVISIONAL: the 1 to 6 bedroom apartment prices below are placeholders until Akkad sends the real ones.
-const ONCE_APT_PRICES = [99, 129, 159, 199, 239, 279, 319];
+// Fixed prices confirmed by Akkad: apartment AED 99, villa AED 210 (no size steps until Akkad sends per-bedroom prices).
+const ONCE_APT_PRICE = 99;
 {
   const g = byId.general;
   const NOTE = 'One visit, no warranty or call-outs';
   PESTS.splice(PESTS.indexOf(g) + 1, 0, {
     id: 'general-once', name: 'One-time visit', single: g.single, service: 'One-time general pest control', short: 'One-time general', general: true,
-    signs: g.signs, from: ONCE_APT_PRICES[0], warrantyMonths: 0, visits: '1 visit', noWarrantyLabel: 'One-time visit, no warranty', provisionalPrices: true,
+    signs: g.signs, from: ONCE_APT_PRICE, warrantyMonths: 0, visits: '1 visit', noWarrantyLabel: 'One-time visit, no warranty',
     blurb: 'A single general pest control visit at a lower price. No warranty and no call-outs.',
     intro: 'A single general pest control visit at a lower price. No warranty and no call-outs.',
     photo: g.photo, prep: g.prep,
     steps: [g.steps[0], g.steps[1], ['Explain and hand over', 'Shows what was done and gives safety advice.']],
     after: 'This is a one-time visit with no warranty. For 6 months of cover with unlimited call-outs, choose general pest control instead.',
     packages: [
-      { id: 'apartment', title: 'One-time general pest control: apartment', duration: '45–60 mins', sized: 'apartment', photo: 'Photo: apartment treatment',
+      { id: 'apartment', title: 'One-time general pest control: apartment', label: 'One-time general pest control · apartment', price: ONCE_APT_PRICE, duration: '45–60 mins', photo: 'Photo: apartment treatment',
         points: ['Cockroaches, ants, spiders and crawling insects', 'Whole apartment, kitchen and bathrooms', NOTE] },
       { id: 'villa', title: 'One-time general pest control: villa', label: 'One-time general pest control · villa', price: 210, duration: '60–90 mins', photo: 'Photo: villa treatment',
         points: ['Cockroaches, ants, spiders and crawling insects', 'Inside the villa', NOTE] },
     ],
-    sizes: { apartment: sizes(APT_LABELS, ONCE_APT_PRICES) },
   });
 }
 for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : (p.noWarrantyLabel || '2 visits, no warranty');
