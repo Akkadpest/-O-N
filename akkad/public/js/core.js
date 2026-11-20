@@ -116,6 +116,17 @@ export const pestTile = (p, pressed) => {
       <span class="pt-price${p.from ? '' : ' survey'}">${p.from ? `From <strong>${aed(p.from)}</strong>` : esc(p.fromLabel)}</span></span>
     <span class="pt-check" aria-hidden="true">${icon('tick', 16)}</span></button>`;
 };
+// Small (480px) copies of the big photos, for cards and thumbnails. Pop-ups keep the full picture.
+const SMALL = new Set(['mosquito-garden-fogging', 'rodent-bait-station', 'termite-soil-treatment', 'commercial-kitchen-inspection', 'bedbug-bed-frame', 'cockroach-gel-kitchen', 'fly-light-trap', 'ant-gel-skirting', 'hero-pest-doctor']);
+export const thumb = (src) => { const m = /^\/img\/([a-z0-9-]+)\.webp$/.exec(src || ''); return m && SMALL.has(m[1]) ? `/img/${m[1]}-sm.webp` : src; };
+// Pictures below the screen load only as they come near it: write data-bg="..." instead of a style, then call lazyBg(root).
+export function lazyBg(root) {
+  const els = $$('[data-bg]', root);
+  const show = (el) => { el.style.backgroundImage = `url('${el.dataset.bg}')`; el.removeAttribute('data-bg'); };
+  if (!('IntersectionObserver' in window)) return els.forEach(show);
+  const io = new IntersectionObserver((list) => list.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } }), { rootMargin: '500px 300px' });
+  els.forEach((el) => io.observe(el));
+}
 export const photo = (label, src = imgFor(label)) => `<div class="photo"${src ? ` style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(label)}"` : ''}>${src ? '' : icon('image') + `<span>${esc(label)}</span>`}</div>`;
 export const lines = (rows, total) => `<div class="lines">${rows.map(([a, b, cls]) => `<div><span>${a}</span><span class="${cls || ''}">${b}</span></div>`).join('')}${total ? `<div class="total"><span>${total[0]}</span><span>${total[1]}</span></div>` : ''}</div>`;
 

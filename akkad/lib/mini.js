@@ -9,12 +9,41 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=
   '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.gif': 'image/gif', '.ico': 'image/x-icon',
   '.woff2': 'font/woff2', '.woff': 'font/woff', '.txt': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json' };
 
-function sendFile(res, file, maxAge) {
+// Speed: text files are sent gzip-compressed (compressed once, then kept in memory), every file carries an ETag so a
+// browser that already has it gets a tiny "304 Not Modified", and pictures, fonts and the animation player may be
+// kept by the browser for a day. Pages, styles and scripts are always re-checked, so a new deploy shows at once.
+const zlib = require('zlib');
+const TEXT = new Set(['.html', '.css', '.js', '.json', '.svg', '.txt', '.webmanifest']);
+const LONG = new Set(['.png', '.jpg', '.jpeg', '.webp', '.gif', '.ico', '.woff2', '.woff']);
+const gzCache = new Map(); // file -> { tag, buf }
+const wantsGzip = (req) => /\bgzip\b/.test((req && req.headers['accept-encoding']) || '');
+
+function sendFile(res, file, maxAge, req) {
   fs.stat(file, (err, st) => {
     if (err || !st.isFile()) { res.statusCode = 404; return res.end('Not found'); }
-    res.setHeader('Content-Type', TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream');
+    const ext = path.extname(file).toLowerCase();
+    const tag = `"${st.size.toString(36)}-${Math.floor(st.mtimeMs).toString(36)}"`;
+    const day = LONG.has(ext) || /[\\/]vendor[\\/]/.test(file);
+    res.setHeader('Content-Type', TYPES[ext] || 'application/octet-stream');
+    res.setHeader('ETag', tag);
+    res.setHeader('Cache-Control', day ? `public, max-age=${Math.max(maxAge || 0, 86400)}` : 'no-cache');
+    if (TEXT.has(ext)) res.setHeader('Vary', 'Accept-Encoding');
+    if (req && req.headers['if-none-match'] === tag) { res.statusCode = 304; return res.end(); }
+    const head = req && req.method === 'HEAD';
+    if (TEXT.has(ext) && wantsGzip(req) && st.size > 600 && st.size < 4 * 1024 * 1024) {
+      const send = (buf) => { res.setHeader('Content-Encoding', 'gzip'); res.setHeader('Content-Length', buf.length); res.end(head ? undefined : buf); };
+      const hit = gzCache.get(file);
+      if (hit && hit.tag === tag) return send(hit.buf);
+      return fs.readFile(file, (e, raw) => {
+        if (e) { res.statusCode = 404; return res.end('Not found'); }
+        zlib.gzip(raw, { level: 9 }, (e2, buf) => {
+          if (e2) { res.setHeader('Content-Length', raw.length); return res.end(head ? undefined : raw); }
+          gzCache.set(file, { tag, buf }); send(buf);
+        });
+      });
+    }
     res.setHeader('Content-Length', st.size);
-    res.setHeader('Cache-Control', maxAge ? `public, max-age=${maxAge}` : 'no-cache');
+    if (head) return res.end();
     fs.createReadStream(file).pipe(res);
   });
 }
@@ -36,8 +65,14 @@ function mini() {
     res.type = (t) => { res.setHeader('Content-Type', TYPES['.' + t] || t); return res; };
     res.attachment = (name) => { res.setHeader('Content-Disposition', `attachment; filename="${name}"`); return res; };
     res.send = (body) => res.end(body);
-    res.json = (data) => { res.setHeader('Content-Type', TYPES['.json']); res.setHeader('Cache-Control', 'no-store'); res.end(JSON.stringify(data)); };
-    res.sendFile = (file) => sendFile(res, file);
+    res.json = (data) => {
+      res.setHeader('Content-Type', TYPES['.json']); res.setHeader('Cache-Control', 'no-store');
+      const text = JSON.stringify(data);
+      // Larger answers (the site's catalogue is about 48 KB) travel compressed.
+      if (text.length < 1400 || !wantsGzip(req)) return res.end(text);
+      zlib.gzip(text, { level: 6 }, (e, buf) => { if (e) return res.end(text); res.setHeader('Content-Encoding', 'gzip'); res.setHeader('Vary', 'Accept-Encoding'); res.end(buf); });
+    };
+    res.sendFile = (file) => sendFile(res, file, 0, req);
     let i = 0;
     const next = (err) => {
       const layer = stack[i++];
@@ -87,7 +122,7 @@ mini.static = (root, { maxAge = 0 } = {}) => (req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
   const file = path.join(root, path.normalize(req.path));
   if (!file.startsWith(root + path.sep) || path.basename(file).startsWith('.')) return next();
-  fs.stat(file, (err, st) => (err || !st.isFile() ? next() : sendFile(res, file, maxAge)));
+  fs.stat(file, (err, st) => (err || !st.isFile() ? next() : sendFile(res, file, maxAge, req)));
 };
 
 module.exports = mini;

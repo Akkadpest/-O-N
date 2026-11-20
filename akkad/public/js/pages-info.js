@@ -91,7 +91,7 @@ route('/about', async () => {
       ${crumbs([['Home', '/'], ['About us']])}
       <h1 class="info-h1">About Akkad Pest Control</h1>
       <p class="info-lead">${esc(c.name)} keeps homes and businesses in Dubai, Sharjah and Ajman free of pests, with clear prices and a warranty on every treatment.</p>
-      <div class="about-photo">${photo('The Akkad Pest Control team and vans', '/img/akkad-team.jpg')}</div>
+      <div class="about-photo">${photo('The Akkad Pest Control team and vans', '/img/akkad-team.webp')}</div>
 
       <section class="info-sec"><h2>What we stand for</h2>
         <div class="value-grid">${[

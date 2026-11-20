@@ -165,7 +165,7 @@ const PHOTOS = {
   // Homepage
   'Photo: technician treating a kitchen': '/img/cockroach-gel-kitchen.webp',
   "Photo: Akkad technician at a customer's door": '/img/rodent-bait-station.webp',
-  'Photo: technician explaining the treatment': '/img/akkad-team.jpg',
+  'Photo: technician explaining the treatment': '/img/akkad-team.webp',
   // Neighbour reviews ("photo of the work")
   'Photo of the work: gel under the kitchen sink': '/img/cockroach-gel-kitchen.webp',
   'Photo of the work: gel behind the fridge': '/img/cockroach-gel-kitchen.webp',

@@ -1,7 +1,7 @@
 // The booking shop: one page used by the homepage and by every area page.
 // The customer picks a service, adds it to "Your booking" and continues to time and payment.
 // Same page for everyone, personalised by the customer's area (S.area) or by the area page it is on.
-import { S, save, site, go, esc, icon, aed, wty, cover, stepsHtml, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
+import { S, save, site, go, esc, icon, aed, wty, cover, stepsHtml, photo, thumb, lazyBg, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
 import { checkAvailability } from './flows.js';
 import { chosen, shortSize, ensureSize, sizeControls, wireSizeControls } from './pages-book.js';
 
@@ -10,7 +10,7 @@ const express = () => S.draft.timing !== 'scheduled';
 const pestById = (id) => site.pests.find((p) => p.id === id);
 // Pest illustrations for tiles, tabs and the basket; commercial falls back to its photo.
 const PEST_ICONS = ['cockroach', 'bedbugs', 'ants', 'rodents', 'termites', 'mosquitoes', 'flies'];
-export const pestIcon = (id) => (PEST_ICONS.includes(id) ? `/img/pests/${id}.webp` : pestImg(id));
+export const pestIcon = (id) => (PEST_ICONS.includes(id) ? `/img/pests/${id}.webp` : thumb(pestImg(id)));
 const fromOf = (p, pk) => (pk.sized ? p.sizes[pk.sized][0].price : pk.price);
 
 /* ---------- Lottie animations (player is self-hosted in /vendor, loaded only when a page has one) ---------- */
@@ -112,7 +112,7 @@ const bugTile = (p) => `<button class="bug" data-jump="${p.id}"><span class="bug
 const pkName = (pk) => { const n = pk.title.split(': ')[1] || pk.title; return n.charAt(0).toUpperCase() + n.slice(1); };
 const pkPhoto = (p, pk) => imgFor(pk.photo) || imgFor(p.photo);
 export const pkgCard = (p, pk) => `<article class="card pk">
-    <button class="pk-pic" data-info="${p.id}:${pk.id}" aria-label="Details of ${esc(pk.title)}"${pkPhoto(p, pk) ? ` style="background-image:url('${esc(pkPhoto(p, pk))}')"` : ''}></button>
+    <button class="pk-pic" data-info="${p.id}:${pk.id}" aria-label="Details of ${esc(pk.title)}"${pkPhoto(p, pk) ? ` data-bg="${esc(thumb(pkPhoto(p, pk)))}"` : ''}></button>
     <div class="pk-main">${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pkName(pk))}</h3>
       <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span>${p.callouts ? `<span>${icon('check', 15)}${esc(p.callouts)}</span>` : ''}${p.warrantyMonths ? `<span>${icon('calendar', 15)}${esc(pk.duration)}</span>` : ''}</div>
       <button class="link b" data-info="${p.id}:${pk.id}">Details ›</button></div>
@@ -128,7 +128,7 @@ export const surveyCard = (p) => {
   const href = `/inspection?job=${p.commercial ? 'amc' : 'termite'}`;
   const img = imgFor(p.photo);
   return `<article class="card pk pk-survey">
-    <a class="pk-pic" href="${href}" aria-label="${esc((SURVEY[p.id] || [p.service])[0])}"${img ? ` style="background-image:url('${esc(img)}')"` : ''}></a>
+    <a class="pk-pic" href="${href}" aria-label="${esc((SURVEY[p.id] || [p.service])[0])}"${img ? ` data-bg="${esc(thumb(img))}"` : ''}></a>
     <div class="pk-main"><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
       <div class="st-meta"><span>${icon('doc', 15)}${esc(p.fromLabel)}</span><span>${icon('calendar', 15)}We call you to arrange it</span></div></div>
     <div class="pk-side"><p class="muted st-blurb">${esc((SURVEY[p.id] || [0, p.blurb])[1])}</p>
@@ -142,7 +142,7 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
   </section>`;
 
 // Each card: a small label, one big figure, one short supporting line, one button.
-const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
+const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${thumb(img)}')"></span></article>`;
 const offers = (cheapest) => [
   offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
   offer('offer-green', 'ONE-TIME VISIT', aed(pestById('general-once').from), 'General pest control', 'Add to booking', 'data-add="general-once:apartment"', '/img/cockroach-gel-kitchen.webp'),
@@ -237,7 +237,7 @@ export function storePage(ctx = {}) {
       </div>
 
       <section class="st-block" id="how"><h2>How it works</h2>
-        <div class="card how-card"><img class="how-img" src="/img/hero-pest-doctor.webp" alt="Hire your pest doctor in just 30 minutes, near you, anywhere in the UAE" width="1320" height="1200" loading="lazy">
+        <div class="card how-card"><img class="how-img" src="/img/hero-pest-doctor-sm.webp" srcset="/img/hero-pest-doctor-sm.webp 480w, /img/hero-pest-doctor.webp 1320w" sizes="(min-width: 900px) 320px, 160px" alt="Hire your pest doctor in just 30 minutes, near you, anywhere in the UAE" width="1320" height="1200" loading="lazy">
           <div class="how-steps mob">${[['Pick your service', 'Choose the pest and home size'], ['Choose a time', 'Express today or any open slot'], ['We treat it', 'A trained technician, on time'], ['Stay protected', 'Pests back? We return free']].map(([t, d], i) => `<article class="offer how-step ${['offer-doctor', 'offer-green', 'offer-dark', 'offer-light'][i]}"><div class="of-text"><span class="of-kicker">STEP ${i + 1} OF 4</span><p class="of-big">${t}</p><p class="of-sub">${d}</p></div>${i < 3 ? `<span class="how-next" aria-hidden="true">${icon('arrow', 18)}</span>` : `<span class="how-next" aria-hidden="true">${icon('tick', 18)}</span>`}</article>`).join('')}</div>
           <ol class="st-how desk">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol></div>
       </section>
@@ -245,7 +245,7 @@ export function storePage(ctx = {}) {
 
       <!-- the team card sits between the two review sections so they do not run together -->
       <section class="card st-team">
-        ${photo('The Akkad Pest Control team and vans', '/img/akkad-team.jpg')}
+        <div class="photo" data-bg="/img/akkad-team.webp" role="img" aria-label="The Akkad Pest Control team and vans"></div>
         <div class="st-team-body"><span class="of-kicker green">MUNICIPALITY-APPROVED TEAM</span><h2>Trained experts, at your door</h2>
           <p class="muted">Uniformed technicians, approved products, and a clear report on WhatsApp after every visit.</p>
           <div class="st-stats"><div><b>${c.rating}★</b><small>Google rating</small></div><div><b>~${site.fees.aboutMin} min</b><small>Express arrival</small></div><div><b>6 mo</b><small>Warranty</small></div><div><b>3</b><small>Emirates covered</small></div></div></div>
@@ -257,7 +257,7 @@ export function storePage(ctx = {}) {
         <div class="card st-faq">${site.faq.slice(0, 4).map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${esc(q)}${icon('down', 18)}</summary><p>${esc(a)}</p></details>`).join('')}<a class="link b" href="/faq" style="display:block;padding:12px 2px 2px">All questions and answers ›</a></div>
       </section>
 
-      <section class="st-help"><span class="sh-img" style="background-image:url('/img/cockroach-gel-kitchen.webp')"></span>
+      <section class="st-help"><span class="sh-img" data-bg="/img/cockroach-gel-kitchen-sm.webp"></span>
         <div class="sh-text"><h2>Need help choosing?</h2><p>Send us a photo of the pest. Our expert will recommend the right treatment in minutes.</p>
           <div class="sh-btns"><a class="btn sh-wa" href="${c.whatsapp}" target="_blank" rel="noopener">${icon('chat', 17)}WhatsApp us</a><a class="btn sh-call" href="${c.phoneHref}">${icon('phone', 17)}${esc(c.phone)}</a></div></div>
       </section>
@@ -269,6 +269,7 @@ export function storePage(ctx = {}) {
 
   function mount(root) {
     loadGoogleReviews(root);
+    lazyBg(root);
     mountBooking(root);
     $$('.offer-track, .st-tabs', root).forEach(arrows);
 
