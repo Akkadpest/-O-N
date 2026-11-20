@@ -336,7 +336,7 @@ function details(p, pkgId, add) {
     <p class="muted">${esc(p.intro)}</p>
     <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${cover(p)}</li>` : ''}</ul>
     <h4>What the technician will do</h4>${p.outdoorSteps && pk.id === 'villa' ? `${stepsHtml(p.steps, p.id, p.stepNotes)}<h4>Outdoor treatment, when included</h4>${stepsHtml(p.outdoorSteps, null, null, p)}` : stepsHtml(p.steps, p.id, p.stepNotes, p)}
-    <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
+    <h4>Before the visit</h4><ul class="st-inc">${String(p.prep).split(/\.\s+|\s+and\s+(?=keep|clear|tell|close)/i).map((t) => t.replace(/\.$/, '').trim()).filter(Boolean).map((t) => `<li>${icon('check', 16)}${esc(t.charAt(0).toUpperCase() + t.slice(1))}</li>`).join('')}</ul>
     ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
     <button class="btn" style="margin-top:16px" data-ok>Add · ${pk.sized ? 'from ' : ''}${aed(fromOf(p, pk))}</button></div>`,
   { mount(box) { on(box, '[data-ok]', () => { closeLayer(); add(); }); } });

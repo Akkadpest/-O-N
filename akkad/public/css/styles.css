@@ -1647,3 +1647,23 @@ a.pk-pic { display: block; }
 .sp-wty svg { flex: none; margin-top: 1px; }
 .sp-wty b { display: block; font-size: 15.5px; line-height: 1.3; }
 .sp-wty span { display: block; margin-top: 3px; font-size: 13.5px; line-height: 1.4; opacity: .92; }
+
+/* ---------- technician steps as a timeline: number on a line, title, text, large picture ---------- */
+.steps-tl { margin: 4px 0 0; padding: 0; list-style: none; }
+.steps-tl li { position: relative; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; padding-bottom: 20px; }
+.steps-tl li::before { content: ''; position: absolute; left: 13px; top: 30px; bottom: 2px; width: 2px; border-radius: 2px; background: #dfe6d8; }
+.steps-tl li:last-child { padding-bottom: 0; }
+.steps-tl li:last-child::before { display: none; }
+.tl-n { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: #fff; font-weight: 700; font-size: 13.5px; }
+.tl-body b { display: block; padding-top: 3px; font-size: 16px; line-height: 1.3; color: var(--ink); }
+.tl-body > span { display: block; margin-top: 5px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+.tl-body .tl-img { margin-top: 12px; width: 100%; aspect-ratio: 16 / 9; border-radius: 14px; background: var(--soft) center / cover no-repeat; }
+.card > h3 + .steps-tl { margin-top: 14px; }
+@media (min-width: 900px) { .tl-body .tl-img { max-width: 440px; } }
+/* warranty banner that closes the steps */
+.sp-wty { display: flex; gap: 14px; align-items: center; margin-top: 18px; padding: 16px; border-radius: 16px; background: #eaf6e4; color: var(--ink); }
+.sp-wty .wty-tick { flex: none; display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; background: var(--green); color: #fff; }
+.sp-wty .wty-tick svg { margin: 0; }
+.sp-wty b { display: block; font-size: 19px; font-weight: 800; line-height: 1.2; letter-spacing: -.01em; }
+.sp-wty span { display: block; margin-top: 3px; font-size: 13.5px; line-height: 1.4; color: var(--muted); opacity: 1; }
+.sp-wty em { display: inline-block; margin-top: 8px; padding: 5px 10px; border-radius: 8px; background: var(--green); color: #fff; font-style: normal; font-weight: 700; font-size: 13px; }
