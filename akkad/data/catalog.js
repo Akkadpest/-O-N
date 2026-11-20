@@ -377,23 +377,24 @@ const ONCE_APT_PRICE = 99;
 // Each step is [title, explanation, picture]; `null` shows the step without a picture.
 {
   const PIC = { inspect: '/img/step-inspect.webp', spray: '/img/step-treat.webp', report: '/img/step-explain.webp', skirting: '/img/ant-gel-skirting.webp',
-    hinge: '/img/job-hinge.webp', hinge2: '/img/job-hinge-2.webp', shower: '/img/job-drain-shower.webp', outdoorDrain: '/img/job-drain-outdoor.webp', sink: '/img/job-drain-sink.webp' };
+    hinge: '/img/job-hinge.webp', hinge2: '/img/job-hinge-2.webp', shower: '/img/job-drain-shower.webp', outdoorDrain: '/img/job-drain-outdoor.webp', sink: '/img/job-drain-sink.webp',
+    bait: '/img/job-bait-stations.webp', gelDoor: '/img/job-gel-door.webp', wall: '/img/job-wall-spray.webp', chamber: '/img/job-drain-chamber.webp', patio: '/img/job-patio-spray.webp' };
   const CRAWLING = [
     ['Inspection', 'We inspect kitchens, bathrooms, cabinets, appliance gaps and other affected areas to locate pest activity and possible entry routes.', PIC.inspect],
     ['Cabinet gel treatment', 'We place small amounts of suitable gel in concealed cabinet joints and hinge areas, away from food and food-contact surfaces.', PIC.hinge],
-    ['Crack and skirting gel treatment', 'We apply suitable gel inside selected wall cracks, crevices and skirting gaps where pests travel or hide.', PIC.skirting],
+    ['Crack and skirting gel treatment', 'We apply suitable gel inside selected wall cracks, crevices and skirting gaps where pests travel or hide.', PIC.gelDoor],
     ['Electrical-area assessment', 'We inspect gaps around electrical fittings. Any treatment near these areas follows a suitable product and professional procedure.', null],
-    ['Ant bait stations', 'Where appropriate, we position ant bait stations near identified trails or entry points to support control of the colony.', null],
+    ['Ant bait stations', 'Where appropriate, we position ant bait stations near identified trails or entry points to support control of the colony.', PIC.bait],
     ['Targeted spray treatment', 'Where needed, we spray suitable hiding places and entry points, keeping spray treatment separate from gel and bait placements.', PIC.sink],
     ['Additional bait stations (optional service)', 'Extra ant or cockroach bait stations are available where recommended. Any additional cost is explained before installation.', null],
     ['Service report and prevention advice', 'We explain the areas treated, which placements to leave undisturbed, and how to reduce food, moisture and pest access.', PIC.report],
   ];
   const OUTDOOR = [
     ['Outdoor inspection', 'We inspect accessible exterior walls, entrances, patio edges, garden borders and agreed drainage points.', null],
-    ['Exterior wall and entry-point treatment', 'We treat suitable wall-base gaps, cracks, door surrounds and service-pipe openings where pest activity is identified.', null],
-    ['Patio and paving-edge treatment', 'We apply targeted treatment to suitable paving joints, patio edges and sheltered structural gaps.', null],
+    ['Exterior wall and entry-point treatment', 'We treat suitable wall-base gaps, cracks, door surrounds and service-pipe openings where pest activity is identified.', PIC.wall],
+    ['Patio and paving-edge treatment', 'We apply targeted treatment to suitable paving joints, patio edges and sheltered structural gaps.', PIC.patio],
     ['Garden activity-point treatment', 'We treat selected pest activity points around garden borders, sheltered ground-level areas and suitable landscaping features.', null],
-    ['Drainage-chamber treatment (when included)', 'We inspect accessible chambers and treat suitable pest harbourage surfaces where the product permits. Drain cleaning and repairs are separate services.', PIC.outdoorDrain],
+    ['Drainage-chamber treatment (when included)', 'We inspect accessible chambers and treat suitable pest harbourage surfaces where the product permits. Drain cleaning and repairs are separate services.', PIC.chamber],
     ['Outdoor ant bait or granules (where suitable)', 'We use an appropriate bait station or labelled granular treatment at identified ant activity points.', null],
     ['Service report and recommendations', 'We record the treatment completed and explain any entry gaps, moisture problems or maintenance issues needing attention.', PIC.report],
   ];
