@@ -270,6 +270,24 @@ app.get('/api/places', limit('places', 90, 5), async (req, res) => {
     res.json({ places, google: true });
   } catch (e) { console.error('Places search failed:', e.message); res.json({ places: [], google: false }); } // the page falls back to our own area list
 });
+// Akkad's own Google listing: rating, number of reviews and the reviews Google hands out (at most 5 per place).
+// Cached for 6 hours. Without a key, or if Google does not answer, the page keeps its built-in reviews.
+app.get('/api/reviews', limit('reviews', 120, 5), async (req, res) => {
+  if (!GOOGLE_KEY) return res.json({ source: 'none' });
+  try {
+    const d = await cached('reviews', 6 * 3600000, () => google(`${PLACES}/places:searchText`, { method: 'POST',
+      headers: { 'X-Goog-FieldMask': 'places.displayName,places.rating,places.userRatingCount,places.googleMapsUri,places.reviews' },
+      body: JSON.stringify({ textQuery: C.COMPANY.mapsQuery, maxResultCount: 1 }) }));
+    const p = (d.places || [])[0];
+    if (!p || !/akkad/i.test((p.displayName || {}).text || '')) return res.json({ source: 'none' });
+    const reviews = (p.reviews || []).map((r) => ({
+      name: clean((r.authorAttribution || {}).displayName, 60), when: clean(r.relativePublishTimeDescription, 40),
+      stars: Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5))), text: clean((r.text || r.originalText || {}).text, 1500),
+    })).filter((r) => r.name && r.text);
+    res.json({ source: 'google', rating: Number(p.rating) || null, count: Number(p.userRatingCount) || null,
+      url: /^https:\/\/(maps\.google\.com|www\.google\.com|maps\.app\.goo\.gl)\//.test(p.googleMapsUri || '') ? p.googleMapsUri : null, reviews });
+  } catch (e) { console.error('Google reviews failed:', e.message); res.json({ source: 'none' }); }
+});
 app.get('/api/places/:id', limit('places', 90, 5), async (req, res) => {
   if (!GOOGLE_KEY) return fail(res, 404, 'Address search is not set up.');
   if (!/^[A-Za-z0-9_-]{10,300}$/.test(req.params.id)) return fail(res, 400, 'Unknown place.');

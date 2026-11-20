@@ -14,14 +14,32 @@ export const pestIcon = (id) => (PEST_ICONS.includes(id) ? `/img/pests/${id}.web
 const fromOf = (p, pk) => (pk.sized ? p.sizes[pk.sized][0].price : pk.price);
 
 /* ---------- reviews (also used on the area pages) ---------- */
-const googleCard = (r) => `<article class="card rev"><div class="who"><span class="av">${esc(r.initials)}</span><div><b>${esc(r.name)}</b><small>${esc(r.when)} · ${esc(r.area)}</small></div><span class="gl" aria-label="Google review">G</span></div>${stars(r.stars)}<blockquote>"${esc(r.text)}"</blockquote></article>`;
+const initialsOf = (name) => String(name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
+const googleCard = (r) => `<article class="rev"><div class="who"><span class="av">${esc(r.initials || initialsOf(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.when)}${r.area ? ` · ${esc(r.area)}` : ''}</small></div><span class="gl" aria-label="Google review">G</span></div>${stars(r.stars)}<blockquote>${esc(r.text)}</blockquote></article>`;
+const reviewsUrl = () => site.company.mapsUrl || site.company.googleReviewsUrl;
+const countLabel = (n) => (n ? `${Number(n).toLocaleString('en')} reviews on Google` : 'Google reviews');
+// Reviews in a framed box that scrolls on its own, so the page stays short.
 export const googleBlock = (list, title, count) => `
   <div class="rev-head">
     <div><h2 class="sec-h">${title}</h2>
-      <p class="rev-score"><b>${site.company.rating}</b>${stars(5)}<span>${count || 'Google reviews'}</span></p></div>
-    <a class="rev-link" href="${site.company.mapsUrl || site.company.googleReviewsUrl}" target="_blank" rel="noopener">Read all on Google${icon('arrow', 16)}</a>
+      <p class="rev-score"><b data-rev-rating>${site.company.rating}</b>${stars(Math.round(site.company.rating))}<span data-rev-count>${count || countLabel(site.company.reviewCount)}</span></p></div>
   </div>
-  ${sliderHtml(list.map(googleCard), { arrows: 'dots' })}`;
+  <div class="rev-frame"><div class="rev-scroll" data-rev-list tabindex="0" role="region" aria-label="Google reviews">${list.map(googleCard).join('')}</div></div>
+  <a class="btn ghost rev-all" data-rev-all href="${reviewsUrl()}" target="_blank" rel="noopener">See all reviews on Google${icon('arrow', 16)}</a>`;
+// Swap in Akkad's live Google reviews when the server can reach Google.
+export async function loadGoogleReviews(root) {
+  const box = $('[data-rev-list]', root);
+  if (!box) return;
+  try {
+    const r = await (await fetch('/api/reviews', { credentials: 'same-origin' })).json();
+    if (r.source !== 'google' || !r.reviews.length || !document.contains(box)) return;
+    box.innerHTML = r.reviews.map(googleCard).join('');
+    if (r.rating) $('[data-rev-rating]', root).textContent = r.rating.toFixed(1);
+    if (r.count) $('[data-rev-count]', root).textContent = countLabel(r.count);
+    if (r.count) $('[data-rev-all]', root).firstChild.textContent = `See all ${Number(r.count).toLocaleString('en')} reviews on Google`;
+    if (r.url) $('[data-rev-all]', root).href = r.url;
+  } catch (e) { /* keep the built-in reviews */ }
+}
 
 /* ---------- "What your neighbors say": verified Akkad jobs, with a pest filter ---------- */
 const pestName = (id) => (pestById(id) || {}).name || '';
@@ -179,7 +197,6 @@ export function storePage(ctx = {}) {
           <ol class="st-how desk">${[['Pick your service', 'Choose the pest and your home size.'], ['Choose a time', 'Express today or any open slot.'], ['We treat it', 'A trained, uniformed technician arrives on time.'], ['Stay protected', 'Pests back during your warranty? We return free.']].map(([t, d], i) => `<li><span class="n">${i + 1}</span><div><b>${t}</b><small>${d}</small></div></li>`).join('')}</ol></div>
       </section>
 
-      ${neighborsBlock(ctx, area)}
 
       <!-- the team card sits between the two review sections so they do not run together -->
       <section class="card st-team">
@@ -189,7 +206,7 @@ export function storePage(ctx = {}) {
           <div class="st-stats"><div><b>${c.rating}★</b><small>Google rating</small></div><div><b>~${site.fees.aboutMin} min</b><small>Express arrival</small></div><div><b>6 mo</b><small>Warranty</small></div><div><b>3</b><small>Emirates covered</small></div></div></div>
       </section>
 
-      <section class="st-block" id="reviews">${googleBlock(ctx.googleReviews || site.googleReviews, area ? `Loved by families in ${esc(area.short)}` : 'Loved by families in the UAE')}</section>
+      <section class="st-block" id="reviews">${googleBlock(ctx.googleReviews || site.googleReviews, 'What customers say on Google')}</section>
 
       <section class="st-block" id="guide"><h2>Frequently asked questions</h2>
         <div class="card st-faq">${site.faq.slice(0, 4).map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${esc(q)}${icon('down', 18)}</summary><p>${esc(a)}</p></details>`).join('')}<a class="link b" href="/faq" style="display:block;padding:12px 2px 2px">All questions and answers ›</a></div>
@@ -206,6 +223,7 @@ export function storePage(ctx = {}) {
   ${bookingBar()}`;
 
   function mount(root) {
+    loadGoogleReviews(root);
     mountBooking(root);
     $$('.offer-track, .st-tabs', root).forEach(arrows);
 

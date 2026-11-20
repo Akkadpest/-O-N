@@ -1680,3 +1680,15 @@ a.pk-pic { display: block; }
 }
 #layer .box.sheet > .x { top: 4px; }
 @media (min-width: 900px) { #layer .box > .x, #layer .sheet > .x { top: 0; right: auto; margin-right: -8px; } }
+
+/* ---------- Google reviews: a framed box that scrolls on its own ---------- */
+.rev-frame { position: relative; border: 1px solid var(--line); border-radius: 18px; background: #fff; overflow: hidden; }
+.rev-frame::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 34px; background: linear-gradient(rgba(255,255,255,0), #fff); pointer-events: none; }
+.rev-scroll { display: grid; gap: 10px; max-height: 440px; padding: 12px 12px 26px; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; scrollbar-color: #c9d6c0 transparent; }
+.rev-scroll:focus-visible { outline: 2px solid var(--green); outline-offset: -2px; }
+.rev-scroll .rev { padding: 14px; border-radius: 14px; background: #f5f7f2; }
+.rev-scroll .rev .stars { display: block; margin-top: 8px; }
+.rev-scroll .rev blockquote { margin-top: 6px; font-size: 14.5px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.rev-all { margin-top: 12px; width: 100%; justify-content: center; }
+.rev-head { margin-bottom: 14px; }
+@media (min-width: 900px) { .rev-scroll { grid-template-columns: 1fr 1fr; max-height: 480px; padding: 16px 16px 30px; align-items: start; } .rev-all { width: auto; } }

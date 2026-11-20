@@ -28,7 +28,9 @@ const COMPANY = {
   hours: '',
   domain: 'pestcontrol.ae',
   googleReviewsUrl: 'https://www.google.com/search?q=Akkad+Pest+Control+Services+Dubai+reviews',
-  rating: 4.8,
+  // From Akkad's Google listing on 20 November 2026. The reviews section reads the live figures from Google.
+  rating: 4.5,
+  reviewCount: 2580,
 };
 
 const FEES = { expressNew: 18, expressWarranty: 39, etaMin: 28, aboutMin: 30 };
