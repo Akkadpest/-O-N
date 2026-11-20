@@ -1697,3 +1697,14 @@ a.pk-pic { display: block; }
 .rev .av { position: relative; overflow: hidden; }
 .rev .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
 .rev-all[hidden] { display: none; }
+
+/* ---------- hero: "Schedule fast" / "Schedule later" cards with their animations ---------- */
+.st-when { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+.when-card { display: grid; justify-items: center; gap: 2px; padding: 8px 8px 12px; border: 1.5px solid var(--line); border-radius: 18px; background: #fff; color: var(--ink); text-align: center; transition: border-color .15s, box-shadow .15s; }
+.when-card:hover { border-color: var(--green); }
+.when-card.on { border-color: var(--green); box-shadow: 0 0 0 3px rgba(60, 122, 34, .14); background: #f6fbf2; }
+.when-anim { display: block; width: 104px; height: 88px; overflow: hidden; }
+.when-anim svg { display: block; width: 104px !important; height: 104px !important; margin-top: -8px; }
+.when-card b { font-size: 16px; font-weight: 800; letter-spacing: -.01em; }
+.when-card small { font-size: 12.5px; color: var(--muted); line-height: 1.3; }
+@media (min-width: 900px) { .st-when { max-width: 460px; gap: 14px; } .when-anim { width: 128px; height: 108px; } .when-anim svg { width: 128px !important; height: 128px !important; margin-top: -10px; } }

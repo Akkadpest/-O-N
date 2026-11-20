@@ -13,6 +13,27 @@ const PEST_ICONS = ['cockroach', 'bedbugs', 'ants', 'rodents', 'termites', 'mosq
 export const pestIcon = (id) => (PEST_ICONS.includes(id) ? `/img/pests/${id}.webp` : pestImg(id));
 const fromOf = (p, pk) => (pk.sized ? p.sizes[pk.sized][0].price : pk.price);
 
+/* ---------- Lottie animations (player is self-hosted in /vendor, loaded only when a page has one) ---------- */
+let lottieReady;
+const lottiePlayer = () => lottieReady || (lottieReady = new Promise((ok, fail) => {
+  const el = document.createElement('script');
+  el.src = '/vendor/lottie_light.min.js'; el.onload = () => ok(window.lottie); el.onerror = fail;
+  document.head.appendChild(el);
+}));
+async function playLotties(root) {
+  const spots = $$('[data-lottie]', root);
+  if (!spots.length) return;
+  try {
+    const lottie = await lottiePlayer();
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    for (const el of spots) {
+      if (!document.contains(el)) continue;
+      const a = lottie.loadAnimation({ container: el, renderer: 'svg', loop: !still, autoplay: !still, path: el.dataset.lottie });
+      if (still) a.addEventListener('DOMLoaded', () => a.goToAndStop(90, true)); // a full, settled frame
+    }
+  } catch (e) { /* the cards still work without the animation */ }
+}
+
 /* ---------- reviews (also used on the area pages) ---------- */
 const initialsOf = (name) => String(name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
 // The reviewer's Google photo when there is one; their initials otherwise (and if the photo fails to load).
@@ -201,6 +222,10 @@ export function storePage(ctx = {}) {
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
         <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
+        <div class="st-when" role="group" aria-label="When do you need us?">
+          <button class="when-card${S.draft.timing === 'express' ? ' on' : ''}" data-when-pick="express"><span class="when-anim" data-lottie="/anim/van-express.json" aria-hidden="true"></span><b>Schedule fast</b><small>At your door in about ${site.fees.aboutMin} min</small></button>
+          <button class="when-card${S.draft.timing === 'scheduled' ? ' on' : ''}" data-when-pick="scheduled"><span class="when-anim" data-lottie="/anim/schedule-later.json" aria-hidden="true"></span><b>Schedule later</b><small>Pick your day and time</small></button>
+        </div>
       </section>
 
       <section class="st-offers"><div class="st-row-h"><h2>Offers and benefits</h2></div>
@@ -250,6 +275,14 @@ export function storePage(ctx = {}) {
 
     // Jump to a service (pest tiles, tabs, offers).
     on(root, '[data-href]', (b) => go(b.dataset.href));
+    // Hero: "Schedule fast" / "Schedule later" with their animations. Picking one sets the visit timing and shows the services.
+    on(root, '[data-when-pick]', (b) => {
+      setDraft({ timing: b.dataset.whenPick });
+      $$('[data-when-pick]', root).forEach((x) => x.classList.toggle('on', x === b));
+      const c = $('#cart', root), bar = $('#cartbar', root); if (c) c.innerHTML = cartHtml(); if (bar) bar.innerHTML = barHtml();
+      const el = $('#st-list', root); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 128, behavior: 'smooth' });
+    });
+    playLotties(root);
     on(root, '[data-jump]', (b) => {
       const id = b.dataset.jump;
       const el = id === 'list' ? $('#st-list', root) : $('#svc-' + id, root);
