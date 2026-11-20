@@ -1,5 +1,5 @@
 // After the sale: confirmation, live tracking, reschedule, cancel, and finding a booking (screens 33-36, 41-56).
-import { S, save, site, me, api, bookingApi, download, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell, helpBox } from './core.js';
+import { S, save, site, me, api, bookingApi, download, route, go, esc, icon, aed, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe, onLeave, toast, shell, helpBox, stepsHtml } from './core.js';
 
 const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const getBooking = async (id) => (await bookingApi(id)).booking;
@@ -180,7 +180,7 @@ route('/booking/:id/report', async ({ id }) => {
     html: `<div class="flow report"><span class="pill lg">${icon('check', 22)}Visit complete · ${esc(b.id)}</span><h1>Service report</h1>
       <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Visit date</span>', `<b>${esc(b.dateLong)}</b>`],
         ['<span class="k">Address</span>', esc(b.address)], [`<span class="k">${pending(b) ? 'Payment' : 'Paid'}</span>`, paidText(b)]])}</div>
-      <div class="card"><h3>What the technician did</h3>${p.steps.map(([t, d], i) => `<div class="ic-row" style="align-items:flex-start;margin-top:12px"><span class="num">${i + 1}</span><div class="grow"><b style="color:var(--ink)">${esc(t)}</b><p class="sub" style="margin:0">${esc(d)}</p></div></div>`).join('')}</div>
+      <div class="card"><h3>What the technician did</h3>${stepsHtml(p.steps)}</div>
       ${b.kind === 'new' && b.warrantyUntilLabel ? `<div class="card ${b.warrantyActive ? 'on' : ''}"><h3 class="ic-row" style="gap:8px">${icon('shield')}${b.warrantyMonths}-month warranty</h3><p class="sub">${b.warrantyActive ? 'Active until' : 'Ended on'} ${esc(b.warrantyUntilLabel)}. ${b.warrantyActive ? 'If the same pest returns, we come back free.' : ''}</p></div>` : ''}
       <p class="note">Products used are Dubai Municipality approved. The technician's own notes and product list are added to this report by dispatch.</p>
       <div class="row noprint"><button class="btn ghost" data-print>Save as PDF</button><a class="btn ghost" href="/my-bookings">My bookings</a></div></div>`,

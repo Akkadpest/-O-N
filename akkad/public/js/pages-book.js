@@ -1,5 +1,5 @@
 // New booking (screens 21-32) and warranty call-out (screens 37-40).
-import { S, save, site, me, api, route, go, esc, icon, aed, wty, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
+import { S, save, site, me, api, route, go, esc, icon, aed, wty, stepsHtml, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
 import { areaUrl } from './flows.js';
 
 const needArea = () => { if (!S.area) { go('/area', { replace: true }); return true; } return false; };
@@ -215,7 +215,7 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
   openLayer('popup', `<div class="explain"><h2 class="plain">${title || 'Your service, explained'}</h2>
     <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows.map(([label, value, cls]) => [label, typeof value === 'number' ? aed(value) : /^from \d/.test(String(value)) ? 'from ' + aed(Number(String(value).slice(5))) : value, cls]))}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
-    <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
+    <h4>What the technician will do</h4>${stepsHtml(p.steps)}
     <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }

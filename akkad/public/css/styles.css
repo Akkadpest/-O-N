@@ -1580,3 +1580,18 @@ a.pk-pic { display: block; }
 .pk-survey .st-survey { margin: 0; }
 @media (max-width: 899px) { .pk-survey .st-blurb { display: none; } .pk-survey .st-survey { width: 100%; } }
 @media (min-width: 900px) { .pk.pk-survey { padding: 16px; grid-template-columns: 180px minmax(0, 1fr); } }
+
+/* ---------- the technician's steps, each with its photo ---------- */
+.steps-pic { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.steps-pic li { display: grid; grid-template-columns: 124px minmax(0, 1fr); gap: 14px; align-items: center; }
+.sp-img { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; background: var(--soft) center / cover; }
+.sp-img i { position: absolute; left: 8px; top: 8px; display: grid; place-items: center; width: 26px; height: 26px; border: 2px solid #fff; border-radius: 50%; background: var(--green); color: #fff; font-style: normal; font-size: 13px; font-weight: 700; }
+.sp-text b { display: block; font-size: 15.5px; color: var(--ink); }
+.sp-text span { display: block; margin-top: 3px; color: var(--muted); font-size: 14px; line-height: 1.45; }
+.card > h3 + .steps-pic { margin-top: 14px; }
+@media (max-width: 379px) { .steps-pic li { grid-template-columns: 100px minmax(0, 1fr); gap: 12px; } }
+@media (min-width: 900px) { .steps-pic li { grid-template-columns: 150px minmax(0, 1fr); gap: 16px; } }
+/* larger step photos so the work is easy to see */
+.steps-pic li { grid-template-columns: 44% minmax(0, 1fr); }
+@media (max-width: 379px) { .steps-pic li { grid-template-columns: 42% minmax(0, 1fr); } }
+@media (min-width: 900px) { .steps-pic li { grid-template-columns: 200px minmax(0, 1fr); } }

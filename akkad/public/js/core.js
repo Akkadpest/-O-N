@@ -41,6 +41,11 @@ export function remember(booking) { S.keys[booking.id] = booking.key; save(); }
 /* ---------- small helpers ---------- */
 export const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 export const aed = (n) => 'AED ' + (Number.isInteger(n) ? n : n.toFixed(2));
+// The technician's steps, each with its photo: 1 inspect, 2 treat, 3 explain and hand over.
+const STEP_PHOTOS = ['/img/step-inspect.webp', '/img/step-treat.webp', '/img/step-explain.webp'];
+export const stepsHtml = (steps) => `<ol class="steps-pic">${steps.map(([t, d], i) => `<li>
+  <span class="sp-img" style="background-image:url('${STEP_PHOTOS[Math.min(i, STEP_PHOTOS.length - 1)]}')" role="img" aria-label="${esc(t)}"><i>${i + 1}</i></span>
+  <div class="sp-text"><b>${esc(t)}</b><span>${esc(d)}</span></div></li>`).join('')}</ol>`;
 // "6-month warranty", or "2 visits, no warranty" for the services sold without one.
 export const wty = (p) => (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');
 export const $ = (sel, root = document) => root.querySelector(sel);

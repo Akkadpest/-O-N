@@ -1,7 +1,7 @@
 // The booking shop: one page used by the homepage and by every area page.
 // The customer picks a service, adds it to "Your booking" and continues to time and payment.
 // Same page for everyone, personalised by the customer's area (S.area) or by the area page it is on.
-import { S, save, site, go, esc, icon, aed, wty, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
+import { S, save, site, go, esc, icon, aed, wty, stepsHtml, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
 import { checkAvailability } from './flows.js';
 import { chosen, shortSize, ensureSize, sizeControls, wireSizeControls } from './pages-book.js';
 
@@ -309,7 +309,7 @@ function sizePicker(p, pkgId, done) {
       <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
       <div class="sz-more">
         <details><summary>What's included${icon('down', 18)}</summary><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}</ul></details>
-        <details><summary>What the technician does${icon('down', 18)}</summary>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}</details>
+        <details open><summary>What the technician does${icon('down', 18)}</summary>${stepsHtml(p.steps)}</details>
         <details><summary>Before and after the visit${icon('down', 18)}</summary><p class="muted"><b>Before:</b> ${esc(p.prep)}</p>${p.after ? `<p class="muted"><b>After:</b> ${esc(p.after)}</p>` : ''}</details>
       </div>
       <div class="sz-foot"><button class="btn" data-done>Add · ${aed(c.price)}</button></div>`, {
@@ -335,7 +335,7 @@ function details(p, pkgId, add) {
   openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>${pkPhoto(p, pk) ? `<div class="pk-photo" style="background-image:url('${esc(pkPhoto(p, pk))}')" role="img" aria-label="${esc(pk.title)}"></div>` : ''}
     <p class="muted">${esc(p.intro)}</p>
     <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}</li>` : ''}</ul>
-    <h4>What the technician will do</h4>${p.steps.map(([t, d], i) => `<div class="do"><span class="num">${i + 1}</span><div><b>${esc(t)}</b><span>${esc(d)}</span></div></div>`).join('')}
+    <h4>What the technician will do</h4>${stepsHtml(p.steps)}
     <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
     ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
     <button class="btn" style="margin-top:16px" data-ok>Add · ${pk.sized ? 'from ' : ''}${aed(fromOf(p, pk))}</button></div>`,
