@@ -110,7 +110,9 @@ test('guessing booking numbers is cut off', async () => {
 });
 
 test('chat: a customer can message, only an agent with the secret can read or reply', async () => {
-  const start = await call('/api/chat/start', { area: 'JLT' });
+  assert.equal((await call('/api/chat/start', { area: 'JLT' })).status, 400, 'no chat without a mobile number');
+  assert.equal((await call('/api/chat/start', { area: 'JLT', mobile: '12345' })).status, 400);
+  const start = await call('/api/chat/start', { area: 'JLT', name: 'Sam', mobile: '050 111 2223' });
   const chat = { 'x-akkad-chat': start.data.token };
   const sent = await call('/api/chat/messages', { text: 'Do you treat ants?<script>' }, chat);
   assert.equal(sent.status, 200);
@@ -122,6 +124,7 @@ test('chat: a customer can message, only an agent with the secret can read or re
   assert.equal((await call('/api/ops/chats', null, { 'x-ops-secret': 'wrong' })).status, 403);
   const inbox = await call('/api/ops/chats', null, { 'x-ops-secret': 'test-secret' });
   assert.equal(inbox.status, 200);
+  assert.equal(inbox.data.chats[0].mobile, '+971501112223');
   const id = inbox.data.chats[0].id;
   // an agent tool is not the website: it sends the secret, not the website header
   const reply = await fetch(`${B}/api/ops/chats/${id}/reply`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-ops-secret': 'test-secret' }, body: JSON.stringify({ text: 'Yes, from AED 210.' }) });

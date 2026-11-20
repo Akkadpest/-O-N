@@ -614,13 +614,18 @@ const chats = () => { const d = db(); if (!d.chats) d.chats = {}; return d.chats
 const chatOf = (req) => { const t = req.get('x-akkad-chat') || ''; return /^[A-Za-z0-9_-]{20,80}$/.test(t) ? chats()[sha(t)] : null; };
 const chatOut = (c, after = 0) => ({ messages: c.messages.filter((m) => m.n > after).map((m) => ({ n: m.n, from: m.from, text: m.text, time: fmtClock(new Date(m.at)) })), agentConnected: !!c.agentSeen });
 function say(c, from, text) { c.messages.push({ n: (c.messages.length ? c.messages[c.messages.length - 1].n : 0) + 1, from, text, at: Date.now() }); c.updatedAt = Date.now(); }
+// A chat only opens with a valid mobile number, so every chat is a contact the team can call back.
 app.post('/api/chat/start', limit('chat-start', 10, 60), (req, res) => {
+  const mobile = normMobile(req.body.mobile);
+  if (!mobile) return fail(res, 400, 'Please enter a valid mobile number.');
+  const name = clean(req.body.name, 80);
   const all = chats();
   for (const [k, c] of Object.entries(all)) if (Date.now() - c.updatedAt > CHAT_DAYS * 86400000) delete all[k];
   const token = store.token(32);
   const d = db(); d.chatSeq = (d.chatSeq || 500) + 1;
-  all[sha(token)] = { id: 'CH-' + d.chatSeq, createdAt: Date.now(), updatedAt: Date.now(), messages: [], area: clean(req.body.area, 60) };
-  store.save();
+  all[sha(token)] = { id: 'CH-' + d.chatSeq, createdAt: Date.now(), updatedAt: Date.now(), messages: [], area: clean(req.body.area, 60), name, mobile };
+  // Kept with the other customer requests, so the number stays after the chat itself expires.
+  newRequest('chat', { chat: 'CH-' + d.chatSeq, name, mobile, area: clean(req.body.area, 60) });
   res.json({ token });
 });
 app.get('/api/chat', limit('chat-read', 240, 5), (req, res) => {
@@ -648,7 +653,7 @@ const agentOnly = (req, res, next) => {
   fail(res, 403, 'Not allowed.');
 };
 app.get('/api/ops/chats', agentOnly, (req, res) => res.json({ chats: Object.values(chats()).filter((c) => c.messages.length).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 100)
-  .map((c) => ({ id: c.id, area: c.area, updatedAt: new Date(c.updatedAt).toISOString(), waiting: c.messages[c.messages.length - 1].from !== 'agent', messages: c.messages.map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() })) })) }));
+  .map((c) => ({ id: c.id, name: c.name || '', mobile: c.mobile || '', area: c.area, updatedAt: new Date(c.updatedAt).toISOString(), waiting: c.messages[c.messages.length - 1].from !== 'agent', messages: c.messages.map((m) => ({ from: m.from, text: m.text, at: new Date(m.at).toISOString() })) })) }));
 app.post('/api/ops/chats/:id/reply', agentOnly, (req, res) => {
   const c = Object.values(chats()).find((x) => x.id === req.params.id);
   const text = clean(req.body.text, 1000);

@@ -14,12 +14,37 @@ export function openChat() {
   let last = 0, timer = null, closed = false;
   const box = openLayer('sheet', `<div class="chat">
     <div class="chat-head"><span class="ic-circle">${icon('chat', 22)}</span><div><h2 class="plain">Chat with Akkad</h2><p class="muted" id="chat-status">Ask us anything about pests, prices or your booking.</p></div></div>
+    <form class="chat-gate" id="chat-gate" novalidate hidden>
+      <p class="chat-gate-t">Enter your mobile number to start the chat.</p>
+      <label class="field">${icon('doc')}<span class="sr">Your name</span><input name="name" autocomplete="name" maxlength="80" placeholder="Your name"></label>
+      <label class="field">${icon('phone')}<span class="sr">Mobile number</span><input name="mobile" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="Mobile number" required></label>
+      <p class="err"></p>
+      <button class="btn">Start chat</button>
+      <p class="note center">We use your number only to reply to you about your enquiry.</p>
+    </form>
+    <div class="chat-room" id="chat-room" hidden>
     <div class="chat-log" id="chat-log" aria-live="polite"><p class="chat-hint">Type your question below. An agent replies here in this chat.</p></div>
     <div class="chat-quick" id="chat-quick">${['What will it cost?', 'Can you come today?', 'Is it safe for kids and pets?'].map((q) => `<button class="chip" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
     <form class="chat-form" novalidate><label class="field"><span class="sr">Your message</span><input name="text" autocomplete="off" maxlength="1000" placeholder="Type your message"></label><button class="btn chat-send" aria-label="Send">${icon('arrow', 20)}</button></form>
+    </div>
     <p class="chat-alt">Prefer to talk? <a href="${site.company.phoneHref}">Call ${esc(site.company.phone)}</a> · <a href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp</a></p></div>`,
   { onClose: () => { closed = true; clearInterval(timer); } });
-  const log = $('#chat-log', box), input = $('[name=text]', box);
+  const log = $('#chat-log', box), input = $('[name=text]', box), gate = $('#chat-gate', box), room = $('#chat-room', box);
+  // No chat token yet (or it expired): ask for the mobile number first.
+  const show = () => { gate.hidden = !!S.chat; room.hidden = !S.chat; };
+  show();
+  gate.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = new FormData(gate), err = $('.err', gate), btn = $('.btn', gate);
+    err.textContent = '';
+    if (String(f.get('mobile')).replace(/\D/g, '').length < 9) { err.textContent = 'Please enter a valid mobile number.'; $('[name=mobile]', gate).focus(); return; }
+    btn.disabled = true;
+    try {
+      S.chat = (await chatApi('/chat/start', { name: f.get('name'), mobile: f.get('mobile'), area: S.area ? S.area.name : '' })).token; save();
+      show(); input.focus();
+    } catch (ex) { err.textContent = ex.message; }
+    btn.disabled = false;
+  });
   const add = (list) => {
     for (const m of list) {
       if (m.n <= last) continue;
@@ -36,18 +61,18 @@ export function openChat() {
   const load = async () => {
     if (!S.chat) return;
     try { const r = await chatApi('/chat?after=' + last); add(r.messages); status(r); }
-    catch (e) { if (e.status === 404) { S.chat = null; save(); } }
+    catch (e) { if (e.status === 404) { S.chat = null; save(); show(); } }
   };
   const send = async (text) => {
     text = text.trim();
     if (!text) return;
     input.value = '';
     try {
-      if (!S.chat) { S.chat = (await chatApi('/chat/start', { area: S.area ? S.area.name : '' })).token; save(); }
+      if (!S.chat) { show(); return; }
       const r = await chatApi('/chat/messages', { text, after: last });
       add(r.messages); status(r);
     } catch (e) {
-      if (e.status === 404) { S.chat = null; save(); return send(text); }
+      if (e.status === 404) { S.chat = null; save(); show(); toast('Please enter your mobile number to continue.'); return; }
       input.value = text; toast(e.message);
     }
   };
@@ -55,6 +80,6 @@ export function openChat() {
   on(box, '[data-q]', (b) => send(b.dataset.q));
   load();
   timer = setInterval(() => { if (!closed && !document.hidden) load(); }, 4000);
-  if (matchMedia('(min-width: 900px)').matches) input.focus();
+  if (matchMedia('(min-width: 900px)').matches) (S.chat ? input : $('[name=name]', gate)).focus();
 }
 on(document, '[data-chat]', () => openChat());

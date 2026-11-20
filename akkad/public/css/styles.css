@@ -1609,3 +1609,13 @@ a.pk-pic { display: block; }
 .insp .opt.on { border-color: var(--green); background: #eef5ea; }
 .insp .field .unit { font-weight: 700; font-size: 13px; color: var(--green); }
 @media (max-width: 379px) { .insp .opt { padding: 10px; } .insp .opt b { font-size: 13.5px; } }
+
+/* Chat: the mobile-number step shown before the conversation opens. */
+.chat-gate, .chat-room { display: grid; gap: 10px; }
+.chat-gate[hidden], .chat-room[hidden] { display: none; }
+.chat-gate { padding: 14px; border-radius: 14px; background: #f5f7f2; }
+.chat-gate-t { font-weight: 700; font-size: 15.5px; color: var(--ink); }
+.chat-gate .field { background: #fff; }
+.chat-gate .err:empty { display: none; }
+.chat-gate .note { font-size: 12.5px; }
+.chat-gate, .chat-room { grid-template-columns: minmax(0, 1fr); }
