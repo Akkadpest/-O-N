@@ -35,7 +35,7 @@ app.disable('x-powered-by');
 /* ---------- security ---------- */
 const sha = (v) => crypto.createHash('sha256').update(String(v)).digest('hex');
 const same = (a, b) => { const x = Buffer.from(sha(a)), y = Buffer.from(sha(b)); return crypto.timingSafeEqual(x, y); };
-const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self'", "style-src-attr 'unsafe-inline'", "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self'",
+const CSP = ["default-src 'self'", "script-src 'self'", "style-src 'self'", "style-src-attr 'unsafe-inline'", "img-src 'self' data: blob: https://lh3.googleusercontent.com", "font-src 'self'", "connect-src 'self'",
   "frame-src 'none'", "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'"].join('; ');
 app.use((req, res, next) => {
   req.ip = (TRUST_PROXY && String(req.headers['x-forwarded-for'] || '').split(',')[0].trim()) || req.socket.remoteAddress || 'unknown';
@@ -270,23 +270,56 @@ app.get('/api/places', limit('places', 90, 5), async (req, res) => {
     res.json({ places, google: true });
   } catch (e) { console.error('Places search failed:', e.message); res.json({ places: [], google: false }); } // the page falls back to our own area list
 });
-// Akkad's own Google listing: rating, number of reviews and the reviews Google hands out (at most 5 per place).
-// Cached for 6 hours. Without a key, or if Google does not answer, the page keeps its built-in reviews.
-app.get('/api/reviews', limit('reviews', 120, 5), async (req, res) => {
+// Akkad's own Google reviews, shown on the site without sending the visitor to Google.
+// Google hands out 5 reviews per request, so each refresh asks twice (newest and most relevant) and adds what it gets
+// to a list kept in the store. The list grows as new reviews arrive; nothing is filtered by rating.
+// A review Google has not returned for 30 days is dropped (Google's limit on keeping its content).
+const REVIEW_KEEP_MS = 30 * 24 * 3600000;
+const agoLabel = (ms) => {
+  const d = Math.max(0, Date.now() - ms) / 86400000;
+  if (d < 1) return 'today';
+  if (d < 7) return `${Math.floor(d)} day${Math.floor(d) === 1 ? '' : 's'} ago`;
+  if (d < 30) return `${Math.floor(d / 7)} week${Math.floor(d / 7) === 1 ? '' : 's'} ago`;
+  if (d < 365) return `${Math.floor(d / 30)} month${Math.floor(d / 30) === 1 ? '' : 's'} ago`;
+  return `${Math.floor(d / 365)} year${Math.floor(d / 365) === 1 ? '' : 's'} ago`;
+};
+async function refreshReviews() {
+  const d = db();
+  if (!d.google) d.google = { placeId: null, rating: null, count: null, reviews: {} };
+  const g = d.google;
+  if (!g.placeId) {
+    const found = await google(`${PLACES}/places:searchText`, { method: 'POST', headers: { 'X-Goog-FieldMask': 'places.id,places.displayName' },
+      body: JSON.stringify({ textQuery: C.COMPANY.mapsQuery, maxResultCount: 1 }) });
+    const p = (found.places || [])[0];
+    if (!p || !/akkad/i.test((p.displayName || {}).text || '') || !/^[A-Za-z0-9_-]{10,200}$/.test(p.id || '')) throw new Error('listing not found');
+    g.placeId = p.id;
+  }
+  for (const sort of ['newest', 'most_relevant']) {
+    const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${g.placeId}&fields=rating,user_ratings_total,reviews&reviews_sort=${sort}&reviews_no_translations=true&key=${encodeURIComponent(GOOGLE_KEY)}`, { signal: AbortSignal.timeout(6000) });
+    const data = await res.json();
+    if (data.status !== 'OK') throw new Error('Google answered ' + data.status);
+    const r = data.result || {};
+    if (Number(r.rating)) g.rating = Number(r.rating);
+    if (Number(r.user_ratings_total)) g.count = Number(r.user_ratings_total);
+    for (const v of r.reviews || []) {
+      const name = clean(v.author_name, 60), text = clean(v.text, 2000), time = Number(v.time) * 1000;
+      if (!name || !time) continue;
+      const photo = /^https:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-\/=.]+$/.test(v.profile_photo_url || '') ? v.profile_photo_url : '';
+      g.reviews[sha(name + '|' + time)] = { name, text, time, photo, stars: Math.min(5, Math.max(1, Math.round(Number(v.rating) || 5))), seen: Date.now() };
+    }
+  }
+  for (const [k, v] of Object.entries(g.reviews)) if (Date.now() - v.seen > REVIEW_KEEP_MS) delete g.reviews[k];
+  store.save();
+}
+app.get('/api/reviews', limit('reviews', 240, 5), async (req, res) => {
   if (!GOOGLE_KEY) return res.json({ source: 'none' });
-  try {
-    const d = await cached('reviews', 6 * 3600000, () => google(`${PLACES}/places:searchText`, { method: 'POST',
-      headers: { 'X-Goog-FieldMask': 'places.displayName,places.rating,places.userRatingCount,places.googleMapsUri,places.reviews' },
-      body: JSON.stringify({ textQuery: C.COMPANY.mapsQuery, maxResultCount: 1 }) }));
-    const p = (d.places || [])[0];
-    if (!p || !/akkad/i.test((p.displayName || {}).text || '')) return res.json({ source: 'none' });
-    const reviews = (p.reviews || []).map((r) => ({
-      name: clean((r.authorAttribution || {}).displayName, 60), when: clean(r.relativePublishTimeDescription, 40),
-      stars: Math.min(5, Math.max(1, Math.round(Number(r.rating) || 5))), text: clean((r.text || r.originalText || {}).text, 1500),
-    })).filter((r) => r.name && r.text);
-    res.json({ source: 'google', rating: Number(p.rating) || null, count: Number(p.userRatingCount) || null,
-      url: /^https:\/\/(maps\.google\.com|www\.google\.com|maps\.app\.goo\.gl)\//.test(p.googleMapsUri || '') ? p.googleMapsUri : null, reviews });
-  } catch (e) { console.error('Google reviews failed:', e.message); res.json({ source: 'none' }); }
+  try { await cached('reviews', 3600000, refreshReviews); } catch (e) { console.error('Google reviews failed:', e.message); }
+  const g = db().google;
+  const all = g ? Object.values(g.reviews).sort((x, y) => y.time - x.time) : [];
+  if (!all.length) return res.json({ source: 'none' });
+  const offset = Math.min(all.length, Math.max(0, parseInt(req.query.offset, 10) || 0));
+  res.json({ source: 'google', rating: g.rating, count: g.count, total: all.length,
+    reviews: all.slice(offset, offset + 5).map((r) => ({ name: r.name, text: r.text, stars: r.stars, photo: r.photo, when: agoLabel(r.time) })) });
 });
 app.get('/api/places/:id', limit('places', 90, 5), async (req, res) => {
   if (!GOOGLE_KEY) return fail(res, 404, 'Address search is not set up.');

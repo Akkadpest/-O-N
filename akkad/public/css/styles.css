@@ -1692,3 +1692,8 @@ a.pk-pic { display: block; }
 .rev-all { margin-top: 12px; width: 100%; justify-content: center; }
 .rev-head { margin-bottom: 14px; }
 @media (min-width: 900px) { .rev-scroll { grid-template-columns: 1fr 1fr; max-height: 480px; padding: 16px 16px 30px; align-items: start; } .rev-all { width: auto; } }
+
+/* reviewer photo over the initials */
+.rev .av { position: relative; overflow: hidden; }
+.rev .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.rev-all[hidden] { display: none; }

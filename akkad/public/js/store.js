@@ -15,29 +15,49 @@ const fromOf = (p, pk) => (pk.sized ? p.sizes[pk.sized][0].price : pk.price);
 
 /* ---------- reviews (also used on the area pages) ---------- */
 const initialsOf = (name) => String(name || '').trim().split(/\s+/).slice(0, 2).map((w) => w.charAt(0).toUpperCase()).join('');
-const googleCard = (r) => `<article class="rev"><div class="who"><span class="av">${esc(r.initials || initialsOf(r.name))}</span><div><b>${esc(r.name)}</b><small>${esc(r.when)}${r.area ? ` · ${esc(r.area)}` : ''}</small></div><span class="gl" aria-label="Google review">G</span></div>${stars(r.stars)}<blockquote>${esc(r.text)}</blockquote></article>`;
-const reviewsUrl = () => site.company.mapsUrl || site.company.googleReviewsUrl;
+// The reviewer's Google photo when there is one; their initials otherwise (and if the photo fails to load).
+const avatar = (r) => `<span class="av">${esc(r.initials || initialsOf(r.name))}${r.photo ? `<img src="${esc(r.photo)}" alt="" loading="lazy" referrerpolicy="no-referrer" width="40" height="40">` : ''}</span>`;
+const googleCard = (r) => `<article class="rev"><div class="who">${avatar(r)}<div><b>${esc(r.name)}</b><small>${esc(r.when)}${r.area ? ` · ${esc(r.area)}` : ''}</small></div><span class="gl" aria-label="Google review">G</span></div>${stars(r.stars)}${r.text ? `<blockquote>${esc(r.text)}</blockquote>` : ''}</article>`;
 const countLabel = (n) => (n ? `${Number(n).toLocaleString('en')} reviews on Google` : 'Google reviews');
-// Reviews in a framed box that scrolls on its own, so the page stays short.
+// Reviews in a framed box that scrolls on its own. "Show more" loads further reviews into the same box.
 export const googleBlock = (list, title, count) => `
   <div class="rev-head">
     <div><h2 class="sec-h">${title}</h2>
       <p class="rev-score"><b data-rev-rating>${site.company.rating}</b>${stars(Math.round(site.company.rating))}<span data-rev-count>${count || countLabel(site.company.reviewCount)}</span></p></div>
   </div>
   <div class="rev-frame"><div class="rev-scroll" data-rev-list tabindex="0" role="region" aria-label="Google reviews">${list.map(googleCard).join('')}</div></div>
-  <a class="btn ghost rev-all" data-rev-all href="${reviewsUrl()}" target="_blank" rel="noopener">See all reviews on Google${icon('arrow', 16)}</a>`;
-// Swap in Akkad's live Google reviews when the server can reach Google.
+  <button class="btn ghost rev-all" data-rev-more hidden>Show more reviews</button>`;
+// Swap in Akkad's real Google reviews, newest first, five at a time.
 export async function loadGoogleReviews(root) {
-  const box = $('[data-rev-list]', root);
+  const box = $('[data-rev-list]', root), more = $('[data-rev-more]', root);
   if (!box) return;
+  let shown = 0, total = 0;
+  const get = async (offset) => (await fetch('/api/reviews?offset=' + offset, { credentials: 'same-origin' })).json();
+  const paint = (r, replace) => {
+    if (replace) box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', r.reviews.map(googleCard).join(''));
+    shown += r.reviews.length; total = r.total;
+    more.hidden = shown >= total;
+    more.textContent = `Show more reviews (${total - shown})`;
+  };
+  // A photo that does not load is removed, leaving the initials.
+  box.addEventListener('error', (e) => { if (e.target.tagName === 'IMG') e.target.remove(); }, true);
+  more.addEventListener('click', async () => {
+    more.disabled = true;
+    try {
+      const before = box.children.length;
+      const r = await get(shown);
+      if (r.source === 'google' && r.reviews.length) { paint(r); const first = box.children[before]; if (first) box.scrollTo({ top: first.offsetTop - 12, behavior: 'smooth' }); }
+      else more.hidden = true;
+    } catch (e) { toast('Could not load more reviews. Please try again.'); }
+    more.disabled = false;
+  });
   try {
-    const r = await (await fetch('/api/reviews', { credentials: 'same-origin' })).json();
+    const r = await get(0);
     if (r.source !== 'google' || !r.reviews.length || !document.contains(box)) return;
-    box.innerHTML = r.reviews.map(googleCard).join('');
+    paint(r, true);
     if (r.rating) $('[data-rev-rating]', root).textContent = r.rating.toFixed(1);
     if (r.count) $('[data-rev-count]', root).textContent = countLabel(r.count);
-    if (r.count) $('[data-rev-all]', root).firstChild.textContent = `See all ${Number(r.count).toLocaleString('en')} reviews on Google`;
-    if (r.url) $('[data-rev-all]', root).href = r.url;
   } catch (e) { /* keep the built-in reviews */ }
 }
 
