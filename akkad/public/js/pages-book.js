@@ -215,7 +215,7 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
   openLayer('popup', `<div class="explain"><h2 class="plain">${title || 'Your service, explained'}</h2>
     <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows.map(([label, value, cls]) => [label, typeof value === 'number' ? aed(value) : /^from \d/.test(String(value)) ? 'from ' + aed(Number(String(value).slice(5))) : value, cls]))}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
-    <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id, p.stepNotes)}
+    <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id, p.stepNotes, p)}
     <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }

@@ -47,14 +47,15 @@ const STEP_PHOTOS = ['/img/step-inspect.webp', '/img/step-treat.webp', '/img/ste
 const STEP_SETS = { bedbugs: ['bedbugs', 6], 'bedbugs-general': ['bedbugs', 6], rodents: ['rodents', 3], mosquitoes: ['mosquitoes', 3], flies: ['flies', 3] };
 const stepPhoto = (pestId, i) => { const set = STEP_SETS[pestId]; return set ? `/img/step-${set[0]}-${Math.min(i, set[1] - 1) + 1}.webp` : STEP_PHOTOS[Math.min(i, STEP_PHOTOS.length - 1)]; };
 // A step is [title, text] or [title, text, picture]. With no third item the pest's photo set is used; `null` means no picture.
-export const stepsHtml = (steps, pestId, notes) => {
+// Pass the pest as `p` to end the list with its warranty promise.
+export const stepsHtml = (steps, pestId, notes, p) => {
   const set = STEP_SETS[pestId];
   return `<ol class="steps-pic${set && set[1] > 3 ? ' wide' : ''}">${steps.map(([t, d, pic], i) => {
     const src = pic === undefined ? stepPhoto(pestId, i) + '?v=3' : pic;
     return `<li${src ? '' : ' class="no-pic"'}>
   ${src ? `<span class="sp-img" style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(t)}"><i>${i + 1}</i></span>` : `<span class="sp-num">${i + 1}</span>`}
   <div class="sp-text"><b>${esc(t)}</b><span>${esc(d)}</span></div></li>`;
-  }).join('')}</ol>${notes && notes.length ? `<ul class="sp-notes">${notes.map(([k, v]) => `<li><b>${esc(k)}:</b> ${esc(v)}</li>`).join('')}</ul>` : ''}`;
+  }).join('')}</ol>${notes && notes.length ? `<ul class="sp-notes">${notes.map(([k, v]) => `<li><b>${esc(k)}:</b> ${esc(v)}</li>`).join('')}</ul>` : ''}${p && p.warrantyMonths ? `<div class="sp-wty">${icon('shield', 22)}<div><b>${esc(p.warrantyLabel)}${p.callouts ? ' + ' + esc(p.callouts.toLowerCase()) : ''}</b><span>If the pests return within ${p.warrantyMonths} months, we come back and treat again free.</span></div></div>` : ''}`;
 };
 // "6-month warranty", or "2 visits, no warranty" for the services sold without one.
 export const wty = (p) => p.warrantyLabel || (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');

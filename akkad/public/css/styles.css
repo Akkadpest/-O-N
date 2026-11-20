@@ -1641,3 +1641,9 @@ a.pk-pic { display: block; }
 .steps-pic li { align-items: start; }
 .steps-pic .sp-text b { line-height: 1.25; }
 .sp-notes { margin: 14px 0 0; padding: 12px 14px; list-style: none; display: grid; gap: 6px; border-radius: 12px; background: #f5f7f2; font-size: 14px; line-height: 1.4; color: var(--ink); }
+
+/* The warranty promise that closes the technician's steps. */
+.sp-wty { display: flex; gap: 12px; align-items: flex-start; margin-top: 14px; padding: 14px; border-radius: 14px; background: var(--green); color: #fff; }
+.sp-wty svg { flex: none; margin-top: 1px; }
+.sp-wty b { display: block; font-size: 15.5px; line-height: 1.3; }
+.sp-wty span { display: block; margin-top: 3px; font-size: 13.5px; line-height: 1.4; opacity: .92; }
