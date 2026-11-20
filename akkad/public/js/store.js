@@ -308,7 +308,8 @@ function sizePicker(p, pkgId, done) {
       <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span>${p.callouts ? `<span>${icon('check', 16)}${esc(p.callouts)}</span>` : ''}<span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
       <div class="sz-more">
         <details><summary>What's included${icon('down', 18)}</summary><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}</ul></details>
-        <details open><summary>What the technician does${icon('down', 18)}</summary>${stepsHtml(p.steps, p.id)}</details>
+        <details open><summary>What the technician does${icon('down', 18)}</summary>${stepsHtml(p.steps, p.id, p.stepNotes)}</details>
+        ${p.outdoorSteps && pk.id === 'villa' ? `<details><summary>Outdoor treatment, when included${icon('down', 18)}</summary>${stepsHtml(p.outdoorSteps)}</details>` : ''}
         <details><summary>Before and after the visit${icon('down', 18)}</summary><p class="muted"><b>Before:</b> ${esc(p.prep)}</p>${p.after ? `<p class="muted"><b>After:</b> ${esc(p.after)}</p>` : ''}</details>
       </div>
       <div class="sz-foot"><button class="btn" data-done>Add · ${aed(c.price)}</button></div>`, {
@@ -334,7 +335,7 @@ function details(p, pkgId, add) {
   openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>${pkPhoto(p, pk) ? `<div class="pk-photo" style="background-image:url('${esc(pkPhoto(p, pk))}')" role="img" aria-label="${esc(pk.title)}"></div>` : ''}
     <p class="muted">${esc(p.intro)}</p>
     <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${cover(p)}</li>` : ''}</ul>
-    <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id)}
+    <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id, p.stepNotes)}${p.outdoorSteps && pk.id === 'villa' ? `<h4>Outdoor treatment, when included</h4>${stepsHtml(p.outdoorSteps)}` : ''}
     <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
     ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
     <button class="btn" style="margin-top:16px" data-ok>Add · ${pk.sized ? 'from ' : ''}${aed(fromOf(p, pk))}</button></div>`,

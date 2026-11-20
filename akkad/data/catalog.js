@@ -372,6 +372,55 @@ const ONCE_APT_PRICE = 99;
     ],
   });
 }
+
+// WHAT THE TECHNICIAN DOES (wording supplied by Akkad, 20 November 2026).
+// Each step is [title, explanation, picture]; `null` shows the step without a picture.
+{
+  const PIC = { inspect: '/img/step-inspect.webp', spray: '/img/step-treat.webp', report: '/img/step-explain.webp', skirting: '/img/ant-gel-skirting.webp',
+    hinge: '/img/job-hinge.webp', hinge2: '/img/job-hinge-2.webp', shower: '/img/job-drain-shower.webp', outdoorDrain: '/img/job-drain-outdoor.webp', sink: '/img/job-drain-sink.webp' };
+  const CRAWLING = [
+    ['Inspection', 'We inspect kitchens, bathrooms, cabinets, appliance gaps and other affected areas to locate pest activity and possible entry routes.', PIC.inspect],
+    ['Cabinet gel treatment', 'We place small amounts of suitable gel in concealed cabinet joints and hinge areas, away from food and food-contact surfaces.', PIC.hinge],
+    ['Crack and skirting gel treatment', 'We apply suitable gel inside selected wall cracks, crevices and skirting gaps where pests travel or hide.', PIC.skirting],
+    ['Electrical-area assessment', 'We inspect gaps around electrical fittings. Any treatment near these areas follows a suitable product and professional procedure.', null],
+    ['Ant bait stations', 'Where appropriate, we position ant bait stations near identified trails or entry points to support control of the colony.', null],
+    ['Targeted spray treatment', 'Where needed, we spray suitable hiding places and entry points, keeping spray treatment separate from gel and bait placements.', PIC.sink],
+    ['Additional bait stations (optional service)', 'Extra ant or cockroach bait stations are available where recommended. Any additional cost is explained before installation.', null],
+    ['Service report and prevention advice', 'We explain the areas treated, which placements to leave undisturbed, and how to reduce food, moisture and pest access.', PIC.report],
+  ];
+  const OUTDOOR = [
+    ['Outdoor inspection', 'We inspect accessible exterior walls, entrances, patio edges, garden borders and agreed drainage points.', null],
+    ['Exterior wall and entry-point treatment', 'We treat suitable wall-base gaps, cracks, door surrounds and service-pipe openings where pest activity is identified.', null],
+    ['Patio and paving-edge treatment', 'We apply targeted treatment to suitable paving joints, patio edges and sheltered structural gaps.', null],
+    ['Garden activity-point treatment', 'We treat selected pest activity points around garden borders, sheltered ground-level areas and suitable landscaping features.', null],
+    ['Drainage-chamber treatment (when included)', 'We inspect accessible chambers and treat suitable pest harbourage surfaces where the product permits. Drain cleaning and repairs are separate services.', PIC.outdoorDrain],
+    ['Outdoor ant bait or granules (where suitable)', 'We use an appropriate bait station or labelled granular treatment at identified ant activity points.', null],
+    ['Service report and recommendations', 'We record the treatment completed and explain any entry gaps, moisture problems or maintenance issues needing attention.', PIC.report],
+  ];
+  const TAG = 'Precision treatment for active trails, hidden pests and entry points, with gels and baits selected for the pest.';
+  for (const id of ['cockroach', 'ants']) Object.assign(byId[id], { steps: CRAWLING, outdoorSteps: OUTDOOR, blurb: TAG, intro: TAG });
+
+  const GTAG = 'Inspection, targeted treatment and continued support for the crawling pests covered by your booking.';
+  Object.assign(byId.general, { blurb: GTAG, intro: GTAG, outdoorSteps: OUTDOOR,
+    steps: [
+      ['Inspect the property', 'We check the booked areas for pest activity, hiding places and entry points.', PIC.inspect],
+      ['Apply suitable gel treatment', 'We place pest-specific gel in selected concealed cabinet joints, cracks and crevices.', PIC.hinge],
+      ['Carry out targeted spray treatment', 'We treat suitable indoor activity points without disturbing gel or bait placements.', PIC.shower],
+      ['Treat included outdoor areas', 'For villa packages with outdoor coverage, we treat the relevant exterior activity points and included drainage areas.', PIC.outdoorDrain],
+      ['Explain your service report', 'We review the work completed, aftercare instructions and warranty support.', PIC.report],
+    ],
+    stepNotes: [['Apartment', 'Treatment covers the indoor areas included in your booking.'], ['Villa', 'Indoor, outdoor and drainage coverage follow your selected package.']] });
+
+  // One-time visit. Akkad's draft text mentioned a six-month warranty here; left out because this service is sold with no warranty.
+  Object.assign(PESTS.find((p) => p.id === 'general-once'), {
+    steps: [
+      ['Inspect', 'We identify the pest problem and assess the areas included in your booking.', PIC.inspect],
+      ['Apply gel where suitable', 'We place suitable gel at selected concealed hiding points.', PIC.hinge2],
+      ['Apply targeted spray where needed', 'We treat suitable indoor areas and any outdoor areas included in your selected package.', PIC.spray],
+      ['Report and explain', 'We provide your service report and aftercare instructions.', PIC.report],
+    ],
+    stepNotes: [['Apartment', 'Indoor treatment within the booked scope.'], ['Villa', 'Treatment of the indoor and outdoor areas selected when booking.']] });
+}
 for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : (p.noWarrantyLabel || '2 visits, no warranty');
 
 // Communities. `aliases` are towers and alternative names that map to the community.

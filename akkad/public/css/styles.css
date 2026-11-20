@@ -1634,3 +1634,10 @@ a.pk-pic { display: block; }
   .store .st-main > .st-hero + .st-offers::before { display: none; }
 }
 @media (min-width: 900px) { .store .st-main > .st-hero + .st-offers { margin-top: 28px; } }
+
+/* Steps without a picture: a numbered row. Notes under the steps (Apartment / Villa scope). */
+.steps-pic li.no-pic { grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: start; }
+.steps-pic .sp-num { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--green); color: #fff; font-weight: 700; font-size: 13.5px; }
+.steps-pic li { align-items: start; }
+.steps-pic .sp-text b { line-height: 1.25; }
+.sp-notes { margin: 14px 0 0; padding: 12px 14px; list-style: none; display: grid; gap: 6px; border-radius: 12px; background: #f5f7f2; font-size: 14px; line-height: 1.4; color: var(--ink); }

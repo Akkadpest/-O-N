@@ -46,9 +46,16 @@ const STEP_PHOTOS = ['/img/step-inspect.webp', '/img/step-treat.webp', '/img/ste
 // Pests with their own step photos (/img/step-<set>-1..n.webp); a longer step list reuses the last photo.
 const STEP_SETS = { bedbugs: ['bedbugs', 6], 'bedbugs-general': ['bedbugs', 6], rodents: ['rodents', 3], mosquitoes: ['mosquitoes', 3], flies: ['flies', 3] };
 const stepPhoto = (pestId, i) => { const set = STEP_SETS[pestId]; return set ? `/img/step-${set[0]}-${Math.min(i, set[1] - 1) + 1}.webp` : STEP_PHOTOS[Math.min(i, STEP_PHOTOS.length - 1)]; };
-export const stepsHtml = (steps, pestId) => `<ol class="steps-pic${steps.length > 3 ? ' wide' : ''}">${steps.map(([t, d], i) => `<li>
-  <span class="sp-img" style="background-image:url('${stepPhoto(pestId, i)}?v=3')" role="img" aria-label="${esc(t)}"><i>${i + 1}</i></span>
-  <div class="sp-text"><b>${esc(t)}</b><span>${esc(d)}</span></div></li>`).join('')}</ol>`;
+// A step is [title, text] or [title, text, picture]. With no third item the pest's photo set is used; `null` means no picture.
+export const stepsHtml = (steps, pestId, notes) => {
+  const set = STEP_SETS[pestId];
+  return `<ol class="steps-pic${set && set[1] > 3 ? ' wide' : ''}">${steps.map(([t, d, pic], i) => {
+    const src = pic === undefined ? stepPhoto(pestId, i) + '?v=3' : pic;
+    return `<li${src ? '' : ' class="no-pic"'}>
+  ${src ? `<span class="sp-img" style="background-image:url('${esc(src)}')" role="img" aria-label="${esc(t)}"><i>${i + 1}</i></span>` : `<span class="sp-num">${i + 1}</span>`}
+  <div class="sp-text"><b>${esc(t)}</b><span>${esc(d)}</span></div></li>`;
+  }).join('')}</ol>${notes && notes.length ? `<ul class="sp-notes">${notes.map(([k, v]) => `<li><b>${esc(k)}:</b> ${esc(v)}</li>`).join('')}</ul>` : ''}`;
+};
 // "6-month warranty", or "2 visits, no warranty" for the services sold without one.
 export const wty = (p) => p.warrantyLabel || (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');
 // The warranty with its call-out promise: "6-month warranty + unlimited call-outs".
