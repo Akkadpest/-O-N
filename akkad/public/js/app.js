@@ -57,11 +57,11 @@ function paint(page) {
         </ul>
       </div>
       <div><h4>Services</h4><ul>${svc}</ul></div>
-      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Check your area</a></li><li><a href="/how-it-works">How it works</a></li><li><a href="/safety">Safety</a></li><li><a href="/faq">Questions and answers</a></li></ul></div>
-      <div><h4>Your booking</h4><ul><li><a href="/manage">Manage my booking</a></li><li><a href="/find">Find my bookings</a></li><li><a href="/warranty">Warranty visit</a></li><li><a href="/warranty-cover">Warranty and call-outs</a></li><li><a href="/refund-policy">Refund policy</a></li><li><a href="/cancellation-policy">Cancellation policy</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial contracts</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Check your area</a></li><li><a href="/how-it-works">How it works</a></li><li><a href="/safety">Safety</a></li><li><a href="/faq">Questions and answers</a></li></ul></div>
+      <div><h4>Your booking</h4><ul><li><a href="/manage">My bookings</a></li><li><a href="/warranty-cover">6-month warranty</a></li><li><a href="/refund-policy">Refund policy</a></li><li><a href="/cancellation-policy">Cancellation policy</a></li></ul></div>
     </div>
     <div class="f-pay"><span>We accept</span>${payLogos()}</div>
-    <div class="f-legal"><span>© ${new Date().getFullYear()} ${esc(c.name)}</span><span>Dubai Municipality licence and registration numbers</span><span class="f-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cancellation-policy">Cancellation</a><a href="/refund-policy">Refunds</a></span>${c.mapsUrl ? `<a href="${c.mapsUrl}" target="_blank" rel="noopener">Akkad on Google</a>` : ''}</div>
+    <div class="f-legal"><span>© ${new Date().getFullYear()} ${esc(c.name)}</span><span>Dubai Municipality licence and registration numbers</span><span class="f-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a></span>${c.mapsUrl ? `<a href="${c.mapsUrl}" target="_blank" rel="noopener">Akkad on Google</a>` : ''}</div>
   </div>`;
 }
 setShell({ paint });
@@ -70,16 +70,16 @@ on(document, '[data-book]', () => book());
 // Screen 15 says "from the menu or footer": the phone menu.
 on(document, '[data-menu]', () => {
   const row = (ic, label, href, attr = '') => `<a class="card ic-row menu-row" href="${href}" ${attr}>${icon(ic, 24)}<span class="grow">${label}</span>${icon('right', 18)}</a>`;
+  const head = (t) => `<p class="muted menu-h">${t}</p>`;
   const box = openLayer('sheet', `<h2 class="plain">Menu</h2>
-    ${row('bug', 'Services and prices', '/services')}${row('doc', 'Commercial', '/commercial')}${row('check', 'About us', '/about')}${row('chat', 'Contact', '/contact')}${row('pin', 'Check your area', '/area')}${row('info', 'Pest guide', '/guide')}
-    <p class="muted" style="margin-top:16px">Your booking</p>
-    ${row('calendar', me.state !== 'none' || me.verified ? 'My bookings' : 'Find my bookings', me.state !== 'none' || me.verified ? '/my-bookings' : '/find')}${row('calendar', 'Manage my booking', '/manage')}
-    <button class="card ic-row menu-row" data-menu-warranty>${icon('shield', 24)}<span class="grow">Request a warranty visit</span>${icon('right', 18)}</button>
-    ${row('doc', 'Termite or commercial inspection', '/inspection')}${row('camera', 'Send a photo, we identify it free', '/photos?mode=identify')}
-    <p class="muted" style="margin-top:16px">More</p>
-    ${row('shield', 'Warranty and call-outs', '/warranty-cover')}${row('card', 'Refund policy', '/refund-policy')}${row('truck', 'How it works', '/how-it-works')}${row('check', 'Safety for children and pets', '/safety')}${row('info', 'Questions and answers', '/faq')}
+    ${row('bug', 'Services and prices', '/services')}${row('doc', 'Commercial contracts <small>Dubai Municipality approved</small>', '/commercial')}${row('search', 'Special termite services', '/inspection?job=termite')}
+    ${head('Your booking')}
+    ${row('calendar', 'My bookings', me.state !== 'none' || me.verified ? '/my-bookings' : '/manage')}${row('shield', '6-month warranty', '/warranty-cover')}
+    ${head('Help')}
+    ${row('truck', 'How it works', '/how-it-works')}${row('check', 'Safety for children and pets', '/safety')}${row('info', 'Questions and answers', '/faq')}${row('card', 'Refund policy', '/refund-policy')}${row('camera', 'Send a photo, we identify it free', '/photos?mode=identify')}
+    ${head('Akkad')}
+    ${row('leaf', 'About us', '/about')}${row('chat', 'Contact', '/contact')}${row('pin', 'Check your area', '/area')}${row('doc', 'Pest guide', '/guide')}
     <div class="menu-actions"><a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 18)}Call</a><button class="btn ghost" data-chat>${icon('chat', 18)}Chat</button><button class="btn" data-book>Book</button></div>`);
-  on(box, '[data-menu-warranty]', () => warrantyEntry());
 });
 on(document, '[data-check]', (el) => { if (!el.closest('#layer')) checkAvailability(); });
 on(document, '[data-loc]', () => (S.area ? go(areaUrl()) : checkAvailability()));

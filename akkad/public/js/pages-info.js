@@ -214,7 +214,7 @@ route('/terms', legal('Terms of service', 'The terms that apply when you book a 
   ['Prices', ['Prices shown include VAT. The price depends on the service and your home size. Express visits have an extra fee, shown before you book. Termite and commercial work is priced after a free inspection. We never add charges without your approval.']],
   ['Arrival times', ['Express arrival times are estimates and can change with traffic and earlier jobs. You can follow your technician live. For scheduled visits, the technician arrives within the time slot you chose.']],
   ['Your part', [['Give the technician safe access to the areas to be treated', 'Follow the preparation advice sent before your visit', 'Keep children and pets away from treated areas for the time the technician advises', 'Tell us about allergies, health conditions or pets before treatment']]],
-  ['Warranty', ['Your treatment has the warranty shown when you book: 6 months with unlimited call-outs on general, cockroach, ant and bed bug treatments. If the same pest returns during the warranty, we come back free. One-time visits and services marked "no warranty" are not covered. See <a href="/warranty-cover">warranty and call-outs</a>. The warranty may not apply if the preparation and aftercare advice was not followed, or if the problem comes from a source outside the treated property.']],
+  ['Warranty', ['Your treatment has the warranty shown when you book: 6 months with unlimited call-outs on general, cockroach, ant and bed bug treatments. If the same pest returns during the warranty, we come back free. One-time visits and services marked "no warranty" are not covered. See <a href="/warranty-cover">6-month warranty</a>. The warranty may not apply if the preparation and aftercare advice was not followed, or if the problem comes from a source outside the treated property.']],
   ['Payment', ['You can pay by card or with Tabby in instalments, if eligible. Payments are processed securely by our payment providers.']],
   ['Rescheduling and cancelling', ['See our <a href="/cancellation-policy">cancellation policy</a>.']],
   ['Refunds', ['We refund if we did not carry out the treatment, or if you paid twice by mistake. See our <a href="/refund-policy">refund policy</a>.']],
@@ -232,7 +232,8 @@ route('/cancellation-policy', legal('Cancellation policy', 'How to reschedule or
 ]));
 
 /* ---------- more pages: warranty cover, refunds, how it works, safety, questions (drafts; review before launch) ---------- */
-route('/warranty-cover', legal('Warranty and call-outs', '6-month warranty with unlimited call-outs. If the pests come back, so do we, free.', [
+route('/warranty-cover', legal('6-month warranty', '6-month warranty with unlimited call-outs. If the pests come back, so do we, free.', [
+  ['Pests back?', ['<a class="btn" href="/warranty">Request a warranty visit</a>']],
   ['What you get', [['6 months of cover from the day of your treatment', 'Unlimited call-outs: if the same pest returns, we treat again as many times as needed', 'No charge for the treatment or materials on a warranty visit']]],
   ['Which services are covered', [['General pest control', 'Cockroach control', 'Ant control', 'Bed bug treatment, and bed bugs + general pest control', 'Fly control: 6-month warranty with 2 follow-up visits']]],
   ['Not covered', [['The one-time general pest control visit (AED 99 apartment, AED 210 villa): one visit, no warranty', 'Rodents, mosquitoes, and wasp or bee nest removal: 2 visits, no warranty', 'A different pest from the one we treated', 'Problems that come from outside the treated property']]],
@@ -272,6 +273,6 @@ route('/faq', async () => ({
       ['Can I move or cancel my booking?', 'Yes. You can move it free of charge from your booking page until the technician sets off. See the cancellation policy for cancelling.'],
       ['Do you treat offices, restaurants and buildings?', 'Yes. Commercial work and termite control are priced after a free inspection. Use "Termite or commercial inspection" in the menu.'],
     ])}
-    <p class="note" style="margin-top:16px">More: <a href="/warranty-cover">Warranty and call-outs</a> · <a href="/refund-policy">Refund policy</a> · <a href="/safety">Safety</a> · <a href="/how-it-works">How it works</a></p>
+    <p class="note" style="margin-top:16px">More: <a href="/warranty-cover">6-month warranty</a> · <a href="/refund-policy">Refund policy</a> · <a href="/safety">Safety</a> · <a href="/how-it-works">How it works</a></p>
   </div>`,
 }));

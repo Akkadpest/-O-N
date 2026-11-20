@@ -135,8 +135,17 @@ export const surveyCard = (p) => {
       <a class="btn ghost sm st-survey" href="${href}">Request inspection${icon('arrow', 16)}</a></div></article>`;
 };
 
+// One line under each service title: its warranty and what that means, with a link to the full details.
+const wtyLine = (p) => {
+  let main, text;
+  if (p.id === 'termites') { main = 'Warranty in your quotation'; text = 'The cover is agreed with you after the free inspection.'; }
+  else if (p.id === 'amc') { main = 'Call-outs included'; text = 'Extra visits between scheduled ones are part of your contract.'; }
+  else if (p.warrantyMonths) { main = cover(p); text = p.callouts === 'Unlimited call-outs' ? 'If the pests return, we come back and treat again free.' : 'If the pests return within the warranty, we come back free.'; }
+  else { main = wty(p); text = p.id === 'general-once' ? 'For 6 months of cover, choose general pest control.' : 'This service is not covered by the 6-month warranty.'; }
+  return `<p class="st-wty">${icon('shield', 16)}<span><b>${esc(main.charAt(0).toUpperCase() + main.slice(1))}.</b> ${text} <a href="/warranty-cover">Warranty details ›</a></span></p>`;
+};
 const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec="${p.id}">
-    <h2>${esc(p.service)}${topIn ? `<span class="st-top">Most booked in ${esc(topIn)}</span>` : ''}</h2><p class="st-intro">${esc(p.intro || p.blurb)}</p>
+    <h2>${esc(p.service)}${topIn ? `<span class="st-top">Most booked in ${esc(topIn)}</span>` : ''}</h2><p class="st-intro">${esc(p.intro || p.blurb)}</p>${wtyLine(p)}
     ${p.inspection ? surveyCard(p) : p.packages.map((pk) => pkgCard(p, pk)).join('')}
     ${site.services && site.services[p.id] ? `<a class="st-more" href="${p.id === 'amc' ? '/commercial' : '/services/' + site.services[p.id].slug}">Learn more about ${esc(p.id === 'amc' ? 'commercial pest control' : p.single)}${icon('right', 14)}</a>` : ''}
   </section>`;
@@ -220,8 +229,7 @@ export function storePage(ctx = {}) {
       <section class="st-hero">
         <p class="eyebrow"><span class="live"></span>${area ? `Team near ${esc(area.short)} today` : 'Technicians available today'}</p>
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
-        <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
-        <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
+        <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li><li>${icon('leaf', 15)}<span>Organic pesticide</span></li></ul>
         <div class="st-when" role="group" aria-label="When do you need us?">
           <button class="when-card${S.draft.timing === 'express' ? ' on' : ''}" data-when-pick="express"><span class="when-anim" data-lottie="/anim/van-express.json" aria-hidden="true"></span><b>Schedule fast</b><small>At your door in about ${site.fees.aboutMin} min</small></button>
           <button class="when-card${S.draft.timing === 'scheduled' ? ' on' : ''}" data-when-pick="scheduled"><span class="when-anim" data-lottie="/anim/schedule-later.json" aria-hidden="true"></span><b>Schedule later</b><small>Pick your day and time</small></button>
