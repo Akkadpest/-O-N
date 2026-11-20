@@ -294,8 +294,11 @@ async function refreshReviews() {
     if (!p || !/akkad/i.test((p.displayName || {}).text || '') || !/^[A-Za-z0-9_-]{10,200}$/.test(p.id || '')) throw new Error('listing not found');
     g.placeId = p.id;
   }
-  for (const sort of ['newest', 'most_relevant']) {
-    const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${g.placeId}&fields=rating,user_ratings_total,reviews&reviews_sort=${sort}&reviews_no_translations=true&key=${encodeURIComponent(GOOGLE_KEY)}`, { signal: AbortSignal.timeout(6000) });
+  // Asking in other languages returns further reviews written in those languages. English is asked every hour,
+  // the others every 6 hours, to keep the number of Google requests low.
+  const sweep = !g.sweptAt || Date.now() - g.sweptAt > 6 * 3600000;
+  for (const [lang, sort] of [['en', 'newest'], ['en', 'most_relevant'], ...(sweep ? ['ar', 'hi', 'de'].flatMap((l) => [[l, 'newest'], [l, 'most_relevant']]) : [])]) {
+    const res = await fetch(`https://maps.googleapis.com/maps/api/place/details/json?place_id=${g.placeId}&fields=rating,user_ratings_total,reviews&reviews_sort=${sort}&reviews_no_translations=true&language=${lang}&key=${encodeURIComponent(GOOGLE_KEY)}`, { signal: AbortSignal.timeout(6000) });
     const data = await res.json();
     if (data.status !== 'OK') throw new Error('Google answered ' + data.status);
     const r = data.result || {};
@@ -308,6 +311,7 @@ async function refreshReviews() {
       g.reviews[sha(name + '|' + time)] = { name, text, time, photo, stars: Math.min(5, Math.max(1, Math.round(Number(v.rating) || 5))), seen: Date.now() };
     }
   }
+  if (sweep) g.sweptAt = Date.now();
   for (const [k, v] of Object.entries(g.reviews)) if (Date.now() - v.seen > REVIEW_KEEP_MS) delete g.reviews[k];
   store.save();
 }
