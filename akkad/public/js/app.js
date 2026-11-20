@@ -20,7 +20,7 @@ function paint(page) {
     ${S.area ? '<a class="chg" href="/area">Change area</a>' : ''}<span class="right">Technicians available today in Dubai, Sharjah and Ajman</span></div>`;
 
   $('#hdr').innerHTML = `<div class="wrap">
-    <a class="brand ${areaHead ? 'compact' : ''}" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="Akkad" width="32" height="32"><span>Pest Control</span></a>
+    <a class="brand ${areaHead ? 'compact' : ''}" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png?v=2" alt="Akkad" width="32" height="32"><span>Pest Control</span></a>
     ${areaHead ? `<div class="areachip mob">${icon('pin', 22)}<span>${esc(S.area.name)}</span><a class="link" href="/area">Change</a></div>` : ''}
     <nav aria-label="Main"><a href="/services">Services</a><a href="/warranty">Warranty</a><a href="/commercial">Commercial</a><a href="/about">About</a><a href="/contact">Contact</a></nav>
     <div class="tools">
@@ -46,7 +46,7 @@ function paint(page) {
   foot.innerHTML = `<div class="wrap">
     <div class="f-grid">
       <div class="f-brand">
-        <a class="f-logo" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png" alt="Akkad" width="36" height="36"><span>Pest Control</span></a>
+        <a class="f-logo" href="/" aria-label="Akkad Pest Control home"><img class="brand-logo" src="/img/brand/akkad-logo.png?v=2" alt="Akkad" width="36" height="36"><span>Pest Control</span></a>
         <p>Licensed pest control for homes and businesses in Dubai, Sharjah and Ajman. Pests gone, or we come back free.</p>
         <ul class="f-contact">
           <li>${icon('pin', 17)}<a href="/contact">${esc(c.address)}</a></li>
