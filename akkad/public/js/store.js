@@ -165,10 +165,6 @@ export function storePage(ctx = {}) {
         <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
       </section>
 
-      <section class="card st-bugs"><h2>What's bugging you?</h2>
-        <div class="bug-grid">${list.filter((p) => !p.commercial && !p.general).map(bugTile).join('')}<a class="bug bug-ask" href="/photos?mode=identify"><span class="bug-img">${icon('camera', 24)}</span><span>Not sure? Ask us</span></a></div>
-      </section>
-
       <section class="st-offers"><div class="st-row-h"><h2>Offers and benefits</h2></div>
         <div class="offer-track">${offers(cheapest)}</div></section>
 

@@ -1627,3 +1627,10 @@ a.pk-pic { display: block; }
 .steps-pic.wide .sp-text b { font-size: 16px; }
 .steps-pic.wide .sp-text span { font-size: 14.5px; line-height: 1.45; }
 @media (min-width: 900px) { .steps-pic.wide { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; } .steps-pic.wide li { margin: 0; } }
+
+/* Offers now follow the hero directly (the pest tile card was removed): tighter gap, no divider band. */
+@media (max-width: 899px) {
+  .store .st-main > .st-hero + .st-offers { margin-top: 26px; padding-top: 0; }
+  .store .st-main > .st-hero + .st-offers::before { display: none; }
+}
+@media (min-width: 900px) { .store .st-main > .st-hero + .st-offers { margin-top: 28px; } }
