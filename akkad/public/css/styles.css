@@ -1571,3 +1571,12 @@ button.cb-sum { padding: 0; border: 0; background: none; text-align: left; }
   .how-card { justify-items: start; }
   .how-img { width: clamp(216px, 62%, 250px); }
 }
+
+/* ---------- survey cards (termites, annual contract): same layout as packages, with their picture ---------- */
+.pk.pk-survey { display: grid; padding: 14px; }
+a.pk-pic { display: block; }
+.pk-survey .pk-side { flex-direction: column; align-items: flex-start; gap: 12px; }
+.pk-survey .st-blurb { margin: 0; font-size: 14px; line-height: 1.45; }
+.pk-survey .st-survey { margin: 0; }
+@media (max-width: 899px) { .pk-survey .st-blurb { display: none; } .pk-survey .st-survey { width: 100%; } }
+@media (min-width: 900px) { .pk.pk-survey { padding: 16px; grid-template-columns: 180px minmax(0, 1fr); } }

@@ -65,11 +65,16 @@ const SURVEY = {
   termites: ['Termite inspection and treatment plan', 'A specialist checks walls, floors and door frames, then gives you a fixed price before any work starts.'],
   amc: ['Annual contract for your business', 'Scheduled visits, service reports for your inspections, and call-outs included. Restaurants, offices, buildings and warehouses.'],
 };
-export const surveyCard = (p) => `<article class="card pk pk-survey"><div class="pk-main"><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
-    <div class="st-meta"><span>${icon('doc', 15)}${esc(p.fromLabel)}</span><span>${icon('calendar', 15)}We call you to arrange it</span></div>
-    <p class="muted st-blurb">${esc((SURVEY[p.id] || [0, p.blurb])[1])}</p>
-    <a class="btn ghost sm st-survey" href="/inspection?job=${p.commercial ? 'amc' : 'termite'}">Request inspection${icon('arrow', 16)}</a></div>
-    </article>`;
+export const surveyCard = (p) => {
+  const href = `/inspection?job=${p.commercial ? 'amc' : 'termite'}`;
+  const img = imgFor(p.photo);
+  return `<article class="card pk pk-survey">
+    <a class="pk-pic" href="${href}" aria-label="${esc((SURVEY[p.id] || [p.service])[0])}"${img ? ` style="background-image:url('${esc(img)}')"` : ''}></a>
+    <div class="pk-main"><span class="tag">FREE SURVEY</span><h3>${esc((SURVEY[p.id] || [p.service])[0])}</h3>
+      <div class="st-meta"><span>${icon('doc', 15)}${esc(p.fromLabel)}</span><span>${icon('calendar', 15)}We call you to arrange it</span></div></div>
+    <div class="pk-side"><p class="muted st-blurb">${esc((SURVEY[p.id] || [0, p.blurb])[1])}</p>
+      <a class="btn ghost sm st-survey" href="${href}">Request inspection${icon('arrow', 16)}</a></div></article>`;
+};
 
 const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec="${p.id}">
     <h2>${esc(p.service)}${topIn ? `<span class="st-top">Most booked in ${esc(topIn)}</span>` : ''}</h2><p class="st-intro">${esc(p.intro || p.blurb)}</p>
