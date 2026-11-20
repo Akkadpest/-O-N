@@ -412,6 +412,14 @@ const ONCE_APT_PRICE = 99;
     ],
     stepNotes: [['Apartment', 'Treatment covers the indoor areas included in your booking.'], ['Villa', 'Indoor, outdoor and drainage coverage follow your selected package.']] });
 
+  // Rodents: Akkad's own job photos. Step wording drafted from the two packages (bait stations, indoor traps).
+  byId.rodents.steps = [
+    ['Inspect', 'Looks for droppings, gnaw marks and the gaps rodents use to get in.'],
+    ['Place bait stations', 'Sets locked, tamper-proof bait stations along the runs rodents use.', '/img/job-rodent-bait.webp'],
+    ['Set traps indoors', 'Where traps are booked, sets them indoors where rodents are active. No poison is used inside your home.', '/img/job-rodent-traps.webp'],
+    ['Follow up', 'Checks the stations, removes rodents and advises how to seal entry points.', '/img/job-rodent-service.webp'],
+  ];
+
   // One-time visit. Akkad's draft text mentioned a six-month warranty here; left out because this service is sold with no warranty.
   Object.assign(PESTS.find((p) => p.id === 'general-once'), {
     steps: [
