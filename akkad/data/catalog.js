@@ -96,8 +96,8 @@ const PESTS = [
   {
     id: 'bedbugs', name: 'Bed bugs', single: 'bed bugs', service: 'Bed bug treatment', short: 'Bed bug',
     signs: 'Bites at night, spots on sheets', from: 299, warrantyMonths: 3, visits: '2 visits',
-    blurb: 'Two visits, 14 days apart, so newly hatched bugs are treated too.',
-    intro: 'Two visits, 14 days apart, so newly hatched bugs are treated too.',
+    blurb: 'Targeted treatment for mattresses, furniture and the places bed bugs hide.',
+    intro: 'Targeted treatment for mattresses, furniture and the places bed bugs hide.',
     photo: 'Photo: mattress inspection',
     prep: 'Strip the beds and wash bedding on a hot cycle before we arrive.',
     steps: [
@@ -212,7 +212,14 @@ const DETAILS = {
     points: { room: ['Mattress, bed frame, headboard and bedside furniture', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Room ready to use again after about 4 hours'],
       apartment: ['All bedrooms, sofas, curtains and the living area', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Rooms ready to use again after about 4 hours'],
       villa: ['All bedrooms, majlis, sofas and the maid’s room', 'Spray and steam into seams, joints and skirting', 'Second visit after 14 days for newly hatched bugs', 'Rooms ready to use again after about 4 hours'] },
-    steps: [['Inspect', 'Checks mattresses, bed frames, sofas and furniture seams to find where they hide.'], ['Treat', 'Sprays and steams every hiding place with municipality-approved products.'], ['Second visit', 'Returns after 14 days to treat newly hatched bugs, then your warranty starts.']],
+    steps: [
+      ['Inspection', 'We inspect mattress seams, bed frames, headboards, sofas and nearby furniture for signs of bed bugs.'],
+      ['Mattress edge and seam treatment', 'We spray suitable mattress edges, seams and folds using a product specifically permitted for those areas.'],
+      ['Misting treatment', 'Where suitable, we apply controlled misting to affected furniture areas according to the selected product\'s instructions.'],
+      ['Targeted spray treatment', 'We treat identified hiding places in bed-frame joints, furniture undersides, headboard crevices and skirting gaps.'],
+      ['Puff treatment', 'Where needed, we apply insecticidal dust inside suitable concealed gaps and voids. Electrical areas require a separate professional assessment.'],
+      ['Service report and follow-up guidance', 'We explain the treatment completed, when treated furniture can be used, and any further visit included in your booking.'],
+    ],
     after: 'Keep the room closed for about 4 hours, then air it. Do not move furniture between rooms before the second visit.',
   },
   ants: {
