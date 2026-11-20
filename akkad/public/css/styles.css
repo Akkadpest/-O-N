@@ -1722,3 +1722,5 @@ a.pk-pic { display: block; }
 @media (max-width: 899px) { .st-pills { flex-wrap: wrap; } }
 /* phones: the footer keeps the address, payment logos and legal line; the link columns are hidden (they are in the menu) */
 @media (max-width: 899px) { .f-grid > div:not(.f-brand) { display: none; } .f-grid { grid-template-columns: 1fr; } }
+/* phones: no "How it works" block on the home page (the menu has the How it works page) */
+@media (max-width: 899px) { .store #how { display: none !important; } }
