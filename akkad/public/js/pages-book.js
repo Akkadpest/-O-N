@@ -1,5 +1,5 @@
 // New booking (screens 21-32) and warranty call-out (screens 37-40).
-import { S, save, site, me, api, route, go, esc, icon, aed, wty, stepsHtml, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
+import { S, save, site, me, api, route, go, esc, icon, aed, wty, cover, stepsHtml, photo, imgFor, pestTile, helpBox, payLogos, lines, on, $, $$, busy, showErr, openLayer, closeLayer, remember, loadMe } from './core.js';
 import { areaUrl } from './flows.js';
 
 const needArea = () => { if (!S.area) { go('/area', { replace: true }); return true; } return false; };
@@ -129,7 +129,7 @@ route('/book/:pest', async ({ pest }) => {
   const card = (pk) => {
     const from = pk.sized ? p.sizes[pk.sized][0].price : pk.price;
     return `<article class="card pkg"><div>${pk.badge ? `<span class="tag">${pk.badge}</span>` : ''}<h3>${esc(pk.title)}</h3>
-      <div class="meta">${icon('shield', 20)}${wty(p)}</div><div class="meta">${icon('calendar', 20)}${esc(pk.duration)}</div>
+      <div class="meta">${icon('shield', 20)}${cover(p)}</div><div class="meta">${icon('calendar', 20)}${esc(pk.duration)}</div>
       <div class="price">${pk.sized ? '<small>Starts at</small> ' : ''}${aed(from)}</div>
       <ul>${pk.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul><button class="link b" data-details="${pk.id}">View details ›</button></div>
       <div class="side">${photo(pk.photo, imgFor(pk.photo) || imgFor(p.photo))}<button class="btn add" data-add="${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;

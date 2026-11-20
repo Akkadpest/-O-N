@@ -189,7 +189,7 @@ route('/commercial', async () => {
 });
 
 /* ---------- legal pages (drafts based on how the site works; review before launch) ---------- */
-const UPDATED = '19 November 2026';
+const UPDATED = '20 November 2026';
 const legal = (title, intro, sections) => async () => ({
   title, bar: true,
   html: `<div class="wrap info-page legal">
@@ -214,9 +214,10 @@ route('/terms', legal('Terms of service', 'The terms that apply when you book a 
   ['Prices', ['Prices shown include VAT. The price depends on the service and your home size. Express visits have an extra fee, shown before you book. Termite and commercial work is priced after a free inspection. We never add charges without your approval.']],
   ['Arrival times', ['Express arrival times are estimates and can change with traffic and earlier jobs. You can follow your technician live. For scheduled visits, the technician arrives within the time slot you chose.']],
   ['Your part', [['Give the technician safe access to the areas to be treated', 'Follow the preparation advice sent before your visit', 'Keep children and pets away from treated areas for the time the technician advises', 'Tell us about allergies, health conditions or pets before treatment']]],
-  ['Warranty', ['Your treatment has the warranty shown when you book (for example 6 months for cockroach control). If the same pest returns during the warranty, we come back free. The warranty may not apply if the preparation and aftercare advice was not followed, or if the problem comes from a source outside the treated property.']],
+  ['Warranty', ['Your treatment has the warranty shown when you book: 6 months with unlimited call-outs on general, cockroach, ant and bed bug treatments. If the same pest returns during the warranty, we come back free. One-time visits and services marked "no warranty" are not covered. See <a href="/warranty-cover">warranty and call-outs</a>. The warranty may not apply if the preparation and aftercare advice was not followed, or if the problem comes from a source outside the treated property.']],
   ['Payment', ['You can pay by card or with Tabby in instalments, if eligible. Payments are processed securely by our payment providers.']],
   ['Rescheduling and cancelling', ['See our <a href="/cancellation-policy">cancellation policy</a>.']],
+  ['Refunds', ['We refund if we did not carry out the treatment, or if you paid twice by mistake. See our <a href="/refund-policy">refund policy</a>.']],
   ['Liability', ['We carry out every treatment with care and approved products. We are not responsible for loss or damage caused by information that was not shared with us, or by not following the technician\'s advice, as far as the law allows.']],
   ['Law', ['These terms are governed by the laws of the United Arab Emirates and the Emirate of Dubai.']],
 ]));
@@ -225,6 +226,52 @@ route('/cancellation-policy', legal('Cancellation policy', 'How to reschedule or
   ['Rescheduling', ['You can move your visit to another open day or time from your booking page, free of charge, until the technician sets off.']],
   ['Cancelling', ['You can cancel from your booking page. The amount you paid stays as Akkad credit for 90 days, which you can use on any service. Credit is applied automatically to your next booking.']],
   ['Express visits', ['Once the technician has set off for an express visit, the express fee cannot be refunded. You can still move the treatment to later today or another day.']],
+  ['Refunds', ['We refund in two cases: we did not carry out the treatment, or you paid twice by mistake. See our <a href="/refund-policy">refund policy</a>.']],
   ['Warranty visits', ['Warranty visits are free. If you can no longer be home, please reschedule or cancel from your booking page so another customer can have the slot.']],
   ['If we need to change your visit', ['If we need to move your visit, we will tell you on WhatsApp as early as possible and offer you the next available times.']],
 ]));
+
+/* ---------- more pages: warranty cover, refunds, how it works, safety, questions (drafts; review before launch) ---------- */
+route('/warranty-cover', legal('Warranty and call-outs', '6-month warranty with unlimited call-outs. If the pests come back, so do we, free.', [
+  ['What you get', [['6 months of cover from the day of your treatment', 'Unlimited call-outs: if the same pest returns, we treat again as many times as needed', 'No charge for the treatment or materials on a warranty visit']]],
+  ['Which services are covered', [['General pest control', 'Cockroach control', 'Ant control', 'Bed bug treatment, and bed bugs + general pest control', 'Fly control: 6-month warranty with 2 follow-up visits']]],
+  ['Not covered', [['The one-time general pest control visit (from AED 99): one visit, no warranty', 'Rodents, mosquitoes, and wasp or bee nest removal: 2 visits, no warranty', 'A different pest from the one we treated', 'Problems that come from outside the treated property']]],
+  ['How to ask for a warranty visit', ['Tap <a href="/warranty">Warranty</a> at the top of the site and enter your booking number, or the mobile number you booked with. Choose a time and we come back.', 'A scheduled warranty visit is free. If you want us there within about 30 minutes, only the express call-out fee applies.']],
+  ['Keeping your warranty valid', ['Please follow the preparation and aftercare advice your technician gives you. It is what makes the treatment last.']],
+]));
+
+route('/refund-policy', legal('Refund policy', 'When we refund a payment, and how to ask for it.', [
+  ['When we refund', ['We refund your payment in two cases:', ['We did not carry out the treatment you paid for', 'You paid twice for the same booking by mistake']]],
+  ['When we do not refund', [['After the treatment has been carried out', 'For a one-time visit (from AED 99): it is a single service with no warranty', 'If pests return during your warranty: we come back and treat again free instead, with unlimited call-outs for 6 months']]],
+  ['If you cancel before the visit', ['See our <a href="/cancellation-policy">cancellation policy</a>. You can also move the visit to another day free of charge.']],
+  ['How to ask for a refund', ['Call or WhatsApp us with your booking number. If you paid twice, please send both payment receipts. We refund to the same card or payment method you used.']],
+]));
+
+route('/how-it-works', legal('How it works', 'From booking to a pest-free home, in four steps.', [
+  ['1. Choose your service', ['Pick the pest and your home size. You see the full price, VAT included, before you book.']],
+  ['2. Pick a time', ['Express: a technician near you arrives in about 30 minutes. Or choose any open slot that suits you.']],
+  ['3. We treat your home', ['The technician inspects, treats with municipality-approved products, then explains what was done and what to do next. You can follow his arrival live.']],
+  ['4. You are covered', ['Warranty services come with 6 months of cover and unlimited call-outs. If the pest returns, ask for a free visit from the <a href="/warranty">Warranty</a> button.']],
+  ['Paying', ['Pay by card, or split it into 4 payments with Tabby if eligible.']],
+]));
+
+route('/safety', legal('Safety for children and pets', 'How we keep your family and pets safe during and after a treatment.', [
+  ['Approved products', ['We use Dubai Municipality-approved products, applied by trained technicians. The technician tells you what was applied and where.']],
+  ['Before the visit', [['Tell us about babies, pregnancy, allergies, asthma or pets when you book', 'Keep pets in one room, and cover or move fish tanks and pet bowls', 'Put away food, dishes and toys in the areas to be treated']]],
+  ['After the visit', [['Follow the waiting time the technician gives you before using treated rooms', 'Keep children and pets away from treated spots until they are dry', 'Do not mop or wipe the treated edges for the time he advises']]],
+  ['Questions', ['Not sure about something in your home? Ask in the chat or call us before you book.']],
+]));
+
+route('/faq', async () => ({
+  title: 'Questions and answers', bar: true,
+  html: `<div class="wrap info-page legal">
+    ${crumbs([['Home', '/'], ['Questions and answers']])}
+    <h1 class="info-h1">Questions and answers</h1><p class="info-lead">Quick answers about prices, warranty, refunds and safety.</p>
+    ${faqBox([...site.faq,
+      ['What is the AED 99 one-time visit?', 'A single general pest control visit at a lower price. It has no warranty and no call-outs. For 6 months of cover, choose general pest control.'],
+      ['Can I move or cancel my booking?', 'Yes. You can move it free of charge from your booking page until the technician sets off. See the cancellation policy for cancelling.'],
+      ['Do you treat offices, restaurants and buildings?', 'Yes. Commercial work and termite control are priced after a free inspection. Use "Termite or commercial inspection" in the menu.'],
+    ])}
+    <p class="note" style="margin-top:16px">More: <a href="/warranty-cover">Warranty and call-outs</a> · <a href="/refund-policy">Refund policy</a> · <a href="/safety">Safety</a> · <a href="/how-it-works">How it works</a></p>
+  </div>`,
+}));

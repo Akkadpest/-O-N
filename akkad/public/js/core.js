@@ -44,13 +44,15 @@ export const aed = (n) => 'AED ' + (Number.isInteger(n) ? n : n.toFixed(2));
 // The technician's steps, each with its photo: 1 inspect, 2 treat, 3 explain and hand over.
 const STEP_PHOTOS = ['/img/step-inspect.webp', '/img/step-treat.webp', '/img/step-explain.webp'];
 // Pests with their own set of three step photos (/img/step-<set>-1..3.webp).
-const STEP_SETS = { bedbugs: 'bedbugs', 'bedbugs-general': 'bedbugs', rodents: 'rodents', mosquitoes: 'mosquitoes', flies: 'flies' };
+const STEP_SETS = { 'general-once': null, bedbugs: 'bedbugs', 'bedbugs-general': 'bedbugs', rodents: 'rodents', mosquitoes: 'mosquitoes', flies: 'flies' };
 const stepPhoto = (pestId, i) => (STEP_SETS[pestId] ? `/img/step-${STEP_SETS[pestId]}-${i + 1}.webp` : STEP_PHOTOS[i]);
 export const stepsHtml = (steps, pestId) => `<ol class="steps-pic">${steps.map(([t, d], i) => `<li>
   <span class="sp-img" style="background-image:url('${stepPhoto(pestId, Math.min(i, 2))}')" role="img" aria-label="${esc(t)}"><i>${i + 1}</i></span>
   <div class="sp-text"><b>${esc(t)}</b><span>${esc(d)}</span></div></li>`).join('')}</ol>`;
 // "6-month warranty", or "2 visits, no warranty" for the services sold without one.
-export const wty = (p) => (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');
+export const wty = (p) => p.warrantyLabel || (p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty');
+// The warranty with its call-out promise: "6-month warranty + unlimited call-outs".
+export const cover = (p) => (p.callouts ? `${wty(p)} + ${p.callouts.toLowerCase()}` : wty(p));
 export const $ = (sel, root = document) => root.querySelector(sel);
 export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 export function on(root, sel, fn, type = 'click') {

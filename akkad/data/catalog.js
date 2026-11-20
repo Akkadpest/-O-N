@@ -336,7 +336,38 @@ PESTS.splice(PESTS.indexOf(byId.bedbugs) + 1, 0, {
 // On the sheet but not bookable online yet: handwritten annual contract rates (2 to 9 bedrooms, AED 1,050 to 2,520).
 const ANNUAL_CONTRACT = { 2: 1050, 3: 1260, 4: 1470, 5: 1680, 6: 1890, 7: 2100, 8: 2310, 9: 2520 };
 const MAX_MATTRESSES = 20;
-for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : '2 visits, no warranty';
+
+// WARRANTY (confirmed by Akkad, 20 November 2026): 6 months with unlimited call-outs on general,
+// cockroach, ant and bed bug treatments. Flies: 6 months with two follow-up visits.
+// Rodents, mosquitoes and wasps stay as on the price sheet: 2 visits, no warranty.
+for (const id of ['general', 'cockroach', 'ants', 'bedbugs', 'bedbugs-general']) Object.assign(PESTS.find((p) => p.id === id), { warrantyMonths: 6, callouts: 'Unlimited call-outs' });
+Object.assign(byId.flies, { warrantyMonths: 6, callouts: '2 follow-up visits' });
+
+// ONE-TIME general pest control: a single visit with no warranty and no call-outs.
+// Confirmed by Akkad: studio AED 99, villa AED 210.
+// PROVISIONAL: the 1 to 6 bedroom apartment prices below are placeholders until Akkad sends the real ones.
+const ONCE_APT_PRICES = [99, 129, 159, 199, 239, 279, 319];
+{
+  const g = byId.general;
+  const NOTE = 'One visit, no warranty or call-outs';
+  PESTS.splice(PESTS.indexOf(g) + 1, 0, {
+    id: 'general-once', name: 'One-time visit', single: g.single, service: 'One-time general pest control', short: 'One-time general', general: true,
+    signs: g.signs, from: ONCE_APT_PRICES[0], warrantyMonths: 0, visits: '1 visit', noWarrantyLabel: 'One-time visit, no warranty', provisionalPrices: true,
+    blurb: 'A single general pest control visit at a lower price. No warranty and no call-outs.',
+    intro: 'A single general pest control visit at a lower price. No warranty and no call-outs.',
+    photo: g.photo, prep: g.prep,
+    steps: [g.steps[0], g.steps[1], ['Explain and hand over', 'Shows what was done and gives safety advice.']],
+    after: 'This is a one-time visit with no warranty. For 6 months of cover with unlimited call-outs, choose general pest control instead.',
+    packages: [
+      { id: 'apartment', title: 'One-time general pest control: apartment', duration: '45–60 mins', sized: 'apartment', photo: 'Photo: apartment treatment',
+        points: ['Cockroaches, ants, spiders and crawling insects', 'Whole apartment, kitchen and bathrooms', NOTE] },
+      { id: 'villa', title: 'One-time general pest control: villa', label: 'One-time general pest control · villa', price: 210, duration: '60–90 mins', photo: 'Photo: villa treatment',
+        points: ['Cockroaches, ants, spiders and crawling insects', 'Inside the villa', NOTE] },
+    ],
+    sizes: { apartment: sizes(APT_LABELS, ONCE_APT_PRICES) },
+  });
+}
+for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : (p.noWarrantyLabel || '2 visits, no warranty');
 
 // Communities. `aliases` are towers and alternative names that map to the community.
 const AREAS = [
@@ -397,7 +428,8 @@ const GOOGLE_REVIEWS = [
 
 const FAQ = [
   ['Is the treatment safe for children and pets?', 'Yes. We use Dubai Municipality-approved products and the technician explains on site what was applied and where. For gel treatments there is no need to leave home.'],
-  ['What does the warranty cover?', 'If the same pest returns during your warranty period, we come back and treat again at no charge. Only an express call-out carries a small fee; a scheduled warranty visit costs nothing.'],
+  ['What does the warranty cover?', 'Our warranty is 6 months with unlimited call-outs. If the same pest returns, we come back and treat again at no charge, as many times as needed. Only an express call-out carries a small fee. The AED 99 one-time visit has no warranty.'],
+  ['When do you refund?', 'In two cases: if we did not carry out the treatment, or if you paid twice by mistake. See the refund policy for details.'],
   ['How soon can you come?', 'If a team is working near you, an express visit reaches you in about 30 minutes. Otherwise pick any open slot, usually from the next day.'],
   ['How do I pay?', 'By credit or debit card on a secure checkout page, or with Tabby in 4 payments if eligible. You see the full total, VAT included, before you pay.'],
   ['Do I need to leave home?', 'For gel treatments, no. For sprays we ask you to keep rooms closed for a short time; the technician will tell you exactly how long.'],
@@ -406,7 +438,7 @@ const FAQ = [
 const WHY = [
   ['card', 'Price before we arrive', 'The total you see is the total you pay.'],
   ['check', 'Safe for children and pets', 'Municipality-approved products, explained on site.'],
-  ['shield', 'Pests return? We return free', 'Covered call-outs during your warranty.'],
+  ['shield', 'Pests return? We return free', '6-month warranty, unlimited call-outs.'],
   ['truck', 'On time, with live tracking', 'Watch your technician arrive.'],
   ['calendar', 'Pay your way', 'Card or Tabby in 4 payments.'],
 ];

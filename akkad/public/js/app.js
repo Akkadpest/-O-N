@@ -57,11 +57,11 @@ function paint(page) {
         </ul>
       </div>
       <div><h4>Services</h4><ul>${svc}</ul></div>
-      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Check your area</a></li></ul></div>
-      <div><h4>Your booking</h4><ul><li><a href="/manage">Manage my booking</a></li><li><a href="/find">Find my bookings</a></li><li><a href="/warranty">Warranty visit</a></li><li><a href="/cancellation-policy">Cancellation policy</a></li></ul></div>
+      <div><h4>Company</h4><ul><li><a href="/about">About us</a></li><li><a href="/commercial">Commercial</a></li><li><a href="/contact">Contact</a></li><li><a href="/guide">Pest guide</a></li><li><a href="/area">Check your area</a></li><li><a href="/how-it-works">How it works</a></li><li><a href="/safety">Safety</a></li><li><a href="/faq">Questions and answers</a></li></ul></div>
+      <div><h4>Your booking</h4><ul><li><a href="/manage">Manage my booking</a></li><li><a href="/find">Find my bookings</a></li><li><a href="/warranty">Warranty visit</a></li><li><a href="/warranty-cover">Warranty and call-outs</a></li><li><a href="/refund-policy">Refund policy</a></li><li><a href="/cancellation-policy">Cancellation policy</a></li></ul></div>
     </div>
     <div class="f-pay"><span>We accept</span>${payLogos()}</div>
-    <div class="f-legal"><span>© ${new Date().getFullYear()} ${esc(c.name)}</span><span>Dubai Municipality licence and registration numbers</span><span class="f-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cancellation-policy">Cancellation</a></span>${c.mapsUrl ? `<a href="${c.mapsUrl}" target="_blank" rel="noopener">Akkad on Google</a>` : ''}</div>
+    <div class="f-legal"><span>© ${new Date().getFullYear()} ${esc(c.name)}</span><span>Dubai Municipality licence and registration numbers</span><span class="f-links"><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/cancellation-policy">Cancellation</a><a href="/refund-policy">Refunds</a></span>${c.mapsUrl ? `<a href="${c.mapsUrl}" target="_blank" rel="noopener">Akkad on Google</a>` : ''}</div>
   </div>`;
 }
 setShell({ paint });
@@ -76,6 +76,8 @@ on(document, '[data-menu]', () => {
     ${row('calendar', me.state !== 'none' || me.verified ? 'My bookings' : 'Find my bookings', me.state !== 'none' || me.verified ? '/my-bookings' : '/find')}${row('calendar', 'Manage my booking', '/manage')}
     <button class="card ic-row menu-row" data-menu-warranty>${icon('shield', 24)}<span class="grow">Request a warranty visit</span>${icon('right', 18)}</button>
     ${row('doc', 'Termite or commercial inspection', '/inspection')}${row('camera', 'Send a photo, we identify it free', '/photos?mode=identify')}
+    <p class="muted" style="margin-top:16px">More</p>
+    ${row('shield', 'Warranty and call-outs', '/warranty-cover')}${row('card', 'Refund policy', '/refund-policy')}${row('truck', 'How it works', '/how-it-works')}${row('check', 'Safety for children and pets', '/safety')}${row('info', 'Questions and answers', '/faq')}
     <div class="menu-actions"><a class="btn ghost" href="${site.company.phoneHref}">${icon('phone', 18)}Call</a><button class="btn ghost" data-chat>${icon('chat', 18)}Chat</button><button class="btn" data-book>Book</button></div>`);
   on(box, '[data-menu-warranty]', () => warrantyEntry());
 });

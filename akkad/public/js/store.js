@@ -1,7 +1,7 @@
 // The booking shop: one page used by the homepage and by every area page.
 // The customer picks a service, adds it to "Your booking" and continues to time and payment.
 // Same page for everyone, personalised by the customer's area (S.area) or by the area page it is on.
-import { S, save, site, go, esc, icon, aed, wty, stepsHtml, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
+import { S, save, site, go, esc, icon, aed, wty, cover, stepsHtml, photo, imgFor, pestImg, stars, sliderHtml, on, $, $$, openLayer, closeLayer, toast, onLeave, payLogos } from './core.js';
 import { checkAvailability } from './flows.js';
 import { chosen, shortSize, ensureSize, sizeControls, wireSizeControls } from './pages-book.js';
 
@@ -55,7 +55,7 @@ const pkPhoto = (p, pk) => imgFor(pk.photo) || imgFor(p.photo);
 export const pkgCard = (p, pk) => `<article class="card pk">
     <button class="pk-pic" data-info="${p.id}:${pk.id}" aria-label="Details of ${esc(pk.title)}"${pkPhoto(p, pk) ? ` style="background-image:url('${esc(pkPhoto(p, pk))}')"` : ''}></button>
     <div class="pk-main">${pk.badge ? `<span class="tag">${esc(pk.badge)}</span>` : ''}<h3>${esc(pkName(pk))}</h3>
-      <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span>${p.warrantyMonths ? `<span>${icon('calendar', 15)}${esc(pk.duration)}</span>` : ''}</div>
+      <div class="st-meta"><span>${icon('shield', 15)}${wty(p)}</span>${p.callouts ? `<span>${icon('check', 15)}${esc(p.callouts)}</span>` : ''}${p.warrantyMonths ? `<span>${icon('calendar', 15)}${esc(pk.duration)}</span>` : ''}</div>
       <button class="link b" data-info="${p.id}:${pk.id}">Details ›</button></div>
     <div class="pk-side"><div class="price">${pk.sized ? '<small>From</small> ' : ''}${aed(fromOf(p, pk))}</div>
       <button class="btn add" data-add="${p.id}:${pk.id}" aria-label="Add ${esc(pk.title)}">Add</button></div></article>`;
@@ -86,8 +86,8 @@ const section = (p, topIn) => `<section class="st-sec" id="svc-${p.id}" data-sec
 const offer = (cls, kicker, big, sub, btn, attr, img, imgCls = '') => `<article class="offer ${cls}"><div class="of-text"><span class="of-kicker">${kicker}</span><p class="of-big">${big}</p><p class="of-sub">${sub}</p><button class="of-btn" ${attr}>${btn}${icon('arrow', 15)}</button></div><span class="of-img ${imgCls}" style="background-image:url('${img}')"></span></article>`;
 const offers = (cheapest) => [
   offer('offer-doctor', 'EXPRESS', `${site.fees.aboutMin} minutes`, 'Technician at your door', 'Book now', 'data-jump="list"', '/img/commercial-kitchen-inspection.webp'),
-  offer('offer-green', 'PEST CONTROL', `<small>From</small> ${aed(pestById('general').from)}`, 'See your price first', 'Add to booking', 'data-add="general:apartment"', '/img/cockroach-gel-kitchen.webp'),
-  offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'See services', 'data-jump="list"', '/img/termite-soil-treatment.webp'),
+  offer('offer-green', 'ONE-TIME VISIT', `<small>From</small> ${aed(pestById('general-once').from)}`, 'General pest control', 'Add to booking', 'data-add="general-once:apartment"', '/img/cockroach-gel-kitchen.webp'),
+  offer('offer-dark', 'WARRANTY', '6 months', 'Unlimited call&#8209;outs', 'How it works', 'data-href="/warranty-cover"', '/img/termite-soil-treatment.webp'),
   offer('offer-light', 'PAY LATER', '4 instalments', 'Split it with Tabby', 'Book now', 'data-jump="list"', '/img/brand/tabby.png', 'of-tabby'),
 ].join('');
 
@@ -109,7 +109,7 @@ function cartHtml() {
     </div>
     <div class="cart-total"><span>Total incl. VAT</span><b>${aed(c.price + fee)}</b></div>
     <button class="btn cart-go" data-checkout>${S.area ? (express() ? 'Continue to payment' : 'Choose a time') : 'Choose your area to continue'}${icon('arrow', 18)}</button>
-    <div class="cart-pay">${payLogos()}<small>${p.warrantyMonths ? `${wty(p)} included` : '2 visits, no warranty'}</small></div>`;
+    <div class="cart-pay">${payLogos()}<small>${p.warrantyMonths ? `${cover(p)} included` : wty(p)}</small></div>`;
 }
 function barHtml() {
   const p = S.draft.pest && pestById(S.draft.pest);
@@ -162,7 +162,7 @@ export function storePage(ctx = {}) {
         <p class="eyebrow"><span class="live"></span>${area ? `Team near ${esc(area.short)} today` : 'Technicians available today'}</p>
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <div class="st-rating"><span class="rate-chip">★ ${c.rating}</span><a href="${c.mapsUrl || c.googleReviewsUrl}" target="_blank" rel="noopener">Google reviews ›</a>${ctx.stats ? `<span class="st-dot"></span><span>${ctx.stats.homes} homes treated in ${esc(area.short)}</span>` : ''}</div>
-        <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">Up to 6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
+        <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li></ul>
       </section>
 
       <section class="card st-bugs"><h2>What's bugging you?</h2>
@@ -190,13 +190,13 @@ export function storePage(ctx = {}) {
         ${photo('The Akkad Pest Control team and vans', '/img/akkad-team.jpg')}
         <div class="st-team-body"><span class="of-kicker green">MUNICIPALITY-APPROVED TEAM</span><h2>Trained experts, at your door</h2>
           <p class="muted">Uniformed technicians, approved products, and a clear report on WhatsApp after every visit.</p>
-          <div class="st-stats"><div><b>${c.rating}★</b><small>Google rating</small></div><div><b>~${site.fees.aboutMin} min</b><small>Express arrival</small></div><div><b>6 mo</b><small>Max warranty</small></div><div><b>3</b><small>Emirates covered</small></div></div></div>
+          <div class="st-stats"><div><b>${c.rating}★</b><small>Google rating</small></div><div><b>~${site.fees.aboutMin} min</b><small>Express arrival</small></div><div><b>6 mo</b><small>Warranty</small></div><div><b>3</b><small>Emirates covered</small></div></div></div>
       </section>
 
       <section class="st-block" id="reviews">${googleBlock(ctx.googleReviews || site.googleReviews, area ? `Loved by families in ${esc(area.short)}` : 'Loved by families in the UAE')}</section>
 
       <section class="st-block" id="guide"><h2>Frequently asked questions</h2>
-        <div class="card st-faq">${site.faq.map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${esc(q)}${icon('down', 18)}</summary><p>${esc(a)}</p></details>`).join('')}</div>
+        <div class="card st-faq">${site.faq.slice(0, 4).map(([q, a], i) => `<details ${i ? '' : 'open'}><summary>${esc(q)}${icon('down', 18)}</summary><p>${esc(a)}</p></details>`).join('')}<a class="link b" href="/faq" style="display:block;padding:12px 2px 2px">All questions and answers ›</a></div>
       </section>
 
       <section class="st-help"><span class="sh-img" style="background-image:url('/img/cockroach-gel-kitchen.webp')"></span>
@@ -215,6 +215,7 @@ export function storePage(ctx = {}) {
 
 
     // Jump to a service (pest tiles, tabs, offers).
+    on(root, '[data-href]', (b) => go(b.dataset.href));
     on(root, '[data-jump]', (b) => {
       const id = b.dataset.jump;
       const el = id === 'list' ? $('#st-list', root) : $('#svc-' + id, root);
@@ -306,7 +307,7 @@ function sizePicker(p, pkgId, done) {
       
       ${sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
       ${sizeControls(p, pk)}
-      <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span><span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
+      <div class="sz-facts"><span>${icon('shield', 16)}${wty(p)}</span>${p.callouts ? `<span>${icon('check', 16)}${esc(p.callouts)}</span>` : ''}<span>${icon('calendar', 16)}${esc(pk.duration)}</span><span>${icon('check', 16)}VAT included</span></div>
       <div class="sz-more">
         <details><summary>What's included${icon('down', 18)}</summary><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}</ul></details>
         <details open><summary>What the technician does${icon('down', 18)}</summary>${stepsHtml(p.steps, p.id)}</details>
@@ -334,7 +335,7 @@ function details(p, pkgId, add) {
   const pk = p.packages.find((x) => x.id === pkgId);
   openLayer('popup', `<div class="explain"><h2 class="plain">${esc(pk.title)}</h2>${pkPhoto(p, pk) ? `<div class="pk-photo" style="background-image:url('${esc(pkPhoto(p, pk))}')" role="img" aria-label="${esc(pk.title)}"></div>` : ''}
     <p class="muted">${esc(p.intro)}</p>
-    <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${wty(p)}</li>` : ''}</ul>
+    <h4>Included</h4><ul class="st-inc">${pk.points.map((t) => `<li>${icon('check', 16)}${esc(t)}</li>`).join('')}${p.warrantyMonths ? `<li>${icon('shield', 16)}${cover(p)}</li>` : ''}</ul>
     <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id)}
     <h4>Before we arrive</h4><p class="muted">${esc(p.prep)}</p>
     ${p.after ? `<h4>After the visit</h4><p class="muted">${esc(p.after)}</p>` : ''}
