@@ -88,28 +88,74 @@ route('/pest-control/:slug', async ({ slug }) => {
 });
 
 /* ---------- screens 9-10: termite control or commercial AMC, inspection first ---------- */
+const chipRow = (id, list, onIdx, multi) => `<div class="chips${multi ? ' multi' : ''}" id="${id}">${list.map((v, i) => `<button type="button" class="chip ${(multi ? onIdx.includes(i) : i === onIdx) ? 'on' : ''}" data-v="${esc(v)}" aria-pressed="${(multi ? onIdx.includes(i) : i === onIdx)}">${esc(v)}</button>`).join('')}</div>`;
+const field = (ic, name, label, extra = '') => `<label class="field">${icon(ic)}<span class="sr">${label}</span><input name="${name}" placeholder="${label}" ${extra}></label>`;
 route('/inspection', async (_, q) => ({
   title: 'Termite control or commercial AMC', flow: true,
-  html: `<div class="flow"><h1>Termite control or commercial AMC</h1>
-    <div class="card warn"><h3 class="ic-row" style="gap:8px">${icon('info', 24)}Inspection required</h3><p style="margin-top:8px">These jobs are priced after we see the site. Akkad's operations team will call you to arrange it.</p></div>
-    <div class="chips" id="job"><button class="chip ${q.get('job') === 'amc' ? '' : 'on'}" data-v="termite">Termite control</button><button class="chip ${q.get('job') === 'amc' ? 'on' : ''}" data-v="amc">Commercial AMC</button></div>
-    <p class="muted">Property type</p>
-    <div class="chips" id="prop">${['Villa', 'Restaurant', 'Office', 'Building', 'Warehouse'].map((p, i) => `<button class="chip ${(q.get('job') === 'amc' ? i === 1 : i === 0) ? 'on' : ''}" data-v="${p}">${p}</button>`).join('')}</div>
+  html: `<div class="flow insp"><h1>Termite control or commercial AMC</h1>
+    <div class="card warn"><h3 class="ic-row" style="gap:8px">${icon('info', 24)}Free inspection first</h3><p style="margin-top:8px">We price these after seeing the site. Our team calls you to arrange it.</p></div>
+    <div class="seg" id="job"><button type="button" class="${q.get('job') === 'amc' ? '' : 'on'}" data-v="termite">Termite control</button><button type="button" class="${q.get('job') === 'amc' ? 'on' : ''}" data-v="amc">Commercial AMC</button></div>
     <form class="form-grid" novalidate>
-      <label class="field">${icon('doc')}<span class="sr">Company or contact name</span><input name="name" placeholder="Company or contact name" autocomplete="name"></label>
-      <label class="field">${icon('phone')}<span class="sr">Mobile number</span><input name="mobile" type="tel" inputmode="tel" placeholder="Mobile number" autocomplete="tel"></label>
+      <div data-for="termite" class="insp-part">
+        <p class="q">When is the treatment needed?</p>
+        <div class="opt2" id="stage">
+          <button type="button" class="opt on" data-v="Pre-construction"><b>Pre-construction</b><span>Before the foundation or floor slab is poured</span></button>
+          <button type="button" class="opt" data-v="Post-construction"><b>Post-construction</b><span>An existing, finished building</span></button>
+        </div>
+        <p class="q">Property type</p>
+        ${chipRow('tprop', ['Villa', 'Building', 'Office', 'Warehouse', 'Other'], 0)}
+        <p class="q" id="sqm-q">Plot or built-up area</p>
+        <label class="field">${icon('doc')}<span class="sr">Area in square metres</span><input name="sqm" inputmode="numeric" maxlength="7" placeholder="Area in SQM, e.g. 450"><span class="unit">SQM</span></label>
+      </div>
+      <div data-for="amc" class="insp-part">
+        <p class="q">Type of business</p>
+        ${chipRow('aprop', ['Restaurant or café', 'Office', 'Shop', 'Hotel', 'Warehouse', 'Building', 'School or clinic', 'Other'], 0)}
+        <p class="q">Pests to cover <span class="muted">(choose all that apply)</span></p>
+        ${chipRow('pests', ['General pests', 'Cockroaches', 'Rodents', 'Flies', 'Mosquitoes', 'Not sure'], [0], true)}
+        <p class="q">How often should we visit?</p>
+        ${chipRow('freq', ['Monthly', 'Every 2 months', 'Every 3 months', 'Not sure'], 0)}
+        <p class="q">Number of sites</p>
+        ${chipRow('sites', ['1', '2–5', '6 or more'], 0)}
+        <label class="field">${icon('doc')}<span class="sr">Approximate area in square metres (optional)</span><input name="asqm" inputmode="numeric" maxlength="7" placeholder="Approx. area (optional)"><span class="unit">SQM</span></label>
+        ${field('doc', 'company', 'Company name', 'autocomplete="organization"')}
+      </div>
+      <p class="q">Your contact details</p>
+      ${field('doc', 'name', 'Contact name', 'autocomplete="name"')}
+      ${field('phone', 'mobile', 'Mobile number', 'type="tel" inputmode="tel" autocomplete="tel"')}
       <label class="field">${icon('pin')}<span class="sr">Area or location</span><input name="area" placeholder="Area or location" value="${esc(S.area ? S.area.name : '')}"></label>
-      <p class="err"></p><button class="btn">Request inspection</button>
+      <p class="err"></p><button class="btn">Request free inspection</button>
     </form>
     <a class="btn ghost" href="/photos">${icon('camera', 22)}Send photos for a price instead</a></div>`,
   mount(root) {
-    on(root, '.chips .chip', (b) => $$('.chip', b.parentNode).forEach((c) => c.classList.toggle('on', c === b)));
+    const job = () => $('#job .on', root).dataset.v;
+    const val = (id) => $(`#${id} .on`, root).dataset.v;
+    const paint = () => {
+      $$('.insp-part', root).forEach((d) => { d.hidden = d.dataset.for !== job(); });
+      $('#sqm-q', root).textContent = val('stage') === 'Pre-construction' ? 'Plot area to be treated' : 'Built-up area of the property';
+    };
+    const pick = (b, cls) => $$(cls, b.parentNode).forEach((c) => { c.classList.toggle('on', c === b); c.setAttribute('aria-pressed', c === b); });
+    on(root, '#job button', (b) => { pick(b, 'button'); paint(); $('.err', root).textContent = ''; });
+    on(root, '#stage .opt', (b) => { pick(b, '.opt'); paint(); });
+    on(root, '.chips .chip', (b) => {
+      if (!b.parentNode.classList.contains('multi')) return pick(b, '.chip');
+      // "Not sure" stands alone; any real choice clears it. Never leave the row empty.
+      const all = $$('.chip', b.parentNode), unsure = all[all.length - 1];
+      if (b === unsure) all.forEach((c) => c.classList.toggle('on', c === b));
+      else { b.classList.toggle('on'); unsure.classList.toggle('on', false); }
+      if (!all.some((c) => c.classList.contains('on'))) b.classList.add('on');
+      all.forEach((c) => c.setAttribute('aria-pressed', c.classList.contains('on')));
+    });
+    $$('input[name=sqm], input[name=asqm]', root).forEach((i) => i.addEventListener('input', () => { i.value = i.value.replace(/\D/g, ''); }));
+    paint();
     $('form', root).addEventListener('submit', (e) => {
       e.preventDefault();
-      const f = new FormData(e.target);
+      const f = new FormData(e.target), amc = job() === 'amc';
+      const body = { job: job(), name: f.get('name'), mobile: f.get('mobile'), area: f.get('area') };
+      if (amc) Object.assign(body, { property: val('aprop'), pests: $$('#pests .on', root).map((c) => c.dataset.v), frequency: val('freq'), sites: val('sites'), sqm: f.get('asqm'), company: f.get('company') });
+      else Object.assign(body, { property: val('tprop'), stage: val('stage'), sqm: f.get('sqm') });
       busy($('form .btn', root), async () => {
         try {
-          const r = await api('/inspections', { job: $('#job .on', root).dataset.v, property: $('#prop .on', root).dataset.v, name: f.get('name'), mobile: f.get('mobile'), area: f.get('area') });
+          const r = await api('/inspections', body);
           go('/inspection/received/' + r.id);
         } catch (err) { showErr(root, err); }
       });

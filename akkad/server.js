@@ -309,14 +309,37 @@ app.post('/api/messages', limit('request', 10, 60), (req, res) => {
   const r = newRequest('message', { name, mobile, topic: clean(req.body.topic, 40), message });
   res.json({ id: r.id });
 });
+const TERMITE_STAGES = ['Pre-construction', 'Post-construction'];
+const AMC_PESTS = ['General pests', 'Cockroaches', 'Rodents', 'Flies', 'Mosquitoes', 'Not sure'];
+const AMC_FREQ = ['Monthly', 'Every 2 months', 'Every 3 months', 'Not sure'];
+const AMC_SITES = ['1', '2–5', '6 or more'];
+// Whole square metres between 1 and 1,000,000, or null when missing or not a number.
+const sqmOf = (v) => { const t = String(v == null ? '' : v).trim(); if (!/^\d{1,7}$/.test(t)) return null; const n = Number(t); return n >= 1 && n <= 1000000 ? n : null; };
 app.post('/api/inspections', limit('request', 10, 60), (req, res) => {
-  const mobile = normMobile(req.body.mobile);
-  const name = clean(req.body.name, 80), where = clean(req.body.area, 80);
-  if (!name) return fail(res, 400, 'Please add a company or contact name.');
+  const b = req.body, amc = b.job === 'amc';
+  const mobile = normMobile(b.mobile);
+  const name = clean(b.name, 80), where = clean(b.area, 80);
+  const sqm = sqmOf(b.sqm), hasSqm = String(b.sqm == null ? '' : b.sqm).trim() !== '';
+  const r = { job: amc ? 'Commercial AMC' : 'Termite control', property: clean(b.property, 30) };
+  if (amc) {
+    r.company = clean(b.company, 80);
+    r.pests = [...new Set((Array.isArray(b.pests) ? b.pests : []).filter((p) => AMC_PESTS.includes(p)))];
+    r.frequency = AMC_FREQ.includes(b.frequency) ? b.frequency : 'Not sure';
+    r.sites = AMC_SITES.includes(b.sites) ? b.sites : '1';
+    if (!r.pests.length) r.pests = ['Not sure'];
+    if (hasSqm && !sqm) return fail(res, 400, 'Please enter the area in square metres as a number, or leave it empty.');
+    if (!r.company) return fail(res, 400, 'Please add your company name.');
+  } else {
+    if (!TERMITE_STAGES.includes(b.stage)) return fail(res, 400, 'Please choose pre-construction or post-construction.');
+    r.stage = b.stage;
+    if (!sqm) return fail(res, 400, 'Please enter the area in square metres (SQM).');
+  }
+  if (sqm) r.sqm = sqm;
+  if (!name) return fail(res, 400, 'Please add a contact name.');
   if (!mobile) return fail(res, 400, 'Please enter a valid mobile number.');
   if (!where) return fail(res, 400, 'Please add your area or location.');
-  const r = newRequest('inspection', { job: req.body.job === 'amc' ? 'Commercial AMC' : 'Termite control', property: clean(req.body.property, 20), name, mobile, area: where });
-  res.json({ id: r.id });
+  const saved = newRequest('inspection', { ...r, name, mobile, area: where });
+  res.json({ id: saved.id });
 });
 app.post('/api/photo-requests', limit('photos', 8, 60), (req, res) => {
   const mobile = normMobile(req.body.mobile);

@@ -88,6 +88,16 @@ test('a WhatsApp code opens the bookings on that number, in an HttpOnly cookie',
   assert.equal(nobody.status, 200); assert.equal(nobody.data.demoCode, undefined);
 });
 
+test('inspection requests need the termite stage and area, AMC needs a company', async () => {
+  const base = { name: 'Sam', mobile: '0501112223', area: 'Tecom' };
+  assert.equal((await call('/api/inspections', { ...base, job: 'termite', stage: 'Pre-construction' })).status, 400);
+  assert.equal((await call('/api/inspections', { ...base, job: 'termite', stage: 'Later', sqm: '450' })).status, 400);
+  assert.equal((await call('/api/inspections', { ...base, job: 'termite', stage: 'Post-construction', sqm: '4e5' })).status, 400);
+  assert.equal((await call('/api/inspections', { ...base, job: 'termite', stage: 'Pre-construction', sqm: '450', property: 'Villa' })).status, 200);
+  assert.equal((await call('/api/inspections', { ...base, job: 'amc', pests: ['Rodents'] })).status, 400);
+  assert.equal((await call('/api/inspections', { ...base, job: 'amc', company: 'Cafe LLC', pests: ['Rodents', '<b>'], frequency: 'Monthly', sites: '1' })).status, 200);
+});
+
 test('oversized requests are refused', async () => {
   const r = await call('/api/inspections', { name: 'x'.repeat(200000), mobile: '0501112223', area: 'Tecom' });
   assert.equal(r.status, 413);
