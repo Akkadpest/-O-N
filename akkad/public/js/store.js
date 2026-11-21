@@ -185,7 +185,7 @@ function cartHtml() {
 function barHtml() {
   const p = S.draft.pest && pestById(S.draft.pest);
   const c = p && chosen(p);
-  if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><button class="btn ghost cb-ico" data-chat aria-label="Chat with an agent">${icon('chat', 20)}</button><button class="btn" data-jump="list">Choose a service</button>`;
+  if (!c) return ''; // nothing chosen yet: the tab bar is enough
   const fee = express() ? site.fees.expressNew : 0;
   return `<button class="cb-x" data-remove aria-label="Remove ${esc(p.service)} from your booking">${icon('x', 18)}</button><button class="cb-sum" data-cart aria-label="See or change your booking"><b>${aed(c.price + fee)}<u>Change</u></b><small>${esc(p.short)} · ${esc(c.sz ? shortSize(c.pk.sized, c.sz.label) : c.line)}${fee ? ' + fast' : ''}</small></button><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }

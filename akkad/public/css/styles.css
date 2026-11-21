@@ -1786,3 +1786,27 @@ a.pk-pic { display: block; }
 .pay-fast-note .link { font-size: 13.5px; }
 @media (min-width: 900px) { .flow-back { margin: -8px 0 14px; padding: 10px 0; background: none; backdrop-filter: none; border-bottom: 0; position: static; } }
 @media (max-width: 359px) { .flow-back span { display: none; } .pay-fast-l small { display: none; } .flow-back { margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px; } }
+
+/* ---------- phone tab bar (Home, Services, Book, Warranty, Menu) ---------- */
+:root { --tab-h: 62px; }
+@media (max-width: 899px) {
+  #bar, body.has-bar #bar { display: grid; grid-template-columns: 1fr 1fr 1.1fr 1fr 1fr; align-items: end; gap: 0; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(255, 255, 255, .97); backdrop-filter: blur(8px); box-shadow: 0 -6px 20px rgba(20, 40, 10, .07); }
+  body.in-flow #bar { display: none; }
+  #bar .tab { display: grid; justify-items: center; gap: 3px; min-height: 50px; padding: 6px 2px 4px; border: 0; background: none; color: #6b7767; font-size: 11.5px; font-weight: 600; text-decoration: none; border-radius: 12px; -webkit-tap-highlight-color: transparent; }
+  #bar .tab svg { transition: transform .15s; }
+  #bar .tab.on { color: var(--green); }
+  #bar .tab.on svg { transform: translateY(-1px); stroke-width: 2.3; }
+  #bar .tab:active { background: #eef4ea; }
+  #bar .tab-book { position: relative; padding-top: 0; color: var(--ink); font-weight: 800; }
+  #bar .tab-book i { display: grid; place-items: center; width: 54px; height: 54px; margin-top: -24px; border: 4px solid #fff; border-radius: 50%; background: var(--green); color: #fff; box-shadow: 0 6px 16px rgba(60, 122, 34, .38); }
+  #bar .tab-book:active i { transform: scale(.96); }
+  /* room for the tab bar under every normal page */
+  body:not(.in-flow) main, body.has-bar:not(.in-flow) main, body.store-on:not(.in-flow) main { padding-bottom: calc(var(--tab-h) + 24px + env(safe-area-inset-bottom)); }
+  body:not(.in-flow) #foot, body.has-bar:not(.in-flow) #foot { padding-bottom: calc(var(--tab-h) + 28px + env(safe-area-inset-bottom)); }
+  body.in-flow main, body.in-flow.has-bar main { padding-bottom: 24px; }
+  body.in-flow #foot { padding-bottom: 28px; }
+  /* the booking summary floats just above the tab bar, like a card; hidden while nothing is chosen */
+  .cart-bar { left: 10px; right: 10px; bottom: calc(var(--tab-h) + 10px + env(safe-area-inset-bottom)); border: 1px solid var(--line); border-radius: 18px; padding: 10px 12px; box-shadow: 0 10px 26px rgba(20, 40, 10, .16); }
+  .cart-bar:empty { display: none; }
+  body.store-on:not(.in-flow) main { padding-bottom: calc(var(--tab-h) + 104px + env(safe-area-inset-bottom)); }
+}

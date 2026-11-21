@@ -13,6 +13,7 @@ function paint(page) {
   const up = me.upcoming[0];
   const areaHead = page.head === 'area' && S.area;
   document.body.classList.toggle('has-bar', !!page.bar);
+  document.body.classList.toggle('in-flow', !!page.flow); // checkout and form pages: no tab bar, they have their own way back
 
   const loc = $('#locbar');
   loc.className = page.loc ? '' : 'mob-hide';
@@ -31,14 +32,19 @@ function paint(page) {
       ${known || areaHead ? '' : `<a class="icon-btn mob" href="${c.phoneHref}" aria-label="Call Akkad">${icon('phone')}</a>`}
       <button class="icon-btn" data-chat aria-label="Chat with an agent" aria-haspopup="dialog">${icon('chat')}</button>
       <button class="btn desk" data-book>Book</button>
-      <button class="icon-btn mob" data-menu aria-label="Menu" aria-haspopup="dialog">${icon('menu')}</button>
+      ${page.flow ? `<button class="icon-btn mob" data-menu aria-label="Menu" aria-haspopup="dialog">${icon('menu')}</button>` : ''}
     </div></div>`;
 
   const banner = $('#banner');
   banner.hidden = !(up && page.banner !== false);
   if (up) banner.innerHTML = `<div class="wrap"><a href="/booking/${up.id}${up.tracking ? '/track' : ''}">${icon(up.tracking ? 'truck' : 'calendar', 20)}<span>${up.tracking ? 'Your technician is on the way' : 'Your visit: ' + esc(up.when)}</span><b>${up.tracking ? 'Track' : 'Manage'} ›</b></a></div>`;
 
-  $('#bar').innerHTML = `<a class="btn ghost" href="${c.phoneHref}">Call</a><a class="btn ghost" href="${c.whatsapp}" target="_blank" rel="noopener">WhatsApp</a><button class="btn" data-book>Book</button>`;
+  // Phone tab bar: the main places, with Book in the middle. (Call and chat stay in the header.)
+  const here = location.pathname;
+  const tab = (href, ic, label, on) => `<a class="tab${on ? ' on' : ''}" href="${href}"${on ? ' aria-current="page"' : ''}>${icon(ic, 23)}<span>${label}</span></a>`;
+  $('#bar').innerHTML = `${tab('/', 'home', 'Home', here === '/' || here.startsWith('/pest-control'))}${tab('/services', 'bug', 'Services', here.startsWith('/services'))}
+    <button class="tab tab-book" data-book aria-label="Book a service"><i>${icon('calendar', 26)}</i><span>Book</span></button>
+    ${tab('/warranty-cover', 'shield', 'Warranty', here.startsWith('/warranty'))}<button class="tab" data-menu aria-haspopup="dialog">${icon('menu', 23)}<span>Menu</span></button>`;
 
   const svc = site.pests.filter((p) => p.id !== 'amc' && site.services[p.id]).map((p) => `<li><a href="/services/${site.services[p.id].slug}">${esc(p.service)}</a></li>`).join('');
   const foot = $('#foot');
