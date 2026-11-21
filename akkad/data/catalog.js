@@ -34,7 +34,8 @@ const COMPANY = {
 };
 
 // "Schedule fast" costs the same AED 49 for a new booking and for a warranty visit. "Schedule later" is free.
-const FEES = { expressNew: 49, expressWarranty: 49, etaMin: 28, aboutMin: 30 };
+// Paying with Tabby adds 7% to the amount due. Card payments have no extra charge.
+const FEES = { expressNew: 49, expressWarranty: 49, etaMin: 28, aboutMin: 30, tabbyPct: 7 };
 
 const APT = ['Studio', '1 bedroom', '2 bedrooms', '3 bedrooms', '4 bedrooms'];
 const VILLA = ['2 bedrooms', '3 bedrooms', '4 bedrooms', '5 bedrooms', '6+ bedrooms'];
@@ -497,7 +498,7 @@ const FAQ = [
   ['What does the warranty cover?', 'Our warranty is 6 months with unlimited call-outs. If the same pest returns, we come back and treat again at no charge, as many times as needed. Only an express call-out carries a small fee. The AED 99 one-time visit has no warranty.'],
   ['When do you refund?', 'In two cases: if we did not carry out the treatment, or if you paid twice by mistake. See the refund policy for details.'],
   ['How soon can you come?', 'If a team is working near you, an express visit reaches you in about 30 minutes. Otherwise pick any open slot, usually from the next day.'],
-  ['How do I pay?', 'By credit or debit card on a secure checkout page, or with Tabby in 4 payments if eligible. You see the full total, VAT included, before you pay.'],
+  ['How do I pay?', 'By credit or debit card on a secure checkout page, or with Tabby in 4 payments if eligible (a Tabby fee is added and shown before you pay). You see the full total, VAT included, before you pay.'],
   ['Do I need to leave home?', 'For gel treatments, no. For sprays we ask you to keep rooms closed for a short time; the technician will tell you exactly how long.'],
 ];
 

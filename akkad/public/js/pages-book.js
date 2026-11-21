@@ -201,11 +201,22 @@ export function pickSlots(root, fn) {
 }
 
 /* ---------- screens 27, 28, 32: review and pay ---------- */
+// Paying with Tabby adds site.fees.tabbyPct percent to the amount due. The server charges the same figure.
+const tabbyFee = (amount) => Math.round(amount * site.fees.tabbyPct) / 100;
 const payMethods = (total) => `
-  <button class="card pay on" data-pay="card" aria-pressed="true"><b>${icon('card')}Credit or debit card</b><small>Secure checkout by Network International</small>${payLogos(['visa', 'mastercard', 'apple-pay'], 'in-pay')}</button>
-  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed(total / 4)}, if eligible</small>${payLogos(['tabby'], 'in-pay')}</button>`;
-function wirePay(root) {
-  on(root, '[data-pay]', (b) => $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }));
+  <button class="card pay on" data-pay="card" aria-pressed="true"><b>${icon('card')}Credit or debit card</b><small>Secure checkout by Network International · no extra charge</small>${payLogos(['visa', 'mastercard', 'apple-pay'], 'in-pay')}</button>
+  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed((total + tabbyFee(total)) / 4)}, if eligible · includes a Tabby fee of ${aed(tabbyFee(total))}</small>${payLogos(['tabby'], 'in-pay')}</button>`;
+// `total` is the amount due by card. Choosing Tabby adds its fee as a line above the total and updates the total.
+function wirePay(root, total) {
+  const paint = () => {
+    const tabby = $('[data-pay].on', root).dataset.pay === 'tabby';
+    const box = $('.lines', root), sum = box && $('.total', box);
+    if (!sum || total == null) return;
+    const old = $('.tabby-row', box); if (old) old.remove();
+    if (tabby) sum.insertAdjacentHTML('beforebegin', `<div class="tabby-row"><span>Tabby fee</span><span class="fast">+ ${aed(tabbyFee(total))}</span></div>`);
+    sum.lastElementChild.textContent = aed(tabby ? Math.round((total + tabbyFee(total)) * 100) / 100 : total);
+  };
+  on(root, '[data-pay]', (b) => { $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); paint(); });
   return () => $('[data-pay].on', root).dataset.pay;
 }
 const demoNote = () => (site.demo ? `<p class="demo-note"><b>Online payment is not connected yet.</b> Confirming books your visit now and nothing is charged; the amount is recorded as payment pending.</p>` : '');
@@ -216,7 +227,7 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
     <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows.map(([label, value, cls]) => [label, typeof value === 'number' ? aed(value) : /^from \d/.test(String(value)) ? 'from ' + aed(Number(String(value).slice(5))) : value, cls]))}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
     <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id, p.stepNotes, p)}
-    <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page, or Tabby in 4 payments. Receipt and service report sent on WhatsApp.</p>
+    <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page with no extra charge, or Tabby in 4 payments with a Tabby fee shown before you pay. Receipt and service report sent on WhatsApp.</p>
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }
 
@@ -249,7 +260,7 @@ route('/book/:pest/pay', async ({ pest }) => {
       ${total ? payMethods(total) : '<div class="card on"><h3>Nothing to pay</h3><p class="sub">Your Akkad credit covers this booking.</p></div>'}
       ${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,
     mount(root) {
-      const method = total ? wirePay(root) : () => 'card';
+      const method = total ? wirePay(root, total) : () => 'card';
       // Changed their mind about paying for speed: keep the details typed so far and pick a day instead.
       on(root, '[data-nofast]', () => { setDraft({ ...Object.fromEntries(new FormData($('form', root))), timing: 'scheduled' }); go(`/book/${pest}/time`); });
       on(root, '[data-explain]', () => explain(p, { rows: [[`Treatment, materials, ${wty(p)}`, c.price], ...(express() ? [[`Schedule fast, team within about ${site.fees.aboutMin} min`, fee]] : [['Scheduled visit', 'No extra fee', 'green']])], total: c.price + fee }));
@@ -348,7 +359,7 @@ route('/warranty/:id/pay', async ({ id }) => {
       <p class="muted">${esc(w.areaShort)} · Express today, about ${site.fees.aboutMin} min · treatment free under warranty</p>
       ${payMethods(fee)}${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,
     mount(root) {
-      const method = wirePay(root);
+      const method = wirePay(root, fee);
       on(root, '[data-explain]', () => explain(p, { rows: [['Warranty treatment and materials', 0], [`Express call-out, team within about ${site.fees.aboutMin} min`, fee]], total: fee }));
       on(root, '#confirm', (btn) => busy(btn, async () => {
         try { const { booking } = await api('/warranty/bookings', { ...body, payMethod: method() }); remember(booking); setDraft({ warranty: null }); await loadMe(); go(`/booking/${booking.id}/track`); } catch (e) { showErr(root, e); }

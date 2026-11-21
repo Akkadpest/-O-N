@@ -6,7 +6,7 @@ const getBooking = async (id) => (await bookingApi(id)).booking;
 const contactRow = (a = 'Call', b = 'WhatsApp') => `<div class="row"><a class="btn ghost" href="${site.company.phoneHref}">${a}</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">${b}</a></div>`;
 const pending = (b) => b.paymentStatus === 'pending';
 const paidText = (b) => (b.kind === 'warranty' && !b.total ? '<span class="green">AED 0 · covered by warranty</span>'
-  : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)}${b.payMethod === 'tabby' ? ' with Tabby' : ' by card'}`);
+  : pending(b) ? `${aed(b.total)} · payment pending${b.tabbyFee ? ` · includes ${aed(b.tabbyFee)} Tabby fee` : ''}` : `${aed(b.total)}${b.payMethod === 'tabby' ? ` with Tabby${b.tabbyFee ? ` (includes ${aed(b.tabbyFee)} Tabby fee)` : ''}` : ' by card'}`);
 const pendingNote = (b) => (pending(b) ? '<p class="demo-note">Online payment is not connected yet, so nothing has been charged. Your visit is booked and the amount is shown as pending.</p>' : '');
 const warrantyNote = (b) => (b.kind === 'warranty' ? 'Same address. Treatment stays free under your warranty.' : `Same service, same address${b.warrantyMonths ? `, same ${b.warrantyMonths}-month warranty` : ''}.`);
 

@@ -1810,3 +1810,7 @@ a.pk-pic { display: block; }
   .cart-bar:empty { display: none; }
   body.store-on:not(.in-flow) main { padding-bottom: calc(var(--tab-h) + 104px + env(safe-area-inset-bottom)); }
 }
+
+/* Tabby fee: tag on the Tabby option and the extra line above the total */
+.pay-tag { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #ffe9b8; color: #5c3d00; font-style: normal; font-weight: 800; font-size: 12px; }
+.lines .tabby-row { animation: fastIn .25s ease; }

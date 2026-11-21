@@ -174,7 +174,7 @@ function view(b) {
     areaSlug: b.areaSlug, areaName: b.areaName, areaShort: b.areaShort, address: maskAddress(b.address), building: maskAddress({ building: b.address.building }),
     mobile: maskMobile(b.mobile), note: b.note || '', timing: b.timing, date: b.date, dateLabel: fmtDate(b.date), dateLong: fmtDate(b.date, true),
     weekday: weekday(b.date), slot: b.slot, when: b.timing === 'express' && !b.slot ? 'Express today' : `${fmtDate(b.date)}, ${b.slot}`,
-    price: b.price, expressFee: b.expressFee, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, paymentStatus: b.paymentStatus || (b.total ? 'paid' : 'none'), prep: (pest(b.pest) || {}).prep || '',
+    price: b.price, expressFee: b.expressFee, tabbyFee: b.tabbyFee || 0, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, paymentStatus: b.paymentStatus || (b.total ? 'paid' : 'none'), prep: (pest(b.pest) || {}).prep || '',
     warrantyMonths: b.warrantyMonths, warrantyUntil: b.warrantyUntil || null, warrantyUntilLabel: b.warrantyUntil ? fmtDate(b.warrantyUntil, true) : null,
     warrantyActive: !!b.warrantyUntil && b.warrantyUntil >= today, parentId: b.parentId || null,
     reminderLabel: b.slot ? fmtDate(addDays(b.date, -1)) : null, credit: b.credit || null, tracking: track(b),
@@ -466,6 +466,8 @@ function create(fields) {
   return b;
 }
 
+// Tabby surcharge on an amount due, in whole fils (two decimals). The server works it out; the page only shows it.
+const tabbyFeeOn = (amount) => Math.round(amount * C.FEES.tabbyPct) / 100;
 app.post('/api/bookings', limit('book', 20, 60), (req, res) => {
   try {
     const a = area(req.body.area);
@@ -479,8 +481,11 @@ app.post('/api/bookings', limit('book', 20, 60), (req, res) => {
     if (sessionMobile(req) === who.mobile) {
       for (const c of customerCredit(who.mobile)) { const use = Math.min(c.credit.amount, total - creditUsed); c.credit.amount -= use; creditUsed += use; }
     }
-    const b = create({ ...who, ...when, kind: 'new', pest: q.p.id, service: q.p.service, label: q.label, price: q.price, expressFee: q.expressFee, total,
-      creditUsed, paid: total - creditUsed, payMethod: method, warrantyMonths: q.p.warrantyMonths, areaSlug: a.slug, areaName: a.name, areaShort: a.short });
+    // Tabby: 7% on what is left to pay after any Akkad credit.
+    const tabbyFee = method === 'tabby' && total - creditUsed > 0 ? tabbyFeeOn(total - creditUsed) : 0;
+    total = Math.round((total + tabbyFee) * 100) / 100;
+    const b = create({ ...who, ...when, kind: 'new', pest: q.p.id, service: q.p.service, label: q.label, price: q.price, expressFee: q.expressFee, tabbyFee, total,
+      creditUsed, paid: Math.round((total - creditUsed) * 100) / 100, payMethod: method, warrantyMonths: q.p.warrantyMonths, areaSlug: a.slug, areaName: a.name, areaShort: a.short });
     res.json({ booking: view(b) });
   } catch (e) { fail(res, 400, e.message); }
 });
@@ -504,8 +509,10 @@ app.post('/api/warranty/bookings', limit('book', 20, 60), struckOut('lookup'), (
     const when = schedule(req.body);
     const address = req.body.building ? { building: clean(req.body.building, 80), apt: clean(req.body.apt, 12) } : src.address;
     const fee = when.timing === 'express' ? C.FEES.expressWarranty : 0;
+    const wMethod = fee ? (req.body.payMethod === 'tabby' ? 'tabby' : 'card') : null;
+    const wTabby = wMethod === 'tabby' ? tabbyFeeOn(fee) : 0;
     const b = create({ ...when, mobile: src.mobile, name: src.name, address, kind: 'warranty', parentId: src.id, pest: src.pest, service: src.service,
-      label: `Warranty visit · ${src.service.toLowerCase()}`, price: 0, expressFee: fee, total: fee, paid: fee, payMethod: fee ? (req.body.payMethod === 'tabby' ? 'tabby' : 'card') : null,
+      label: `Warranty visit · ${src.service.toLowerCase()}`, price: 0, expressFee: fee, tabbyFee: wTabby, total: fee + wTabby, paid: fee + wTabby, payMethod: wMethod,
       areaSlug: src.areaSlug, areaName: src.areaName, areaShort: src.areaShort });
     res.json({ booking: view(b) });
   } catch (e) { fail(res, 400, e.message); }
@@ -585,7 +592,9 @@ app.post('/api/bookings/:id/reschedule', authed, (req, res) => {
     if (req.body.timing === 'express') {
       if (enRoute) throw new Error('Your technician is already on the way.');
       const fee = b.kind === 'warranty' ? C.FEES.expressWarranty : C.FEES.expressNew;
-      Object.assign(b, { movedFrom: `${fmtDate(b.date)}, ${b.slot}`, timing: 'express', date: dubaiNow().iso, slot: null, expressFee: fee, total: b.total + fee, paid: (b.paid || 0) + (DEMO ? 0 : fee),
+      const extraTabby = b.payMethod === 'tabby' ? tabbyFeeOn(fee) : 0;
+      Object.assign(b, { movedFrom: `${fmtDate(b.date)}, ${b.slot}`, timing: 'express', date: dubaiNow().iso, slot: null, expressFee: fee, tabbyFee: Math.round(((b.tabbyFee || 0) + extraTabby) * 100) / 100,
+        total: Math.round((b.total + fee + extraTabby) * 100) / 100, paid: Math.round(((b.paid || 0) + (DEMO ? 0 : fee + extraTabby)) * 100) / 100,
         payMethod: b.payMethod || 'card', paymentStatus: DEMO ? 'pending' : 'paid', status: 'on_the_way', setOffAt: Date.now(), etaMin: C.FEES.etaMin });
     } else {
       let when;

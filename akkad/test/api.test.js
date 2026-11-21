@@ -62,6 +62,21 @@ test('the server sets the price and records payment as pending', async () => {
   assert.equal(cancelled.data.booking.credit, null, 'nothing was paid, so no credit');
 });
 
+test('Tabby adds 7% to the amount due; card adds nothing', async () => {
+  const { days } = (await call('/api/slots?days=3')).data;
+  const when = { timing: 'scheduled', date: days[2].iso, slot: days[2].slots[0] };
+  const tabby = await call('/api/bookings', { ...order, ...when, payMethod: 'tabby', tabbyFee: 0, total: 1 });
+  assert.equal(tabby.status, 200);
+  assert.equal(tabby.data.booking.tabbyFee, 14.7, '7% of AED 210');
+  assert.equal(tabby.data.booking.total, 224.7);
+  const fast = await call('/api/bookings', { ...order, timing: 'express', payMethod: 'tabby' });
+  assert.equal(fast.data.booking.tabbyFee, 18.13, '7% of AED 210 + AED 49 Schedule fast');
+  assert.equal(fast.data.booking.total, 277.13);
+  const card = await call('/api/bookings', { ...order, ...when, slot: days[2].slots[1], payMethod: 'something-else' });
+  assert.equal(card.data.booking.tabbyFee, 0);
+  assert.equal(card.data.booking.total, 210);
+});
+
 test('made-up slots, sizes and areas are rejected', async () => {
   assert.equal((await call('/api/bookings', { ...order, timing: 'scheduled', date: '2020-01-01', slot: '2–4 PM' })).status, 400);
   assert.equal((await call('/api/bookings', { ...order, timing: 'express', size: 's99' })).status, 400);
