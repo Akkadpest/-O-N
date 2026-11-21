@@ -1724,3 +1724,16 @@ a.pk-pic { display: block; }
 @media (max-width: 899px) { .f-grid > div:not(.f-brand) { display: none; } .f-grid { grid-template-columns: 1fr; } }
 /* phones: no "How it works" block on the home page (the menu has the How it works page) */
 @media (max-width: 899px) { .store #how { display: none !important; } }
+
+/* desktop only: the warranty line spans the full width above the two cards (it was taking a card's place) */
+@media (min-width: 900px) {
+  .st-sec > .st-wty { grid-column: 1 / -1; margin: 6px 0 14px; padding: 10px 14px; font-size: 14px; }
+}
+
+/* desktop only: breathing room between the blocks under the service list (they were touching) */
+@media (min-width: 900px) {
+  .store .st-main > .st-block, .store .st-main > .st-team, .store .st-main > .st-help { margin-top: 48px; }
+  .store .st-main > .st-tabs { margin-top: 22px; }
+  .store .st-main > #st-list { margin-top: 18px; }
+  .store .st-main > .st-block > h2, .store .st-main > .st-block .sec-h { margin-bottom: 4px; }
+}
