@@ -171,9 +171,12 @@ function cartHtml() {
     <div class="cart-item"><span class="ci-img" style="background-image:url('${esc(pestIcon(p.id))}')"></span>
       <div class="ci-text"><b>${esc(p.service)}</b><small>${esc(c.line)}</small>${p.packages.some((x) => x.sized) ? '<button class="link ci-change" data-change>Change home type or size</button>' : ''}</div><b class="ci-price">${aed(c.price)}</b>
       <button class="ci-x" data-remove aria-label="Remove">${icon('x', 16)}</button></div>
+    ${express() ? `<div class="cart-item cart-fast"><span class="ci-img ci-van">${icon('truck', 24)}</span>
+      <div class="ci-text"><b>Schedule fast</b><small>At your door in about ${site.fees.aboutMin} min</small></div><b class="ci-price">${aed(fee)}</b>
+      <button class="ci-x" data-when="scheduled" aria-label="Remove Schedule fast">${icon('x', 16)}</button></div>` : ''}
     <div class="cart-timing" role="radiogroup" aria-label="When do you need us?">
-      <button role="radio" data-when="express" class="${express() ? 'on' : ''}" aria-checked="${express()}"><b>Express now</b><small>~${site.fees.aboutMin} min · +AED ${site.fees.expressNew}</small></button>
-      <button role="radio" data-when="scheduled" class="${express() ? '' : 'on'}" aria-checked="${!express()}"><b>Schedule</b><small>From ${esc(site.firstDay)} · free</small></button>
+      <button role="radio" data-when="express" class="${express() ? 'on' : ''}" aria-checked="${express()}"><b>Schedule fast</b><small>~${site.fees.aboutMin} min · +${aed(site.fees.expressNew)}</small></button>
+      <button role="radio" data-when="scheduled" class="${express() ? '' : 'on'}" aria-checked="${!express()}"><b>Schedule later</b><small>From ${esc(site.firstDay)} · no extra fee</small></button>
     </div>
     <div class="cart-total"><span>Total incl. VAT</span><b>${aed(c.price + fee)}</b></div>
     <button class="btn cart-go" data-checkout>${S.area ? (express() ? 'Continue to payment' : 'Choose a time') : 'Choose your area to continue'}${icon('arrow', 18)}</button>
@@ -184,7 +187,7 @@ function barHtml() {
   const c = p && chosen(p);
   if (!c) return `<a class="btn ghost cb-ico" href="${site.company.phoneHref}" aria-label="Call Akkad">${icon('phone', 20)}</a><button class="btn ghost cb-ico" data-chat aria-label="Chat with an agent">${icon('chat', 20)}</button><button class="btn" data-jump="list">Choose a service</button>`;
   const fee = express() ? site.fees.expressNew : 0;
-  return `<button class="cb-x" data-remove aria-label="Remove ${esc(p.service)} from your booking">${icon('x', 18)}</button><button class="cb-sum" data-cart aria-label="See or change your booking"><b>${aed(c.price + fee)}<u>Change</u></b><small>${esc(p.short)} · ${esc(c.sz ? shortSize(c.pk.sized, c.sz.label) : c.line)}</small></button><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
+  return `<button class="cb-x" data-remove aria-label="Remove ${esc(p.service)} from your booking">${icon('x', 18)}</button><button class="cb-sum" data-cart aria-label="See or change your booking"><b>${aed(c.price + fee)}<u>Change</u></b><small>${esc(p.short)} · ${esc(c.sz ? shortSize(c.pk.sized, c.sz.label) : c.line)}${fee ? ' + fast' : ''}</small></button><button class="btn" data-checkout>${S.area ? 'Continue' : 'Choose area'}${icon('arrow', 17)}</button>`;
 }
 
 // Desktop: left and right arrows on a sideways row, plus click-and-drag, so a mouse can slide it like a finger does.
@@ -231,8 +234,8 @@ export function storePage(ctx = {}) {
         <h1>Pest Control in <span class="hl">${esc(place)}</span></h1>
         <ul class="st-pills"><li>${icon('shield', 15)}<span class="desk">Municipality approved</span><span class="mob">Approved</span></li><li>${icon('calendar', 15)}<span class="desk">6-month warranty</span><span class="mob">6-month warranty</span></li><li>${icon('check', 15)}<span class="desk">Safe for kids and pets</span><span class="mob">Kid &amp; pet safe</span></li><li>${icon('leaf', 15)}<span>Organic pesticide</span></li></ul>
         <div class="st-when" role="group" aria-label="When do you need us?">
-          <button class="when-card${S.draft.timing === 'express' ? ' on' : ''}" data-when-pick="express"><span class="when-anim" data-lottie="/anim/van-express.json" aria-hidden="true"></span><b>Schedule fast</b><small>At your door in about ${site.fees.aboutMin} min</small></button>
-          <button class="when-card${S.draft.timing === 'scheduled' ? ' on' : ''}" data-when-pick="scheduled"><span class="when-anim" data-lottie="/anim/schedule-later.json" aria-hidden="true"></span><b>Schedule later</b><small>Pick your day and time</small></button>
+          <button class="when-card${S.draft.timing === 'express' ? ' on' : ''}" data-when-pick="express"><span class="when-anim" data-lottie="/anim/van-express.json" aria-hidden="true"></span><b>Schedule fast</b><small>At your door in about ${site.fees.aboutMin} min</small><em class="when-fee">+ ${aed(site.fees.expressNew)}</em></button>
+          <button class="when-card${S.draft.timing === 'scheduled' ? ' on' : ''}" data-when-pick="scheduled"><span class="when-anim" data-lottie="/anim/schedule-later.json" aria-hidden="true"></span><b>Schedule later</b><small>Pick your day and time</small><em class="when-fee free">No extra fee</em></button>
         </div>
       </section>
 

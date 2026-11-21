@@ -53,7 +53,7 @@ export function teamPopup() {
     <div class="teamline"><span class="rail"></span><span class="fill"></span><i class="a"></i><i class="v">${icon('truck', 22)}</i><i class="z">${icon('pin', 20)}</i></div>
     <div class="teamline-l"><span>Akkad team</span><span>about ${f.aboutMin} min</span><span>You</span></div>
     <button class="btn lg" data-t="express">Book nearby team</button>
-    <p class="note center">Express fee: AED ${f.expressNew} new booking · AED ${f.expressWarranty} warranty visit</p>
+    <p class="note center">Schedule fast: + AED ${f.expressNew}, for new bookings and warranty visits · Schedule later: no extra fee</p>
     <button class="btn ghost" data-t="scheduled">Schedule for later <span class="muted">· no extra fee</span></button>
     <p class="note center">Team status updated ${esc(site.statusClock)}</p>`);
   on(box, '[data-t]', (b) => { S.draft = { ...S.draft, timing: b.dataset.t }; save(); needPopup(); });

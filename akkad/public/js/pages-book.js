@@ -163,7 +163,7 @@ function sizeSheet(p, pkgId) {
       <p class="muted">${type ? 'Choose your home size. ' : ''}Price includes VAT${p.warrantyMonths ? ` and a ${wty(p)}` : ''}.</p>
       ${type && sizedPkgs.length > 1 ? `<div class="seg">${sizedPkgs.map((x) => `<button data-seg="${x.id}" class="${x.id === pk.id ? 'on' : ''}">${x.sized === 'villa' ? 'Villa' : 'Apartment'}</button>`).join('')}</div>` : ''}
       ${type ? sizeControls(p, pk) : ''}
-      <div class="card">${lines([[esc(c.line), aed(c.price)], express() ? ['Express now', aed(fee)] : ['Scheduled visit', 'No extra fee', 'green']], ['Total incl. VAT', aed(c.price + fee)])}</div>
+      <div class="card">${lines([[esc(c.line), aed(c.price)], express() ? ['Schedule fast', aed(fee)] : ['Scheduled visit', 'No extra fee', 'green']], ['Total incl. VAT', aed(c.price + fee)])}</div>
       <button class="btn lg" data-next>${express() ? 'Continue to payment' : 'Choose a time'}</button>`, {
       mount(box) {
         on(box, '[data-seg]', (b) => { setDraft({ pkg: b.dataset.seg }); paint(); });

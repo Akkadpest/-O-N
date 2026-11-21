@@ -33,7 +33,8 @@ const COMPANY = {
   reviewCount: 2580,
 };
 
-const FEES = { expressNew: 18, expressWarranty: 39, etaMin: 28, aboutMin: 30 };
+// "Schedule fast" costs the same AED 49 for a new booking and for a warranty visit. "Schedule later" is free.
+const FEES = { expressNew: 49, expressWarranty: 49, etaMin: 28, aboutMin: 30 };
 
 const APT = ['Studio', '1 bedroom', '2 bedrooms', '3 bedrooms', '4 bedrooms'];
 const VILLA = ['2 bedrooms', '3 bedrooms', '4 bedrooms', '5 bedrooms', '6+ bedrooms'];
