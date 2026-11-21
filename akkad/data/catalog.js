@@ -269,8 +269,9 @@ for (const p of PESTS) {
 const beds = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => `${from + i} bedroom${from + i > 1 ? 's' : ''}`);
 const APT_LABELS = ['Studio', ...beds(1, 6)];
 const APT_PRICES = [189, 210, 262.5, 367.5, 420, 472.5, 525];
-const VILLA_LABELS = [...beds(1, 8), 'Common areas only', 'Common areas + outside'];
-const VILLA_PRICES = [315, 472.5, 525, 577.5, 630, 735, 840, 935, 210, 367.5];
+// Villas are sold by bedrooms only. (The sheet's "common areas only" AED 210 and "common areas + outside" AED 367.50 options were removed at Akkad's request, 21 November 2026.)
+const VILLA_LABELS = beds(1, 8);
+const VILLA_PRICES = [315, 472.5, 525, 577.5, 630, 735, 840, 935];
 const byId = Object.fromEntries(PESTS.map((p) => [p.id, p]));
 const fixed = (p, id, name, price, duration, points) => ({ id, title: `${p.service}: ${name}`, label: `${p.service} · ${name}`, price, duration, points });
 const NO_WARRANTY_AFTER = 'This service is 2 visits with no warranty. The second visit is arranged with you after the first.';
@@ -404,6 +405,11 @@ const ONCE_APT_PRICE = 99;
   ];
   const TAG = 'Precision treatment for active trails, hidden pests and entry points, with gels and baits selected for the pest.';
   for (const id of ['cockroach', 'ants']) Object.assign(byId[id], { steps: CRAWLING, outdoorSteps: OUTDOOR, blurb: TAG, intro: TAG });
+  // Villa packages for cockroach and ant control list the same cover as the general pest control villa.
+  const gVilla = byId.general.packages.find((pk) => pk.id === 'villa');
+  for (const id of ['cockroach', 'ants']) Object.assign(byId[id].packages.find((pk) => pk.id === 'villa'), { points: gVilla.points, duration: gVilla.duration });
+  // Same visit length as general pest control for the apartment too.
+  for (const id of ['cockroach', 'ants']) byId[id].packages.find((pk) => pk.id === 'apartment').duration = byId.general.packages.find((pk) => pk.id === 'apartment').duration;
 
   const GTAG = 'Inspection, targeted treatment and continued support for the crawling pests covered by your booking.';
   Object.assign(byId.general, { blurb: GTAG, intro: GTAG, outdoorSteps: OUTDOOR,
