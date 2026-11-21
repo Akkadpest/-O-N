@@ -123,8 +123,10 @@ const SMALL = new Set(['mosquito-garden-fogging', 'rodent-bait-station', 'termit
 export const thumb = (src) => { const m = /^\/img\/([a-z0-9-]+)\.webp$/.exec(src || ''); return m && SMALL.has(m[1]) ? `/img/${m[1]}-sm.webp` : src; };
 // Pictures below the screen load only as they come near it: write data-bg="..." instead of a style, then call lazyBg(root).
 export function lazyBg(root) {
-  const els = $$('[data-bg]', root);
-  const show = (el) => { el.style.backgroundImage = `url('${el.dataset.bg}')`; el.removeAttribute('data-bg'); };
+  // Safe to call more than once on the same page: each picture is watched once and shown once.
+  const els = $$('[data-bg]', root).filter((el) => !el.lazyWatched);
+  els.forEach((el) => { el.lazyWatched = true; });
+  const show = (el) => { if (!el.dataset.bg) return; el.style.backgroundImage = `url('${el.dataset.bg}')`; el.removeAttribute('data-bg'); };
   if (!('IntersectionObserver' in window)) return els.forEach(show);
   const io = new IntersectionObserver((list) => list.forEach((e) => { if (e.isIntersecting) { show(e.target); io.unobserve(e.target); } }), { rootMargin: '500px 300px' });
   els.forEach((el) => io.observe(el));
