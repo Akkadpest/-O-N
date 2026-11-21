@@ -332,6 +332,7 @@ export const bookingBar = () => `<div class="cart-bar" id="cartbar">${barHtml()}
 
 // Wires Add, View details, remove, express/schedule and Continue inside root.
 export function mountBooking(root) {
+  lazyBg(root); // card pictures are lazy-loaded wherever the booking cards appear (home, area and service pages)
   document.body.classList.add('store-on');
   onLeave(() => document.body.classList.remove('store-on'));
   const refresh = () => { const c = $('#cart', root), b = $('#cartbar', root); if (c) c.innerHTML = cartHtml(); if (b) b.innerHTML = barHtml(); };
