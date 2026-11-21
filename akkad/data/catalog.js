@@ -434,6 +434,9 @@ const ONCE_APT_PRICE = 99;
     ],
     stepNotes: [['Apartment', 'Indoor treatment within the booked scope.'], ['Villa', 'Treatment of the indoor and outdoor areas selected when booking.']] });
 }
+// PAYMENT RULE (Akkad, 21 November 2026): cash on delivery is offered only for "Schedule later" bookings.
+// "Schedule fast" and the one-time visit must be paid online.
+PESTS.find((p) => p.id === 'general-once').payOnline = true;
 for (const p of PESTS) if (!p.inspection) p.warrantyLabel = p.warrantyMonths ? `${p.warrantyMonths}-month warranty` : (p.noWarrantyLabel || '2 visits, no warranty');
 
 // Communities. `aliases` are towers and alternative names that map to the community.
@@ -498,7 +501,7 @@ const FAQ = [
   ['What does the warranty cover?', 'Our warranty is 6 months with unlimited call-outs. If the same pest returns, we come back and treat again at no charge, as many times as needed. Only an express call-out carries a small fee. The AED 99 one-time visit has no warranty.'],
   ['When do you refund?', 'In two cases: if we did not carry out the treatment, or if you paid twice by mistake. See the refund policy for details.'],
   ['How soon can you come?', 'If a team is working near you, an express visit reaches you in about 30 minutes. Otherwise pick any open slot, usually from the next day.'],
-  ['How do I pay?', 'By credit or debit card on a secure checkout page, or with Tabby in 4 payments if eligible (a Tabby fee is added and shown before you pay). You see the full total, VAT included, before you pay.'],
+  ['How do I pay?', 'By credit or debit card on a secure checkout page, or with Tabby in 4 payments if eligible (a Tabby fee is added and shown before you pay). For a Schedule later booking you can also pay cash to the technician at the visit. Schedule fast and the one-time visit are paid online. You see the full total, VAT included, before you pay.'],
   ['Do I need to leave home?', 'For gel treatments, no. For sprays we ask you to keep rooms closed for a short time; the technician will tell you exactly how long.'],
 ];
 

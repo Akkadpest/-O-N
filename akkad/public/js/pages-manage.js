@@ -5,7 +5,9 @@ const setDraft = (patch) => { S.draft = { ...S.draft, ...patch }; save(); };
 const getBooking = async (id) => (await bookingApi(id)).booking;
 const contactRow = (a = 'Call', b = 'WhatsApp') => `<div class="row"><a class="btn ghost" href="${site.company.phoneHref}">${a}</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">${b}</a></div>`;
 const pending = (b) => b.paymentStatus === 'pending';
+const cod = (b) => b.paymentStatus === 'cod';
 const paidText = (b) => (b.kind === 'warranty' && !b.total ? '<span class="green">AED 0 · covered by warranty</span>'
+  : cod(b) ? `${aed(b.cashDue || b.total)} · cash at the visit`
   : pending(b) ? `${aed(b.total)} · payment pending${b.tabbyFee ? ` · includes ${aed(b.tabbyFee)} Tabby fee` : ''}` : `${aed(b.total)}${b.payMethod === 'tabby' ? ` with Tabby${b.tabbyFee ? ` (includes ${aed(b.tabbyFee)} Tabby fee)` : ''}` : ' by card'}`);
 const pendingNote = (b) => (pending(b) ? '<p class="demo-note">Online payment is not connected yet, so nothing has been charged. Your visit is booked and the amount is shown as pending.</p>' : '');
 const warrantyNote = (b) => (b.kind === 'warranty' ? 'Same address. Treatment stays free under your warranty.' : `Same service, same address${b.warrantyMonths ? `, same ${b.warrantyMonths}-month warranty` : ''}.`);
@@ -19,7 +21,7 @@ route('/booking/:id/confirmed', async ({ id }) => {
     html: `<div class="flow"><span class="pill lg">${icon('check', 22)}Booking confirmed · ${esc(b.id)}</span>
       <h1>See you on ${esc(b.weekday)}</h1>
       <div class="card">${lines([['Date', `<b>${esc(b.dateLabel)}</b>`], ['Time slot', `<b>${esc(b.slot)}</b>`], ['Service', esc(b.kind === 'warranty' ? 'Warranty visit' : b.label)],
-        ['Total', !b.total ? '<span class="green">AED 0 · nothing to pay</span>' : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)} paid`]])}</div>${pendingNote(b)}
+        ['Total', !b.total ? '<span class="green">AED 0 · nothing to pay</span>' : cod(b) ? `${aed(b.cashDue || b.total)} · cash at the visit` : pending(b) ? `${aed(b.total)} · payment pending` : `${aed(b.total)} paid`]])}</div>${pendingNote(b)}
       <div class="card"><p class="muted">Before we arrive</p><p style="font-size:16px;color:var(--ink);margin-top:8px">${esc(b.prep)}</p></div>
       <p class="muted">A reminder is sent on WhatsApp the day before, and live tracking starts when the technician sets off.</p>
       <div class="row"><a class="btn ghost" href="/booking/${b.id}/reschedule">Reschedule</a><a class="btn ghost" href="${site.company.whatsapp}" target="_blank" rel="noopener">WhatsApp</a></div>
@@ -115,7 +117,7 @@ route('/booking/:id', async ({ id }) => {
   return {
     title: 'Your booking', head: 'area', flow: true, banner: false,
     html: `<div class="flow">${pill}<h1>Your booking</h1>
-      <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Date and time</span>', `<b>${esc(b.when)}</b>`], [`<span class="k">${pending(b) ? 'Payment' : 'Paid'}</span>`, paidText(b)]])}</div>
+      <div class="card">${lines([['<span class="k">Booking</span>', `<b>${esc(b.id)}</b>`], ['<span class="k">Service</span>', esc(b.label)], ['<span class="k">Date and time</span>', `<b>${esc(b.when)}</b>`], [`<span class="k">${pending(b) || cod(b) ? 'Payment' : 'Paid'}</span>`, paidText(b)]])}</div>
       ${b.status === 'booked' ? `<a class="btn" href="/booking/${b.id}/reschedule">${icon('calendar', 22)}Reschedule</a>` : ''}
       ${live ? `<a class="btn" href="/booking/${b.id}/track">${icon('truck', 22)}Track my technician</a>` : ''}
       ${b.status === 'done' && b.kind === 'new' ? (b.warrantyActive ? `<div class="card on"><h3 class="ic-row" style="gap:8px">${icon('shield')}Warranty active until ${esc(b.warrantyUntilLabel)}</h3><p class="sub">If the same pest returns before then, we come back free.</p><a class="btn ghost" style="margin-top:12px" href="/warranty/${b.id}">Pests back? Book a free visit</a></div>`
@@ -156,7 +158,8 @@ function cancelSheet(b) {
     <div class="card on"><h3 class="ic-row" style="gap:8px">${icon('calendar', 24)}Move it instead, free</h3><p class="sub" style="margin:8px 0 12px">Keep your price and warranty. Pick any open day in the next 30 days.</p><a class="btn" href="/booking/${b.id}/reschedule">Pick a new time</a></div>
     <p class="muted">Tell us why you're cancelling</p>
     <div class="chips">${['Not at home', 'Pests gone', 'Found cheaper', 'Other'].map((r) => `<button class="chip" data-r="${r}">${r}</button>`).join('')}</div>
-    ${pending(b) ? `<div class="card warn"><p><b>Nothing has been charged.</b> Payment for this booking is still pending, so there is nothing to refund.</p></div>`
+    ${cod(b) ? `<div class="card warn"><p><b>Nothing has been charged.</b> This booking was to be paid in cash at the visit, so there is nothing to refund.</p></div>`
+      : pending(b) ? `<div class="card warn"><p><b>Nothing has been charged.</b> Payment for this booking is still pending, so there is nothing to refund.</p></div>`
       : amount ? `<div class="card warn"><p><b style="font-size:17px">No cash refund.</b> If you cancel, your ${aed(amount)} stays as Akkad credit for 90 days, to use on any service.</p></div>`
       : `<div class="card warn"><p><b>Nothing was charged.</b> Your warranty stays active, so you can book this free visit again.</p></div>`}
     <p class="err"></p><button class="btn danger" data-go>Cancel anyway</button>`, {
@@ -225,7 +228,7 @@ route('/booking/:id/reschedule/confirm', async ({ id }) => {
     title: 'Confirm the new time', head: 'area', flow: true, banner: false,
     html: `<div class="flow"><h1>Confirm the new time</h1>
       <div class="card fromto"><div class="old"><small>From</small><b>${esc(d1)}</b><b>${esc(d2)}</b></div>${icon('arrow', 34)}<div><small>To</small>${m.express ? `<b>Today</b><b>about ${site.fees.aboutMin} min</b>` : `<b>${esc(m.label)}</b><b>${esc(m.slot)}</b>`}</div></div>
-      <div class="card">${lines([[pending(b) ? 'Booking total (payment pending)' : 'Already paid', b.kind === 'warranty' && !b.total ? 'AED 0 (warranty)' : aed(b.total)], m.express ? ['Express fee', aed(fee)] : ['Reschedule fee', 'Free', 'green']], ['To pay now', aed(m.express ? fee : 0)])}</div>
+      <div class="card">${lines([[cod(b) ? 'Booking total (cash on delivery)' : pending(b) ? 'Booking total (payment pending)' : 'Already paid', b.kind === 'warranty' && !b.total ? 'AED 0 (warranty)' : aed(b.total)], m.express ? ['Express fee', aed(fee)] : ['Reschedule fee', 'Free', 'green']], ['To pay now', aed(m.express ? (cod(b) ? b.total + fee : fee) : 0)])}</div>${m.express && cod(b) ? '<div class="card warn"><p><b>Schedule fast is paid online.</b> Your cash-on-delivery booking switches to card payment for the full amount.</p></div>' : ''}
       <p class="muted">${warrantyNote(b)}</p>${m.express && site.demo ? '<p class="demo-note">Demo mode: the express fee is not charged to a card.</p>' : ''}
       <p class="err"></p><button class="btn lg" id="ok">${m.express ? 'Confirm express visit' : 'Confirm new time'}</button>
       <a class="btn ghost" href="/booking/${id}">Keep ${esc(b.slot ? b.dateLabel : 'my express visit')}</a></div>`,

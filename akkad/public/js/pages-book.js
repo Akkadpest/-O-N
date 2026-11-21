@@ -203,9 +203,12 @@ export function pickSlots(root, fn) {
 /* ---------- screens 27, 28, 32: review and pay ---------- */
 // Paying with Tabby adds site.fees.tabbyPct percent to the amount due. The server charges the same figure.
 const tabbyFee = (amount) => Math.round(amount * site.fees.tabbyPct) / 100;
-const payMethods = (total) => `
+// `cod`: true offers cash on delivery, false explains why it is not offered, undefined leaves it out (warranty visits).
+const payMethods = (total, cod) => `
   <button class="card pay on" data-pay="card" aria-pressed="true"><b>${icon('card')}Credit or debit card</b><small>Secure checkout by Network International · no extra charge</small>${payLogos(['visa', 'mastercard', 'apple-pay'], 'in-pay')}</button>
-  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed((total + tabbyFee(total)) / 4)}, if eligible · includes a Tabby fee of ${aed(tabbyFee(total))}</small>${payLogos(['tabby'], 'in-pay')}</button>`;
+  <button class="card pay" data-pay="tabby" aria-pressed="false"><b>${icon('calendar')}Tabby</b><small>4 payments of ${aed((total + tabbyFee(total)) / 4)}, if eligible · includes a Tabby fee of ${aed(tabbyFee(total))}</small>${payLogos(['tabby'], 'in-pay')}</button>
+  ${cod === true ? `<button class="card pay" data-pay="cod" aria-pressed="false"><b>${icon('card')}Cash on delivery</b><small>Pay ${aed(total)} in cash to the technician at your visit · no extra charge</small></button>`
+    : cod === false ? `<p class="pay-rule">${icon('info', 16)}<span>Cash on delivery is offered for <b>Schedule later</b> bookings. Schedule fast and the one-time visit are paid online.</span></p>` : ''}`;
 // `total` is the amount due by card. Choosing Tabby adds its fee as a line above the total and updates the total.
 function wirePay(root, total) {
   const paint = () => {
@@ -216,7 +219,11 @@ function wirePay(root, total) {
     if (tabby) sum.insertAdjacentHTML('beforebegin', `<div class="tabby-row"><span>Tabby fee</span><span class="fast">+ ${aed(tabbyFee(total))}</span></div>`);
     sum.lastElementChild.textContent = aed(tabby ? Math.round((total + tabbyFee(total)) * 100) / 100 : total);
   };
-  on(root, '[data-pay]', (b) => { $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); paint(); });
+  on(root, '[data-pay]', (b) => {
+    $$('[data-pay]', root).forEach((x) => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); paint();
+    const go = $('#confirm', root); if (go) go.textContent = b.dataset.pay === 'cod' ? 'Confirm booking · pay cash at the visit' : 'Confirm booking';
+    const note = $('.demo-note', root); if (note) note.hidden = b.dataset.pay === 'cod'; // the online-payment notice does not apply to cash
+  });
   return () => $('[data-pay].on', root).dataset.pay;
 }
 const demoNote = () => (site.demo ? `<p class="demo-note"><b>Online payment is not connected yet.</b> Confirming books your visit now and nothing is charged; the amount is recorded as payment pending.</p>` : '');
@@ -227,7 +234,7 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
     <h4>${total ? `Why you pay ${aed(total)}` : 'What it costs'}</h4>${lines(rows.map(([label, value, cls]) => [label, typeof value === 'number' ? aed(value) : /^from \d/.test(String(value)) ? 'from ' + aed(Number(String(value).slice(5))) : value, cls]))}
     <p class="note" style="margin-top:10px">VAT included. No extra charge without your approval.</p>
     <h4>What the technician will do</h4>${stepsHtml(p.steps, p.id, p.stepNotes, p)}
-    <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page with no extra charge, or Tabby in 4 payments with a Tabby fee shown before you pay. Receipt and service report sent on WhatsApp.</p>
+    <h4>How you pay</h4><p style="font-size:15.5px;color:var(--ink)">Card on Network's secure page with no extra charge, or Tabby in 4 payments with a Tabby fee shown before you pay. Schedule later bookings can also be paid in cash at the visit. Receipt and service report sent on WhatsApp.</p>
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }
 
@@ -257,7 +264,7 @@ route('/book/:pest/pay', async ({ pest }) => {
         <div class="two"><label class="field">${icon('pin')}<span class="sr">Building or villa</span><input name="building" placeholder="Building or villa" autocomplete="address-line1" value="${esc(d.building || '')}"></label>
           <label class="field"><span class="sr">Apartment number</span><input name="apt" placeholder="Apt no." autocomplete="address-line2" value="${esc(d.apt || '')}"></label></div>
       </form>
-      ${total ? payMethods(total) : '<div class="card on"><h3>Nothing to pay</h3><p class="sub">Your Akkad credit covers this booking.</p></div>'}
+      ${total ? payMethods(total, !express() && !p.payOnline) : '<div class="card on"><h3>Nothing to pay</h3><p class="sub">Your Akkad credit covers this booking.</p></div>'}
       ${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,
     mount(root) {
       const method = total ? wirePay(root, total) : () => 'card';

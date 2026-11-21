@@ -77,6 +77,20 @@ test('Tabby adds 7% to the amount due; card adds nothing', async () => {
   assert.equal(card.data.booking.total, 210);
 });
 
+test('cash on delivery: only for a scheduled visit, never for the one-time visit', async () => {
+  const { days } = (await call('/api/slots?days=3')).data;
+  const when = { timing: 'scheduled', date: days[1].iso, slot: days[1].slots[1] };
+  const ok = await call('/api/bookings', { ...order, ...when, payMethod: 'cod' });
+  assert.equal(ok.status, 200);
+  assert.equal(ok.data.booking.paymentStatus, 'cod');
+  assert.equal(ok.data.booking.cashDue, 210);
+  assert.equal(ok.data.booking.paid, 0);
+  assert.equal(ok.data.booking.tabbyFee, 0);
+  assert.equal((await call('/api/bookings', { ...order, timing: 'express', payMethod: 'cod' })).status, 400, 'Schedule fast must be paid online');
+  assert.equal((await call('/api/bookings', { ...order, ...when, slot: days[1].slots[2], pest: 'general-once', pkg: 'apartment', size: undefined, payMethod: 'cod' })).status, 400, 'the one-time visit must be paid online');
+  assert.equal((await call('/api/bookings', { ...order, ...when, slot: days[1].slots[2], pest: 'general-once', pkg: 'apartment', size: undefined, payMethod: 'card' })).status, 200);
+});
+
 test('made-up slots, sizes and areas are rejected', async () => {
   assert.equal((await call('/api/bookings', { ...order, timing: 'scheduled', date: '2020-01-01', slot: '2–4 PM' })).status, 400);
   assert.equal((await call('/api/bookings', { ...order, timing: 'express', size: 's99' })).status, 400);

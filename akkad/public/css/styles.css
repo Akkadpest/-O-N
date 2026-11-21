@@ -1814,3 +1814,7 @@ a.pk-pic { display: block; }
 /* Tabby fee: tag on the Tabby option and the extra line above the total */
 .pay-tag { margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: #ffe9b8; color: #5c3d00; font-style: normal; font-weight: 800; font-size: 12px; }
 .lines .tabby-row { animation: fastIn .25s ease; }
+
+/* pay page: the note about when cash on delivery is offered */
+.pay-rule { display: flex; gap: 8px; align-items: flex-start; margin: 2px 2px 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+.pay-rule svg { flex: none; margin-top: 2px; color: var(--green); }

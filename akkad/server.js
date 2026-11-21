@@ -160,6 +160,7 @@ function refresh(b) {
     if (t && t.phase === 'arrived' && b.status === 'on_the_way') b.status = 'arrived';
     if (t && t.done) {
       b.status = 'done';
+      if (b.paymentStatus === 'cod') { b.paymentStatus = 'paid'; b.paid = b.cashDue || 0; } // cash collected by the technician
       if (b.kind === 'new' && b.warrantyMonths !== 0) b.warrantyUntil = addMonths(b.date, b.warrantyMonths || 3);
       store.save();
     }
@@ -174,7 +175,7 @@ function view(b) {
     areaSlug: b.areaSlug, areaName: b.areaName, areaShort: b.areaShort, address: maskAddress(b.address), building: maskAddress({ building: b.address.building }),
     mobile: maskMobile(b.mobile), note: b.note || '', timing: b.timing, date: b.date, dateLabel: fmtDate(b.date), dateLong: fmtDate(b.date, true),
     weekday: weekday(b.date), slot: b.slot, when: b.timing === 'express' && !b.slot ? 'Express today' : `${fmtDate(b.date)}, ${b.slot}`,
-    price: b.price, expressFee: b.expressFee, tabbyFee: b.tabbyFee || 0, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, paymentStatus: b.paymentStatus || (b.total ? 'paid' : 'none'), prep: (pest(b.pest) || {}).prep || '',
+    price: b.price, expressFee: b.expressFee, tabbyFee: b.tabbyFee || 0, cashDue: b.cashDue || 0, total: b.total, paid: b.paid || 0, creditUsed: b.creditUsed || 0, payMethod: b.payMethod, paymentStatus: b.paymentStatus || (b.total ? 'paid' : 'none'), prep: (pest(b.pest) || {}).prep || '',
     warrantyMonths: b.warrantyMonths, warrantyUntil: b.warrantyUntil || null, warrantyUntilLabel: b.warrantyUntil ? fmtDate(b.warrantyUntil, true) : null,
     warrantyActive: !!b.warrantyUntil && b.warrantyUntil >= today, parentId: b.parentId || null,
     reminderLabel: b.slot ? fmtDate(addDays(b.date, -1)) : null, credit: b.credit || null, tracking: track(b),
@@ -461,6 +462,8 @@ function create(fields) {
   // and every amount is recorded as "pending", never as paid.
   b.paymentStatus = !b.total ? 'none' : DEMO ? 'pending' : 'paid';
   if (b.paymentStatus === 'pending') b.paid = 0;
+  // Cash on delivery: nothing is taken now; the technician collects `cashDue` at the visit.
+  if (b.payMethod === 'cod') { b.cashDue = Math.round((b.total - (b.creditUsed || 0)) * 100) / 100; b.paid = 0; b.paymentStatus = b.cashDue > 0 ? 'cod' : 'none'; }
   if (b.timing === 'express') { b.status = 'on_the_way'; b.setOffAt = Date.now(); b.etaMin = C.FEES.etaMin; }
   d.bookings.push(b); store.save();
   return b;
@@ -475,7 +478,9 @@ app.post('/api/bookings', limit('book', 20, 60), (req, res) => {
     const q = quote(req.body);
     const who = contact(req.body);
     const when = schedule(req.body);
-    const method = req.body.payMethod === 'tabby' ? 'tabby' : 'card';
+    const method = ['tabby', 'cod'].includes(req.body.payMethod) ? req.body.payMethod : 'card';
+    // Cash on delivery: only for a scheduled visit, and never for services that must be paid online (the one-time visit).
+    if (method === 'cod' && (when.timing !== 'scheduled' || q.p.payOnline)) throw new Error('Cash on delivery is only for Schedule later bookings. Schedule fast and the one-time visit are paid online.');
     let total = q.price + q.expressFee, creditUsed = 0;
     // Akkad credit from a cancelled booking is used only once the customer has proved the number is theirs.
     if (sessionMobile(req) === who.mobile) {
@@ -593,9 +598,11 @@ app.post('/api/bookings/:id/reschedule', authed, (req, res) => {
       if (enRoute) throw new Error('Your technician is already on the way.');
       const fee = b.kind === 'warranty' ? C.FEES.expressWarranty : C.FEES.expressNew;
       const extraTabby = b.payMethod === 'tabby' ? tabbyFeeOn(fee) : 0;
+      const wasCod = b.payMethod === 'cod'; // Schedule fast must be paid online, so a cash booking switches to card
       Object.assign(b, { movedFrom: `${fmtDate(b.date)}, ${b.slot}`, timing: 'express', date: dubaiNow().iso, slot: null, expressFee: fee, tabbyFee: Math.round(((b.tabbyFee || 0) + extraTabby) * 100) / 100,
         total: Math.round((b.total + fee + extraTabby) * 100) / 100, paid: Math.round(((b.paid || 0) + (DEMO ? 0 : fee + extraTabby)) * 100) / 100,
         payMethod: b.payMethod || 'card', paymentStatus: DEMO ? 'pending' : 'paid', status: 'on_the_way', setOffAt: Date.now(), etaMin: C.FEES.etaMin });
+      if (wasCod) Object.assign(b, { payMethod: 'card', cashDue: 0, paid: DEMO ? 0 : Math.round((b.total - (b.creditUsed || 0)) * 100) / 100 });
     } else {
       let when;
       if (req.body.laterToday) {
