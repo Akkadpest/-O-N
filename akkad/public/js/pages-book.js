@@ -184,7 +184,7 @@ route('/book/:pest/time', async ({ pest }) => {
   const { days } = await api('/slots?days=3');
   return {
     title: 'Pick a day and time', head: 'area', flow: true,
-    html: `<div class="flow"><span class="pill lg">${icon('calendar', 20)}Schedule for later · no extra fee</span><h1>Pick a day and time</h1>
+    html: `<div class="flow">${flowBack()}<span class="pill lg">${icon('calendar', 20)}Schedule for later · no extra fee</span><h1>Pick a day and time</h1>
       ${slotCards(days, S.draft.date, S.draft.slot)}
       <p class="note">Only real open slots from dispatch are shown.</p><p class="err"></p>
       <button class="btn" id="cont" ${S.draft.slot ? '' : 'disabled'}>Continue to payment</button></div>`,
@@ -220,6 +220,9 @@ function explain(p, { rows, total, title, cta = 'Got it, continue to pay', done 
     <button class="btn" style="margin-top:16px" data-ok>${cta}</button></div>`, { mount(box) { on(box, '[data-ok]', () => { closeLayer(); if (done) done(); }); } });
 }
 
+// Checkout pages keep a way back on screen at all times; the booking stays saved on the phone.
+const flowBack = (label = 'Back to home', href = '/') => `<nav class="flow-back" aria-label="Leave checkout"><a href="${href}">${icon('left', 18)}${label}</a><span>Your booking is saved</span></nav>`;
+
 route('/book/:pest/pay', async ({ pest }) => {
   if (needArea()) return null;
   const p = pestOf(pest);
@@ -229,13 +232,13 @@ route('/book/:pest/pay', async ({ pest }) => {
   const fee = express() ? site.fees.expressNew : 0;
   const credit = Math.min(me.credit || 0, c.price + fee);
   const total = c.price + fee - credit;
-  const rows = [[esc(c.label), aed(c.price)], express() ? ['Express fee', aed(fee)] : ['Scheduled visit', 'No extra fee', 'green']];
+  const rows = [[esc(c.label), aed(c.price)], express() ? [`<span class="pay-fast-l">${icon('truck', 18)}Schedule fast <small>about ${site.fees.aboutMin} min</small></span>`, '+ ' + aed(fee), 'fast'] : ['Schedule later', 'No extra fee', 'green']];
   if (credit) rows.push(['Akkad credit', '− ' + aed(credit), 'green']);
   const d = S.draft;
   return {
     title: 'Review and pay', head: 'area', flow: true,
-    html: `<div class="flow"><h1>Review and pay</h1>
-      <div class="card">${lines(rows, ['Total incl. VAT', aed(total)])}<button class="info-link" data-explain>${icon('info', 24)}What's included and how it works</button></div>
+    html: `<div class="flow">${flowBack()}<h1>Review and pay</h1>
+      <div class="card">${lines(rows, ['Total incl. VAT', aed(total)])}${express() ? `<div class="pay-fast-note"><span><b>+ ${aed(fee)} added</b> for Schedule fast.</span><button class="link b" data-nofast>Schedule later instead, no extra fee</button></div>` : ''}<button class="info-link" data-explain>${icon('info', 24)}What's included and how it works</button></div>
       <p class="muted">${esc(S.area.short)} · ${express() ? `Express today, about ${site.fees.aboutMin} min` : `${esc(d.dateLabel)}, ${esc(d.slot)}`}</p>
       <form class="card form-grid" novalidate><h3>Where should we come?</h3>
         <label class="field">${icon('check')}<span class="sr">Your name</span><input name="name" placeholder="Your name" autocomplete="name" value="${esc(d.name || '')}"></label>
@@ -247,7 +250,9 @@ route('/book/:pest/pay', async ({ pest }) => {
       ${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,
     mount(root) {
       const method = total ? wirePay(root) : () => 'card';
-      on(root, '[data-explain]', () => explain(p, { rows: [[`Treatment, materials, ${wty(p)}`, c.price], ...(express() ? [[`Express fee, team within about ${site.fees.aboutMin} min`, fee]] : [['Scheduled visit', 'No extra fee', 'green']])], total: c.price + fee }));
+      // Changed their mind about paying for speed: keep the details typed so far and pick a day instead.
+      on(root, '[data-nofast]', () => { setDraft({ ...Object.fromEntries(new FormData($('form', root))), timing: 'scheduled' }); go(`/book/${pest}/time`); });
+      on(root, '[data-explain]', () => explain(p, { rows: [[`Treatment, materials, ${wty(p)}`, c.price], ...(express() ? [[`Schedule fast, team within about ${site.fees.aboutMin} min`, fee]] : [['Scheduled visit', 'No extra fee', 'green']])], total: c.price + fee }));
       on(root, '#confirm', (btn) => busy(btn, async () => {
         const f = Object.fromEntries(new FormData($('form', root)));
         setDraft(f);
@@ -297,7 +302,7 @@ route('/warranty/:id', async ({ id }) => {
   const st = { timing: 'express', date: null, slot: null, addressOk: null };
   return {
     title: 'Warranty call-out', head: 'area', flow: true,
-    html: `<div class="flow"><h1 class="ic-row" style="gap:10px">${icon('shield', 28)}Warranty call-out</h1>
+    html: `<div class="flow">${flowBack()}<h1 class="ic-row" style="gap:10px">${icon('shield', 28)}Warranty call-out</h1>
       <div class="card"><p class="muted">Is this still the address?</p><h3 style="margin:8px 0 12px">${esc(w.address)}</h3>
         <div class="row" id="addr"><button class="btn" data-a="yes">Yes</button><button class="btn ghost" data-a="no">No, update</button></div>
         <div class="form-grid" id="newaddr" hidden style="margin-top:12px"><div class="two"><label class="field">${icon('pin')}<span class="sr">Building or villa</span><input name="building" placeholder="Building or villa"></label><label class="field"><span class="sr">Apartment number</span><input name="apt" placeholder="Apt no."></label></div></div></div>
@@ -338,7 +343,7 @@ route('/warranty/:id/pay', async ({ id }) => {
   const fee = site.fees.expressWarranty;
   return {
     title: 'Review and pay', head: 'area', flow: true,
-    html: `<div class="flow"><h1>Review and pay</h1>
+    html: `<div class="flow">${flowBack()}<h1>Review and pay</h1>
       <div class="card">${lines([[`Warranty treatment · ${esc(w.id)}`, 'AED 0'], ['Express call-out', aed(fee)]], ['Total incl. VAT', aed(fee)])}<button class="info-link" data-explain>${icon('info', 24)}What's included and how it works</button></div>
       <p class="muted">${esc(w.areaShort)} · Express today, about ${site.fees.aboutMin} min · treatment free under warranty</p>
       ${payMethods(fee)}${demoNote()}<p class="err"></p><button class="btn" id="confirm">Confirm booking</button></div>`,

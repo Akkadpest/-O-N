@@ -289,6 +289,7 @@ export function storePage(ctx = {}) {
     // Hero: "Schedule fast" / "Schedule later" with their animations. Picking one sets the visit timing and shows the services.
     on(root, '[data-when-pick]', (b) => {
       setDraft({ timing: b.dataset.whenPick });
+      toast(b.dataset.whenPick === 'express' ? `Schedule fast: + ${aed(site.fees.expressNew)} added` : 'Schedule later: no extra fee');
       $$('[data-when-pick]', root).forEach((x) => x.classList.toggle('on', x === b));
       const c = $('#cart', root), bar = $('#cartbar', root); if (c) c.innerHTML = cartHtml(); if (bar) bar.innerHTML = barHtml();
       const el = $('#st-list', root); if (el) window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 128, behavior: 'smooth' });
@@ -364,7 +365,7 @@ export function mountBooking(root) {
   on(root, '[data-remove]', clear);
   on(root, '[data-change]', () => change());
   on(root, '[data-cart]', cartSheet);
-  on(root, '[data-when]', (b) => { setDraft({ timing: b.dataset.when }); refresh(); });
+  on(root, '[data-when]', (b) => { const was = S.draft.timing; setDraft({ timing: b.dataset.when }); refresh(); if (was !== b.dataset.when) toast(b.dataset.when === 'express' ? `Schedule fast: + ${aed(site.fees.expressNew)} added` : 'Schedule fast removed: no extra fee'); $$('[data-when-pick]', root).forEach((x) => x.classList.toggle('on', x.dataset.whenPick === b.dataset.when)); });
   on(root, '[data-checkout]', (btn) => {
     if (!S.area) return checkAvailability();
     if (btn.closest('#cartbar')) return cartSheet(); // phone: review the booking and pick the time first
